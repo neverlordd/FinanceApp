@@ -45,6 +45,12 @@ Health check: /api/health
 
 A `Dockerfile` is also included. The server must be available over HTTPS and connected to persistent MySQL or PostgreSQL storage. User data is never stored in local files.
 
+### GitHub Pages
+
+GitHub Pages is supported as a static, browser-only edition. The included workflow builds Vite with the `/FinanceApp/` base path and deploys the generated `dist` artifact. In this edition, changes are saved in the current browser's local storage because GitHub Pages cannot run the Express API or connect directly to the database. Data does not sync between browsers or devices.
+
+In **Settings → Pages → Build and deployment**, select **GitHub Actions** as the source. Pushes to `main` then build and publish automatically.
+
 ### Hostinger
 
 1. Create a MySQL database in hPanel.

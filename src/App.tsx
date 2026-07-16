@@ -37,6 +37,7 @@ export default function App() {
   const [loading, setLoading] = useState<boolean>(true);
   const [syncStatus, setSyncStatus] = useState<'synced' | 'syncing' | 'offline'>('syncing');
   const [storagePersistent, setStoragePersistent] = useState<boolean | null>(null);
+  const [storageProvider, setStorageProvider] = useState<string | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const saveQueueRef = useRef<Promise<void>>(Promise.resolve());
 
@@ -105,6 +106,7 @@ export default function App() {
       }
       const json = await res.json() as FinanceData;
       setStoragePersistent(res.headers.get("X-Storage-Persistent") !== "false");
+      setStorageProvider(res.headers.get("X-Storage-Provider"));
       setData(json);
       setSyncStatus('synced');
       setErrorMsg(null);
@@ -175,6 +177,7 @@ export default function App() {
         });
         if (!res.ok) throw new Error("Unable to save changes");
         setStoragePersistent(res.headers.get("X-Storage-Persistent") !== "false");
+        setStorageProvider(res.headers.get("X-Storage-Provider"));
         setSyncStatus('synced');
         setErrorMsg(null);
       })
@@ -359,6 +362,7 @@ export default function App() {
       if (!res.ok) throw new Error("Unable to restore the demo data");
       const json = await res.json();
       setStoragePersistent(res.headers.get("X-Storage-Persistent") !== "false");
+      setStorageProvider(res.headers.get("X-Storage-Provider"));
       setData(json.data);
       setSyncStatus('synced');
       setSelectedMonthStr("2026-08"); // Focus August after reset
@@ -484,7 +488,7 @@ export default function App() {
 
           {/* Logo */}
           <div className="flex items-center gap-2.5">
-            <img src="/logo.png" className="w-8 h-8 object-contain rounded-lg" alt="Logo" referrerPolicy="no-referrer" />
+            <img src={`${import.meta.env.BASE_URL}logo.png`} className="w-8 h-8 object-contain rounded-lg" alt="Logo" referrerPolicy="no-referrer" />
             <span className="text-xs font-black tracking-widest text-white/95 uppercase font-sans">Finance Tracker</span>
           </div>
 
@@ -494,7 +498,9 @@ export default function App() {
               {syncStatus === 'synced' && (
                 <>
                   <span className="w-1.5 h-1.5 bg-emerald-400 rounded-full shadow-[0_0_8px_#34d399]" />
-                  <span className="text-white/60 font-medium">{storagePersistent === false ? "Saved temporarily" : "Saved"}</span>
+                  <span className="text-white/60 font-medium">
+                    {storagePersistent === false ? "Saved temporarily" : storageProvider === "browser" ? "Saved on device" : "Saved"}
+                  </span>
                 </>
               )}
               {syncStatus === 'syncing' && (

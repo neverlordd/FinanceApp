@@ -1,5 +1,10 @@
 type TelegramWebApp = {
   initData: string;
+  initDataUnsafe?: {
+    user?: {
+      id?: number;
+    };
+  };
   colorScheme: "light" | "dark";
   ready: () => void;
   expand: () => void;

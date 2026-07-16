@@ -3,19 +3,20 @@
   "name": "Finance Tracker & Forecaster",
   "icons": [
     {
-      "src": "/logo.png",
+      "src": "logo.png",
       "type": "image/png",
       "sizes": "512x512",
       "purpose": "any maskable"
     },
     {
-      "src": "/apple-touch-icon.png",
+      "src": "apple-touch-icon.png",
       "type": "image/png",
       "sizes": "512x512",
       "purpose": "any"
     }
   ],
-  "start_url": "/",
+  "start_url": "./",
+  "scope": "./",
   "background_color": "#06080c",
   "theme_color": "#22c55e",
   "display": "standalone",
