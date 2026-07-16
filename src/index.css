@@ -1,30 +1,27 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
 @import "tailwindcss";
 
 @theme {
-  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
-  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+  --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", Inter, ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "SF Mono", SFMono-Regular, ui-monospace, Menlo, Monaco, Consolas, monospace;
 }
 
 :root {
   color-scheme: dark;
-  background: #06080d;
+  background: #05070c;
   font-synthesis: none;
   text-rendering: optimizeLegibility;
 }
 
 html {
   min-width: 320px;
-  background: #06080d;
+  background: #05070c;
 }
 
 body {
   min-width: 320px;
   min-height: 100vh;
   margin: 0;
-  background:
-    radial-gradient(circle at 12% -10%, rgba(16, 185, 129, 0.09), transparent 34rem),
-    #06080d;
+  background: #05070c;
   -webkit-font-smoothing: antialiased;
 }
 
@@ -36,6 +33,116 @@ body {
   min-height: var(--tg-viewport-stable-height, 100vh);
   padding-left: max(env(safe-area-inset-left), var(--tg-safe-area-inset-left, 0px));
   padding-right: max(env(safe-area-inset-right), var(--tg-safe-area-inset-right, 0px));
+  isolation: isolate;
+  background:
+    radial-gradient(circle at 8% 3%, rgba(64, 145, 255, 0.18), transparent 29rem),
+    radial-gradient(circle at 92% 18%, rgba(126, 87, 255, 0.14), transparent 31rem),
+    radial-gradient(circle at 45% 92%, rgba(16, 185, 129, 0.13), transparent 34rem),
+    linear-gradient(145deg, #05070d 0%, #080b13 42%, #05070b 100%);
+}
+
+.telegram-app-shell::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  opacity: 0.28;
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.018) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.018) 1px, transparent 1px);
+  background-size: 48px 48px;
+  mask-image: linear-gradient(to bottom, black, transparent 82%);
+}
+
+.ambient-orb {
+  position: absolute;
+  border-radius: 999px;
+  pointer-events: none;
+  filter: blur(90px);
+  opacity: 0.55;
+  animation: ambient-drift 16s ease-in-out infinite alternate;
+}
+
+.liquid-glass,
+.liquid-glass-strong {
+  position: relative;
+  background:
+    linear-gradient(145deg, rgba(255, 255, 255, 0.095), rgba(255, 255, 255, 0.025) 45%, rgba(255, 255, 255, 0.045)),
+    rgba(7, 11, 19, 0.52);
+  border: 1px solid rgba(255, 255, 255, 0.13);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.16),
+    inset 0 -1px 0 rgba(255, 255, 255, 0.025),
+    0 18px 48px rgba(0, 0, 0, 0.28);
+  -webkit-backdrop-filter: blur(26px) saturate(155%);
+  backdrop-filter: blur(26px) saturate(155%);
+}
+
+.liquid-glass-strong {
+  background:
+    linear-gradient(145deg, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0.035) 46%, rgba(255, 255, 255, 0.055)),
+    rgba(6, 9, 16, 0.7);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.19),
+    0 28px 70px rgba(0, 0, 0, 0.42);
+}
+
+.liquid-glass::after,
+.liquid-glass-strong::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  background: linear-gradient(120deg, rgba(255, 255, 255, 0.1), transparent 25%, transparent 72%, rgba(94, 234, 212, 0.035));
+  mask-image: linear-gradient(#000, transparent 45%);
+}
+
+.liquid-header {
+  background: rgba(5, 8, 14, 0.55);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.09);
+  box-shadow: 0 10px 32px rgba(0, 0, 0, 0.18), inset 0 -1px 0 rgba(255, 255, 255, 0.025);
+  -webkit-backdrop-filter: blur(30px) saturate(170%);
+  backdrop-filter: blur(30px) saturate(170%);
+}
+
+.liquid-sidebar {
+  padding: 0.45rem;
+  border-radius: 1.45rem;
+  height: fit-content;
+  position: sticky;
+  top: 5.8rem;
+}
+
+.liquid-input {
+  background: rgba(0, 0, 0, 0.24) !important;
+  border-color: rgba(255, 255, 255, 0.11) !important;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.28), 0 1px 0 rgba(255, 255, 255, 0.035);
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
+}
+
+.telegram-app-shell button {
+  transform: translateZ(0);
+}
+
+.telegram-app-shell button:hover {
+  filter: brightness(1.08);
+}
+
+.telegram-app-shell button:active {
+  transform: scale(0.97);
+}
+
+.telegram-app-shell input,
+.telegram-app-shell select {
+  -webkit-appearance: none;
+}
+
+@keyframes ambient-drift {
+  from { transform: translate3d(-2%, -2%, 0) scale(0.98); }
+  to { transform: translate3d(3%, 3%, 0) scale(1.06); }
 }
 
 .telegram-app-header {
@@ -45,6 +152,32 @@ body {
 .telegram-bottom-nav {
   height: calc(3.5rem + max(env(safe-area-inset-bottom), var(--tg-content-safe-area-inset-bottom, 0px)));
   padding-bottom: max(env(safe-area-inset-bottom), var(--tg-content-safe-area-inset-bottom, 0px));
+}
+
+.liquid-tab-bar {
+  left: 0.75rem !important;
+  right: 0.75rem !important;
+  bottom: max(0.55rem, env(safe-area-inset-bottom), var(--tg-content-safe-area-inset-bottom, 0px)) !important;
+  width: auto;
+  height: 4rem;
+  padding: 0.35rem;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 1.65rem;
+  background: rgba(10, 14, 23, 0.72);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.14), 0 18px 45px rgba(0, 0, 0, 0.48);
+  -webkit-backdrop-filter: blur(28px) saturate(170%);
+  backdrop-filter: blur(28px) saturate(170%);
+}
+
+.liquid-tab-bar button {
+  border: 1px solid transparent;
+}
+
+.liquid-tab-bar button[aria-current="page"] {
+  color: #f7fffc;
+  border-color: rgba(110, 231, 183, 0.2);
+  background: linear-gradient(145deg, rgba(52, 211, 153, 0.22), rgba(16, 185, 129, 0.08));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.13), 0 5px 18px rgba(16, 185, 129, 0.11);
 }
 
 button,
@@ -107,5 +240,30 @@ select:focus-visible {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
+  }
+}
+
+@media (max-width: 767px) {
+  .telegram-app-shell {
+    padding-bottom: calc(5rem + max(env(safe-area-inset-bottom), var(--tg-content-safe-area-inset-bottom, 0px)));
+  }
+
+  .liquid-glass,
+  .liquid-glass-strong {
+    -webkit-backdrop-filter: blur(18px) saturate(145%);
+    backdrop-filter: blur(18px) saturate(145%);
+  }
+
+  .app-content {
+    padding-bottom: 6.25rem;
+  }
+}
+
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .liquid-glass,
+  .liquid-glass-strong,
+  .liquid-header,
+  .liquid-tab-bar {
+    background-color: rgba(10, 14, 23, 0.96);
   }
 }

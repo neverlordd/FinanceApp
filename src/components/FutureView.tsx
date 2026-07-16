@@ -69,7 +69,7 @@ export const FutureView: React.FC<FutureViewProps> = ({
       <div className="grid grid-cols-1 gap-5">
 
         {/* KPI: Cumulative Savings (Moved from Dashboard, positioned at the top) */}
-        <div className="bg-gradient-to-b from-white/[0.03] to-transparent backdrop-blur-2xl border border-white/[0.08] rounded-3xl p-6 shadow-[0_12px_40px_rgba(0,0,0,0.45)] relative overflow-hidden flex flex-col justify-between group hover:border-emerald-500/20 transition-all duration-300">
+        <div className="liquid-glass-strong rounded-3xl p-6 relative overflow-hidden flex flex-col justify-between group hover:border-emerald-500/30 transition-all duration-300">
           <div className="absolute right-0 top-0 translate-x-4 -translate-y-4 w-32 h-32 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none group-hover:bg-emerald-500/15 transition-all duration-300" />
 
           <div>
@@ -111,8 +111,8 @@ export const FutureView: React.FC<FutureViewProps> = ({
                 }}
                 className={`group transition-all duration-300 relative overflow-hidden flex flex-col justify-between ${
                   isSelected
-                    ? "p-5 rounded-3xl bg-gradient-to-b from-white/[0.06] to-white/[0.01] border border-emerald-500/40 shadow-[0_16px_36px_rgba(16,185,129,0.12)] scale-[1.01]"
-                    : "p-3.5 rounded-2xl bg-white/[0.015] border border-white/[0.04] hover:bg-white/[0.03] hover:border-white/[0.1] cursor-pointer"
+                    ? "liquid-glass-strong p-5 rounded-3xl border-emerald-500/40 shadow-[0_16px_36px_rgba(16,185,129,0.12)] scale-[1.01]"
+                    : "liquid-glass p-3.5 rounded-2xl hover:border-white/[0.2] cursor-pointer"
                 }`}
               >
                 {/* Visual Accent Glow on selection */}

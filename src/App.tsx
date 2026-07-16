@@ -460,12 +460,12 @@ export default function App() {
   };
 
   return (
-    <div className="telegram-app-shell min-h-screen bg-[#06080d] text-slate-100 font-sans flex flex-col pb-20 md:pb-0 relative overflow-hidden">
+    <div className="telegram-app-shell min-h-screen text-slate-100 font-sans flex flex-col pb-20 md:pb-0 relative overflow-hidden">
 
       {/* iOS Liquid Glass Background Glowing Orbs */}
-      <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] rounded-full bg-emerald-500/8 blur-[130px] pointer-events-none" />
-      <div className="absolute bottom-[10%] right-[-10%] w-[60%] h-[60%] rounded-full bg-emerald-600/8 blur-[150px] pointer-events-none" />
-      <div className="absolute top-[40%] left-[20%] w-[45%] h-[45%] rounded-full bg-green-500/5 blur-[140px] pointer-events-none" />
+      <div className="ambient-orb top-[-12%] left-[-14%] w-[52%] h-[48%] bg-blue-500/20" />
+      <div className="ambient-orb top-[12%] right-[-18%] w-[48%] h-[52%] bg-violet-500/15 [animation-delay:-5s]" />
+      <div className="ambient-orb bottom-[-12%] left-[22%] w-[58%] h-[50%] bg-emerald-500/14 [animation-delay:-9s]" />
 
       {/* GLOBAL NETWORK WARNING */}
       {errorMsg && (
@@ -483,18 +483,18 @@ export default function App() {
       )}
 
       {/* TOP DESKTOP HEADER */}
-      <header className="telegram-app-header relative z-40 bg-white/[0.01] backdrop-blur-xl border-b border-white/[0.06] px-4 py-3 md:px-6">
+      <header className="telegram-app-header liquid-header sticky top-0 z-40 px-4 py-3 md:px-6">
         <div className="max-w-7xl mx-auto flex items-center justify-between">
 
           {/* Logo */}
           <div className="flex items-center gap-2.5">
-            <img src={`${import.meta.env.BASE_URL}logo.png`} className="w-8 h-8 object-contain rounded-lg" alt="Logo" referrerPolicy="no-referrer" />
+            <img src={`${import.meta.env.BASE_URL}logo.png`} className="w-9 h-9 object-contain rounded-xl ring-1 ring-white/15 shadow-[0_8px_24px_rgba(16,185,129,0.18)]" alt="Logo" referrerPolicy="no-referrer" />
             <span className="text-xs font-black tracking-widest text-white/95 uppercase font-sans">Finance Tracker</span>
           </div>
 
           {/* Sync status & Manual refresh button */}
           <div className="flex items-center gap-3">
-            <div className="flex items-center gap-1.5 px-2.5 py-1 bg-white/[0.02] border border-white/[0.06] rounded-full text-[10px]">
+            <div className="liquid-glass flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[10px]">
               {syncStatus === 'synced' && (
                 <>
                   <span className="w-1.5 h-1.5 bg-emerald-400 rounded-full shadow-[0_0_8px_#34d399]" />
@@ -519,7 +519,7 @@ export default function App() {
 
             <button
               onClick={() => fetchData(false)}
-              className="p-1.5 bg-white/[0.02] hover:bg-white/[0.06] border border-white/[0.08] rounded-xl text-white/60 hover:text-white transition duration-200 cursor-pointer"
+              className="liquid-glass p-2 rounded-xl text-white/60 hover:text-white transition duration-200 cursor-pointer"
               title="Refresh data"
             >
               <RefreshCw size={12} className={syncStatus === 'syncing' ? 'animate-spin' : ''} />
@@ -529,10 +529,10 @@ export default function App() {
       </header>
 
       {/* CORE CONTENT LAYOUT */}
-      <div className="max-w-7xl w-full mx-auto flex-1 flex flex-col md:flex-row p-4 md:p-6 gap-6 relative z-10">
+      <div className="app-content max-w-7xl w-full mx-auto flex-1 flex flex-col md:flex-row p-4 md:p-6 gap-6 relative z-10">
 
         {/* DESKTOP SIDEBAR NAVIGATION */}
-        <aside className="hidden md:block w-52 shrink-0 space-y-1">
+        <aside className="liquid-sidebar liquid-glass hidden md:block w-52 shrink-0 space-y-1">
           <button
             onClick={() => setActiveTab("budget")}
             className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-semibold tracking-wide transition duration-150 cursor-pointer ${
@@ -624,9 +624,10 @@ export default function App() {
       </div>
 
       {/* MOBILE BOTTOM NAVIGATION BAR */}
-      <nav className="telegram-bottom-nav md:hidden fixed bottom-0 left-0 right-0 z-40 bg-[#070b13]/95 backdrop-blur-md border-t border-slate-800/80 px-2 py-1 shadow-2xl flex items-center justify-around h-14">
+      <nav className="telegram-bottom-nav liquid-tab-bar md:hidden fixed z-40 flex items-center justify-around">
         <button
           onClick={() => setActiveTab("budget")}
+          aria-current={activeTab === "budget" ? "page" : undefined}
           className={`flex flex-col items-center justify-center flex-1 h-full rounded-xl transition cursor-pointer ${
             activeTab === "budget" ? "text-emerald-400" : "text-slate-400 hover:text-slate-200"
           }`}
@@ -637,6 +638,7 @@ export default function App() {
 
         <button
           onClick={() => setActiveTab("projections")}
+          aria-current={activeTab === "projections" ? "page" : undefined}
           className={`flex flex-col items-center justify-center flex-1 h-full rounded-xl transition cursor-pointer ${
             activeTab === "projections" ? "text-emerald-400" : "text-slate-400 hover:text-slate-200"
           }`}
@@ -647,6 +649,7 @@ export default function App() {
 
         <button
           onClick={() => setActiveTab("settings")}
+          aria-current={activeTab === "settings" ? "page" : undefined}
           className={`flex flex-col items-center justify-center flex-1 h-full rounded-xl transition cursor-pointer ${
             activeTab === "settings" ? "text-emerald-400" : "text-slate-400 hover:text-slate-200"
           }`}

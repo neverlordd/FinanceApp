@@ -340,7 +340,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
         <div className="lg:col-span-5 xl:col-span-4 space-y-6">
 
           {/* 1. COMPACT HORIZONTAL MONTH PILLS */}
-          <div className="bg-gradient-to-b from-white/[0.02] to-white/[0.005] backdrop-blur-xl border border-white/[0.06] p-4 rounded-3xl shadow-[0_12px_40px_rgba(0,0,0,0.3)] space-y-3">
+          <div className="liquid-glass p-4 rounded-3xl space-y-3">
             <div className="flex items-center justify-between">
               <span className="text-[9px] font-bold text-white/40 tracking-wider uppercase font-mono flex items-center gap-1.5">
                 <Calendar size={11} className="text-emerald-400" /> Period
@@ -391,7 +391,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
           <div className="grid grid-cols-2 gap-4">
 
             {/* KPI 1: Income */}
-            <div className="bg-gradient-to-b from-white/[0.02] to-transparent backdrop-blur-xl border border-white/[0.06] rounded-3xl p-4 shadow-[0_12px_32px_rgba(0,0,0,0.4)] relative overflow-hidden flex flex-col justify-between group hover:border-emerald-500/20 transition-all duration-300 col-span-1">
+            <div className="liquid-glass rounded-3xl p-4 relative overflow-hidden flex flex-col justify-between group hover:border-emerald-500/30 transition-all duration-300 col-span-1">
               <div className="absolute right-0 top-0 translate-x-4 -translate-y-4 w-16 h-16 bg-emerald-500/5 rounded-full blur-xl pointer-events-none group-hover:bg-emerald-500/10 transition-all duration-300" />
 
               <div className="flex items-center justify-between mb-2">
@@ -451,7 +451,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
             </div>
 
             {/* KPI 2: Planned Spend */}
-            <div className="bg-gradient-to-b from-white/[0.02] to-transparent backdrop-blur-xl border border-white/[0.06] rounded-3xl p-4 shadow-[0_12px_32px_rgba(0,0,0,0.4)] relative overflow-hidden flex flex-col justify-between group hover:border-rose-500/20 transition-all duration-300 col-span-1">
+            <div className="liquid-glass rounded-3xl p-4 relative overflow-hidden flex flex-col justify-between group hover:border-rose-500/30 transition-all duration-300 col-span-1">
               <div className="absolute right-0 top-0 translate-x-4 -translate-y-4 w-16 h-16 bg-rose-500/5 rounded-full blur-xl pointer-events-none group-hover:bg-rose-500/10 transition-all duration-300" />
 
               <div className="flex items-center justify-between mb-2">
@@ -469,7 +469,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
             </div>
 
             {/* KPI 3: Spent */}
-            <div className="bg-gradient-to-b from-white/[0.02] to-transparent backdrop-blur-xl border border-white/[0.06] rounded-3xl p-4 shadow-[0_12px_32px_rgba(0,0,0,0.4)] relative overflow-hidden flex flex-col justify-between group hover:border-emerald-500/20 transition-all duration-300 col-span-1">
+            <div className="liquid-glass rounded-3xl p-4 relative overflow-hidden flex flex-col justify-between group hover:border-emerald-500/30 transition-all duration-300 col-span-1">
               <div className="absolute right-0 top-0 translate-x-4 -translate-y-4 w-16 h-16 bg-emerald-500/5 rounded-full blur-xl pointer-events-none group-hover:bg-emerald-500/10 transition-all duration-300" />
 
               <div className="flex items-center justify-between mb-2">
@@ -500,7 +500,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
             </div>
 
             {/* KPI 4: Leftover */}
-            <div className="bg-gradient-to-b from-white/[0.02] to-transparent backdrop-blur-xl border border-white/[0.06] rounded-3xl p-4 shadow-[0_12px_32px_rgba(0,0,0,0.4)] relative overflow-hidden flex flex-col justify-between group hover:border-emerald-500/20 transition-all duration-300 col-span-1">
+            <div className="liquid-glass rounded-3xl p-4 relative overflow-hidden flex flex-col justify-between group hover:border-emerald-500/30 transition-all duration-300 col-span-1">
               <div className="absolute right-0 top-0 translate-x-4 -translate-y-4 w-16 h-16 bg-emerald-500/5 rounded-full blur-xl pointer-events-none group-hover:bg-emerald-500/10 transition-all duration-300" />
 
               <div className="flex items-center justify-between mb-2">
@@ -523,7 +523,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
         <div className="lg:col-span-7 xl:col-span-8">
 
           {/* 3. CORE TABLE CONTAINER */}
-          <div className="bg-gradient-to-b from-white/[0.03] to-white/[0.005] backdrop-blur-2xl border border-white/[0.08] rounded-3xl overflow-hidden shadow-[0_24px_50px_rgba(0,0,0,0.55)]">
+          <div className="liquid-glass-strong rounded-3xl overflow-hidden">
 
             {/* Filter controls */}
             <div className="p-4 border-b border-white/[0.06] bg-black/10 flex justify-start items-center">
@@ -918,7 +918,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
           }}
           role="presentation"
         >
-          <div className="bg-[#0a0d15] border border-white/[0.08] rounded-[28px] w-full max-w-md max-h-[calc(100dvh-2rem)] overflow-y-auto shadow-2xl relative animate-scaleUp" role="dialog" aria-modal="true" aria-label={editingExpense ? "Edit transaction" : "New transaction"}>
+          <div className="liquid-glass-strong rounded-[28px] w-full max-w-md max-h-[calc(100dvh-2rem)] overflow-y-auto relative animate-scaleUp" role="dialog" aria-modal="true" aria-label={editingExpense ? "Edit transaction" : "New transaction"}>
 
             {/* Modal header */}
             <div className="px-6 py-5 border-b border-white/[0.06] flex items-center justify-between bg-black/30">

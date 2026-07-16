@@ -57,7 +57,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
       </div>
 
       {/* CORE PARAMS CARD */}
-      <div className="bg-white/[0.015] backdrop-blur-xl border border-white/[0.06] rounded-3xl p-5 shadow-[0_8px_32px_0_rgba(0,0,0,0.2)]">
+      <div className="liquid-glass rounded-3xl p-5">
         <h3 className="text-xs font-bold text-white/95 uppercase tracking-wider flex items-center gap-2 pb-3.5 border-b border-white/[0.06] mb-4">
           <Sliders size={14} className="text-emerald-400" />
           Baseline Parameters
@@ -74,7 +74,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                 step="0.01"
                 value={baselineIncome}
                 onChange={(e) => setBaselineIncome(e.target.value)}
-                className="w-full bg-black/25 border border-white/[0.08] focus:border-emerald-500/50 rounded-xl px-3 py-2.5 text-xs text-white font-mono outline-none transition"
+                className="liquid-input w-full border focus:border-emerald-500/50 rounded-xl px-3 py-2.5 text-xs text-white font-mono outline-none transition"
               />
             </div>
 
@@ -86,7 +86,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                 step="0.01"
                 value={baselineBalance}
                 onChange={(e) => setBaselineBalance(e.target.value)}
-                className="w-full bg-black/25 border border-white/[0.08] focus:border-emerald-500/50 rounded-xl px-3 py-2.5 text-xs text-white font-mono outline-none transition"
+                className="liquid-input w-full border focus:border-emerald-500/50 rounded-xl px-3 py-2.5 text-xs text-white font-mono outline-none transition"
               />
             </div>
           </div>
@@ -114,7 +114,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
       </div>
 
       {/* DANGEROUS ZONE - Minimal design */}
-      <div className="bg-white/[0.015] backdrop-blur-xl border border-white/[0.06] rounded-3xl p-5 shadow-[0_8px_32px_0_rgba(0,0,0,0.2)] space-y-4">
+      <div className="liquid-glass rounded-3xl p-5 space-y-4">
         <h3 className="text-xs font-bold text-rose-400/90 uppercase tracking-wider flex items-center gap-2 pb-3.5 border-b border-white/[0.06]">
           <AlertOctagon size={14} />
           Reset Data
