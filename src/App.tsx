@@ -12,7 +12,8 @@ import {
   Settings,
   RefreshCw,
   WifiOff,
-  LineChart
+  LineChart,
+  Database
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 
@@ -35,6 +36,7 @@ export default function App() {
   const [data, setData] = useState<FinanceData | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [syncStatus, setSyncStatus] = useState<'synced' | 'syncing' | 'offline'>('syncing');
+  const [storagePersistent, setStoragePersistent] = useState<boolean | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const saveQueueRef = useRef<Promise<void>>(Promise.resolve());
 
@@ -102,6 +104,7 @@ export default function App() {
         throw new Error(message);
       }
       const json = await res.json() as FinanceData;
+      setStoragePersistent(res.headers.get("X-Storage-Persistent") !== "false");
       setData(json);
       setSyncStatus('synced');
       setErrorMsg(null);
@@ -171,6 +174,7 @@ export default function App() {
           body: JSON.stringify(updated)
         });
         if (!res.ok) throw new Error("Unable to save changes");
+        setStoragePersistent(res.headers.get("X-Storage-Persistent") !== "false");
         setSyncStatus('synced');
         setErrorMsg(null);
       })
@@ -354,6 +358,7 @@ export default function App() {
       });
       if (!res.ok) throw new Error("Unable to restore the demo data");
       const json = await res.json();
+      setStoragePersistent(res.headers.get("X-Storage-Persistent") !== "false");
       setData(json.data);
       setSyncStatus('synced');
       setSelectedMonthStr("2026-08"); // Focus August after reset
@@ -466,6 +471,13 @@ export default function App() {
         </div>
       )}
 
+      {storagePersistent === false && !errorMsg && (
+        <div className="relative z-50 bg-amber-400/90 backdrop-blur-md text-amber-950 font-semibold px-4 py-2 text-center text-xs shadow-lg flex items-center justify-center gap-2">
+          <Database size={14} />
+          Development storage is temporary. Configure MySQL or PostgreSQL to keep data after a restart.
+        </div>
+      )}
+
       {/* TOP DESKTOP HEADER */}
       <header className="telegram-app-header relative z-40 bg-white/[0.01] backdrop-blur-xl border-b border-white/[0.06] px-4 py-3 md:px-6">
         <div className="max-w-7xl mx-auto flex items-center justify-between">
@@ -482,7 +494,7 @@ export default function App() {
               {syncStatus === 'synced' && (
                 <>
                   <span className="w-1.5 h-1.5 bg-emerald-400 rounded-full shadow-[0_0_8px_#34d399]" />
-                  <span className="text-white/60 font-medium">Saved</span>
+                  <span className="text-white/60 font-medium">{storagePersistent === false ? "Saved temporarily" : "Saved"}</span>
                 </>
               )}
               {syncStatus === 'syncing' && (

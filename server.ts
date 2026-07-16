@@ -4,7 +4,13 @@ import path from "path";
 import { createServer as createViteServer } from "vite";
 import { FinanceData } from "./src/types";
 import { resolveRequestIdentity } from "./server/auth";
-import { checkStorage, initStorage, readFinanceData, writeFinanceData } from "./server/storage";
+import {
+  checkStorage,
+  getStorageStatus,
+  initStorage,
+  readFinanceData,
+  writeFinanceData,
+} from "./server/storage";
 
 const app = express();
 const PORT = Number(process.env.PORT) || 3000;
@@ -47,10 +53,16 @@ const isFinanceData = (value: unknown): value is FinanceData => {
   );
 };
 
+const attachStorageHeaders = (res: express.Response) => {
+  const storage = getStorageStatus();
+  res.setHeader("X-Storage-Provider", storage.provider);
+  res.setHeader("X-Storage-Persistent", String(storage.persistent));
+};
+
 app.get("/api/health", async (_req, res) => {
   try {
     await checkStorage();
-    res.json({ status: "ok" });
+    res.json({ status: "ok", storage: getStorageStatus() });
   } catch (error) {
     console.error("Storage health check failed:", error);
     res.status(503).json({ status: "unavailable" });
@@ -63,6 +75,7 @@ app.get("/api/data", async (req, res) => {
 
   try {
     const data = await readFinanceData(identity.userKey);
+    attachStorageHeaders(res);
     res.json(data);
   } catch (error) {
     console.error("Failed to read finance data:", error);
@@ -77,6 +90,7 @@ app.post("/api/data/sync", async (req, res) => {
 
   try {
     await writeFinanceData(identity.userKey, req.body);
+    attachStorageHeaders(res);
     res.json({ success: true, data: req.body });
   } catch (error) {
     console.error("Failed to persist finance data:", error);
