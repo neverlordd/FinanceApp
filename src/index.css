@@ -157,6 +157,10 @@ body {
   padding-top: max(0.75rem, env(safe-area-inset-top), var(--tg-content-safe-area-inset-top, 0px));
 }
 
+.telegram-mini-app .telegram-app-header {
+  padding-top: max(3.25rem, env(safe-area-inset-top), var(--tg-content-safe-area-inset-top, 0px));
+}
+
 .telegram-bottom-nav {
   height: calc(3.5rem + max(env(safe-area-inset-bottom), var(--tg-content-safe-area-inset-bottom, 0px)));
   padding-bottom: max(env(safe-area-inset-bottom), var(--tg-content-safe-area-inset-bottom, 0px));
