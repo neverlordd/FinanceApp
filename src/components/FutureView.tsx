@@ -99,7 +99,7 @@ export const FutureView: React.FC<FutureViewProps> = ({
         </div>
 
         {/* Dynamic Bento Block Display */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-start">
           {calculatedMonths.map((month) => {
             const isSelected = month.monthStr === selectedMonthStr;
             const netPositive = month.net >= 0;

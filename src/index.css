@@ -35,6 +35,7 @@ body {
   padding-left: max(env(safe-area-inset-left), var(--tg-safe-area-inset-left, 0px));
   padding-right: max(env(safe-area-inset-right), var(--tg-safe-area-inset-right, 0px));
   isolation: isolate;
+  scroll-padding-bottom: 6rem;
   background:
     radial-gradient(circle at 8% 3%, rgba(64, 145, 255, 0.18), transparent 29rem),
     radial-gradient(circle at 92% 18%, rgba(126, 87, 255, 0.14), transparent 31rem),
@@ -164,6 +165,21 @@ body {
     env(safe-area-inset-top),
     var(--tg-safe-area-inset-top, 0px),
     var(--tg-content-safe-area-inset-top, 0px)
+  );
+}
+
+.telegram-mini-app .app-modal-overlay {
+  padding-top: max(
+    1rem,
+    env(safe-area-inset-top),
+    var(--tg-safe-area-inset-top, 0px),
+    var(--tg-content-safe-area-inset-top, 0px)
+  );
+  padding-bottom: max(
+    1rem,
+    env(safe-area-inset-bottom),
+    var(--tg-safe-area-inset-bottom, 0px),
+    var(--tg-content-safe-area-inset-bottom, 0px)
   );
 }
 
@@ -332,6 +348,12 @@ select:focus-visible {
     min-height: 2.65rem;
   }
 
+  .app-content input,
+  .app-content select {
+    min-height: 2.85rem;
+    font-size: 0.8125rem;
+  }
+
   .app-content button[title] {
     min-width: 2.65rem;
   }
@@ -359,6 +381,12 @@ select:focus-visible {
   .mobile-primary-action {
     min-height: 2.85rem !important;
     font-size: 0.75rem;
+  }
+}
+
+@media (max-width: 359px) {
+  .app-brand-name {
+    display: none;
   }
 }
 

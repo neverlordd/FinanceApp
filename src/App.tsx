@@ -489,7 +489,7 @@ export default function App() {
           {/* Logo */}
           <div className="flex items-center gap-2.5">
             <img src={`${import.meta.env.BASE_URL}logo.png`} className="w-9 h-9 object-contain rounded-xl ring-1 ring-white/15 shadow-[0_8px_24px_rgba(16,185,129,0.18)]" alt="Logo" referrerPolicy="no-referrer" />
-            <span className="text-xs font-black tracking-widest text-white/95 uppercase font-sans">Finance Tracker</span>
+            <span className="app-brand-name text-xs font-black tracking-widest text-white/95 uppercase font-sans">Finance Tracker</span>
           </div>
 
           {/* Sync status & Manual refresh button */}
@@ -638,8 +638,8 @@ export default function App() {
             activeTab === "budget" ? "text-emerald-400" : "text-slate-400 hover:text-slate-200"
           }`}
         >
-          <Wallet size={18} />
-          <span className="text-[9px] font-medium mt-1">Budget</span>
+          <Wallet size={19} />
+          <span className="text-[10px] font-semibold mt-1">Budget</span>
         </button>
 
         <button
@@ -649,8 +649,8 @@ export default function App() {
             activeTab === "projections" ? "text-emerald-400" : "text-slate-400 hover:text-slate-200"
           }`}
         >
-          <Calendar size={18} />
-          <span className="text-[9px] font-medium mt-1">Plans</span>
+          <Calendar size={19} />
+          <span className="text-[10px] font-semibold mt-1">Plans</span>
         </button>
 
         <button
@@ -660,8 +660,8 @@ export default function App() {
             activeTab === "settings" ? "text-emerald-400" : "text-slate-400 hover:text-slate-200"
           }`}
         >
-          <Settings size={18} />
-          <span className="text-[9px] font-medium mt-1">Settings</span>
+          <Settings size={19} />
+          <span className="text-[10px] font-semibold mt-1">Settings</span>
         </button>
       </nav>
 

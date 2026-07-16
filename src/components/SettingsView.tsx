@@ -50,14 +50,14 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
   };
 
   return (
-    <div className="space-y-6 max-w-2xl">
+    <div className="space-y-5 md:space-y-6 max-w-2xl">
       {/* TITLE */}
       <div>
         <h2 className="text-xl font-black text-white tracking-tight uppercase">Settings</h2>
       </div>
 
       {/* CORE PARAMS CARD */}
-      <div className="liquid-glass rounded-3xl p-5">
+      <div className="liquid-glass rounded-3xl p-5 md:p-6">
         <h3 className="text-xs font-bold text-white/95 uppercase tracking-wider flex items-center gap-2 pb-3.5 border-b border-white/[0.06] mb-4">
           <Sliders size={14} className="text-emerald-400" />
           Baseline Parameters
@@ -114,7 +114,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
       </div>
 
       {/* DANGEROUS ZONE - Minimal design */}
-      <div className="liquid-glass rounded-3xl p-5 space-y-4">
+      <div className="liquid-glass rounded-3xl p-5 md:p-6 space-y-4">
         <h3 className="text-xs font-bold text-rose-400/90 uppercase tracking-wider flex items-center gap-2 pb-3.5 border-b border-white/[0.06]">
           <AlertOctagon size={14} />
           Reset Data
