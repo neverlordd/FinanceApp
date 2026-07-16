@@ -47,7 +47,7 @@ A `Dockerfile` is also included. The server must be available over HTTPS and con
 
 ### GitHub Pages
 
-GitHub Pages is supported as a static, browser-only edition. The included workflow builds Vite with the `/FinanceApp/` base path and deploys the generated `dist` artifact. In this edition, changes are saved in the current browser's local storage because GitHub Pages cannot run the Express API or connect directly to the database. Data does not sync between browsers or devices.
+GitHub Pages is supported as a static edition. The included workflow builds Vite with the `/FinanceApp/` base path and deploys the generated `dist` artifact. Inside Telegram, the app uses Telegram CloudStorage and synchronizes data across Telegram clients logged into the same account. Existing browser-local data is migrated automatically on the first cloud-enabled launch. Outside Telegram, GitHub Pages falls back to storage on the current device because no verified Telegram identity is available.
 
 In **Settings → Pages → Build and deployment**, select **GitHub Actions** as the source. Pushes to `main` then build and publish automatically.
 

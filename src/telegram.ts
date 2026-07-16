@@ -10,6 +10,25 @@ type TelegramWebApp = {
   expand: () => void;
   setHeaderColor: (color: string) => void;
   setBackgroundColor: (color: string) => void;
+  CloudStorage?: {
+    setItem: (
+      key: string,
+      value: string,
+      callback?: (error: string | null, stored?: boolean) => void,
+    ) => void;
+    getItem: (
+      key: string,
+      callback: (error: string | null, value?: string) => void,
+    ) => void;
+    getItems: (
+      keys: string[],
+      callback: (error: string | null, values?: Record<string, string>) => void,
+    ) => void;
+    removeItems: (
+      keys: string[],
+      callback?: (error: string | null, removed?: boolean) => void,
+    ) => void;
+  };
 };
 
 declare global {

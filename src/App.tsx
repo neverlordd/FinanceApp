@@ -499,7 +499,13 @@ export default function App() {
                 <>
                   <span className="w-1.5 h-1.5 bg-emerald-400 rounded-full shadow-[0_0_8px_#34d399]" />
                   <span className="text-white/60 font-medium">
-                    {storagePersistent === false ? "Saved temporarily" : storageProvider === "browser" ? "Saved on device" : "Saved"}
+                    {storagePersistent === false
+                      ? "Saved temporarily"
+                      : storageProvider === "telegram-cloud"
+                        ? "Synced to Telegram"
+                        : storageProvider === "browser"
+                          ? "Saved on device"
+                          : "Saved"}
                   </span>
                 </>
               )}
