@@ -1,5 +1,6 @@
 type TelegramWebApp = {
   initData: string;
+  platform?: string;
   initDataUnsafe?: {
     user?: {
       id?: number;
@@ -49,7 +50,9 @@ export const initTelegramMiniApp = () => {
   const webApp = window.Telegram?.WebApp;
   if (!webApp) return;
 
-  document.documentElement.classList.add("telegram-mini-app");
+  if (webApp.platform !== "unknown") {
+    document.documentElement.classList.add("telegram-mini-app");
+  }
   webApp.setHeaderColor("#06080d");
   webApp.setBackgroundColor("#06080d");
   webApp.setBottomBarColor?.("#06080d");

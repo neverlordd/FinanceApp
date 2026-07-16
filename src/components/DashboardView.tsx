@@ -526,23 +526,26 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
           <div className="liquid-glass-strong rounded-3xl overflow-hidden">
 
             {/* Filter controls */}
-            <div className="p-4 border-b border-white/[0.06] bg-black/10 flex justify-start items-center">
+            <div className="p-3.5 border-b border-white/[0.06] bg-black/10 space-y-3">
 
               {/* Segmented Filter Tab */}
-              <div className="flex bg-slate-950 p-1 rounded-2xl border border-white/[0.04] w-full md:w-auto">
+              <div className="transaction-tabs flex bg-slate-950/80 p-1 border border-white/[0.06] w-full" role="tablist" aria-label="Transaction filter">
                 <button
                   onClick={() => setFilterType("all")}
-                  className={`px-3.5 py-1.5 text-[11px] font-semibold rounded-xl transition-all duration-150 flex-1 md:flex-none cursor-pointer text-center ${
+                  aria-pressed={filterType === "all"}
+                  className={`transaction-tab min-w-0 px-2.5 py-2 text-[11px] font-semibold transition-all duration-150 flex-1 cursor-pointer text-center ${
                     filterType === "all"
                       ? "bg-white/[0.06] text-white shadow"
                       : "text-white/40 hover:text-white"
                   }`}
                 >
-                  All Transactions
+                  <span className="sm:hidden">All</span>
+                  <span className="hidden sm:inline">All Transactions</span>
                 </button>
                 <button
                   onClick={() => setFilterType("expense")}
-                  className={`px-3.5 py-1.5 text-[11px] font-semibold rounded-xl transition-all duration-150 flex-1 md:flex-none cursor-pointer text-center flex items-center justify-center gap-1 ${
+                  aria-pressed={filterType === "expense"}
+                  className={`transaction-tab min-w-0 px-2.5 py-2 text-[11px] font-semibold transition-all duration-150 flex-1 cursor-pointer text-center flex items-center justify-center gap-1.5 ${
                     filterType === "expense"
                       ? "bg-rose-500/10 text-rose-300 border border-rose-500/20"
                       : "text-white/40 hover:text-white"
@@ -553,7 +556,8 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                 </button>
                 <button
                   onClick={() => setFilterType("income")}
-                  className={`px-3.5 py-1.5 text-[11px] font-semibold rounded-xl transition-all duration-150 flex-1 md:flex-none cursor-pointer text-center flex items-center justify-center gap-1 ${
+                  aria-pressed={filterType === "income"}
+                  className={`transaction-tab min-w-0 px-2.5 py-2 text-[11px] font-semibold transition-all duration-150 flex-1 cursor-pointer text-center flex items-center justify-center gap-1.5 ${
                     filterType === "income"
                       ? "bg-emerald-500/10 text-emerald-300 border border-emerald-500/20"
                       : "text-white/40 hover:text-white"
@@ -561,6 +565,25 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                 >
                   <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full" />
                   Income
+                </button>
+              </div>
+
+              {/* Add transaction controls */}
+              <div className="grid grid-cols-2 gap-2">
+                <button
+                  onClick={() => handleOpenAddForm("expense")}
+                  className="flex min-w-0 items-center justify-center gap-1.5 px-3 py-2.5 bg-rose-500/10 hover:bg-rose-500/15 border border-rose-500/20 hover:border-rose-500/30 text-rose-300 hover:text-rose-200 text-[11px] font-bold tracking-wide transition-all duration-200 cursor-pointer active:scale-95"
+                >
+                  <Plus size={13} strokeWidth={2.5} />
+                  <span className="truncate">Add Expense</span>
+                </button>
+
+                <button
+                  onClick={() => handleOpenAddForm("income")}
+                  className="flex min-w-0 items-center justify-center gap-1.5 px-3 py-2.5 bg-emerald-500/10 hover:bg-emerald-500/15 border border-emerald-500/20 hover:border-emerald-500/30 text-emerald-300 hover:text-emerald-200 text-[11px] font-bold tracking-wide transition-all duration-200 cursor-pointer active:scale-95"
+                >
+                  <Plus size={13} strokeWidth={2.5} />
+                  <span className="truncate">Add Income</span>
                 </button>
               </div>
             </div>
@@ -574,7 +597,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                   </div>
                   <p className="text-xs text-white/40 font-bold tracking-wide">No transactions yet</p>
                   <p className="text-[10px] text-white/20 mt-1 max-w-[200px] mx-auto">
-                    Add income or expenses using the buttons below
+                    Add income or expenses using the buttons above
                   </p>
                 </div>
               ) : (
@@ -889,22 +912,6 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
               )}
             </div>
 
-            {/* ADD ROW CONTROLLER */}
-            <div className="p-3 border-t border-white/[0.06] bg-black/20 flex flex-col sm:flex-row gap-2 justify-center items-center">
-              <button
-                onClick={() => handleOpenAddForm("expense")}
-                className="w-full sm:w-auto flex items-center justify-center gap-1.5 px-4 py-2 bg-rose-500/10 hover:bg-rose-500/15 border border-rose-500/20 hover:border-rose-500/30 text-rose-300 hover:text-rose-200 rounded-2xl text-[11px] font-bold tracking-wide transition-all duration-200 cursor-pointer active:scale-95"
-              >
-                <Plus size={13} strokeWidth={2.5} /> Add Expense
-              </button>
-
-              <button
-                onClick={() => handleOpenAddForm("income")}
-                className="w-full sm:w-auto flex items-center justify-center gap-1.5 px-4 py-2 bg-emerald-500/10 hover:bg-emerald-500/15 border border-emerald-500/20 hover:border-emerald-500/30 text-emerald-300 hover:text-emerald-200 rounded-2xl text-[11px] font-bold tracking-wide transition-all duration-200 cursor-pointer active:scale-95"
-              >
-                <Plus size={13} strokeWidth={2.5} /> Add Income
-              </button>
-            </div>
           </div>
         </div>
       </div>
