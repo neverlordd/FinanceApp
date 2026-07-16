@@ -1,0 +1,19 @@
+{
+  "baselineMonthlyIncome": 3000,
+  "baselineBalance": 1500,
+  "monthlyBudgets": [
+    {
+      "monthStr": "2026-08",
+      "income": 3000,
+      "expenses": [
+        { "id": "aug-1", "category": "Работа", "description": "Вычет за аванс (2-я часть)", "amount": 675, "completed": true },
+        { "id": "aug-2", "category": "Долги", "description": "Долг жене", "amount": 150, "completed": true },
+        { "id": "aug-3", "category": "Долги", "description": "Долг Амалю (остаток)", "amount": 175, "completed": true },
+        { "id": "aug-4", "category": "Долги", "description": "Долг Андрею", "amount": 250, "completed": true },
+        { "id": "aug-5", "category": "Долги", "description": "Малому", "amount": 50, "completed": false },
+        { "id": "aug-6", "category": "Жильё", "description": "Аренда квартиры", "amount": 270, "completed": false },
+        { "id": "aug-7", "category": "Жизнь", "description": "Еда и быт (Тбилиси)", "amount": 189.39, "completed": false }
+      ]
+    }
+  ]
+}
