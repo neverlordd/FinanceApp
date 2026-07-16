@@ -1,0 +1,134 @@
+import { FinanceData, ExpenseItem, MonthlyBudget } from "../types";
+
+export interface CalculatedMonth {
+  monthStr: string; // YYYY-MM
+  monthName: string; // "АВГУСТ"
+  monthYear: string; // "2026"
+  isCurrent: boolean;
+  isPast: boolean;
+  isFuture: boolean;
+  baseIncome: number; // baseline monthly income or customized base income
+  income: number; // TOTAL income = baseIncome + any items of type === 'income'
+  expenses: ExpenseItem[];
+  totalExpenses: number; // USD (only items of type !== 'income')
+  completedExpenses: number; // USD (only items of type !== 'income' and completed)
+  net: number; // USD (income - totalExpenses)
+  startingSavings: number; // cumulative from prior months + baselineBalance
+  endingSavings: number; // startingSavings + net
+}
+
+export const getRussianMonthName = (monthStr: string): { name: string; year: string } => {
+  const [year, month] = monthStr.split('-');
+  const months = [
+    "ЯНВАРЬ", "ФЕВРАЛЬ", "МАРТ", "АПРЕЛЬ", "МАЙ", "ИЮНЬ",
+    "ИЮЛЬ", "АВГУСТ", "СЕНТЯБРЬ", "ОКТЯБРЬ", "НОЯБРЬ", "ДЕКАБРЬ"
+  ];
+  const index = parseInt(month, 10) - 1;
+  return {
+    name: months[index] || "МЕСЯЦ",
+    year
+  };
+};
+
+// Generates an array of months starting from a given month (or 2 months before current) up to 12 months ahead
+export const getMonthSequence = (data: FinanceData, currentMonthStr: string): string[] => {
+  if (data.activeMonths && data.activeMonths.length > 0) {
+    return [...data.activeMonths].sort();
+  }
+
+  const monthsSet = new Set<string>();
+  
+  // 1. Add months that have custom budgets
+  data.monthlyBudgets.forEach(b => {
+    monthsSet.add(b.monthStr);
+  });
+  
+  // 2. Add current month
+  monthsSet.add(currentMonthStr);
+  
+  // 3. Add 2 months in the past
+  let [currY, currM] = currentMonthStr.split('-').map(Number);
+  for (let i = 1; i <= 2; i++) {
+    let m = currM - i;
+    let y = currY;
+    if (m <= 0) {
+      m += 12;
+      y -= 1;
+    }
+    monthsSet.add(`${y}-${String(m).padStart(2, '0')}`);
+  }
+  
+  // 4. Add 12 months in the future
+  for (let i = 1; i <= 12; i++) {
+    let m = currM + i;
+    let y = currY;
+    while (m > 12) {
+      m -= 12;
+      y += 1;
+    }
+    monthsSet.add(`${y}-${String(m).padStart(2, '0')}`);
+  }
+  
+  // Sort chronologically and filter out months after August 2026
+  return Array.from(monthsSet).sort().filter(m => m <= "2026-08");
+};
+
+export const calculateMonthlyStats = (data: FinanceData, currentMonthStr: string): CalculatedMonth[] => {
+  const monthSequence = getMonthSequence(data, currentMonthStr);
+  const calculated: CalculatedMonth[] = [];
+  
+  let runningSavings = data.baselineBalance || 0;
+  
+  for (let i = 0; i < monthSequence.length; i++) {
+    const monthStr = monthSequence[i];
+    const isCurrent = monthStr === currentMonthStr;
+    const isPast = monthStr < currentMonthStr;
+    const isFuture = monthStr > currentMonthStr;
+    
+    // Find custom budget for this month
+    const budget = data.monthlyBudgets.find(b => b.monthStr === monthStr);
+    
+    // Base monthly income defaults to baseline if not customized
+    const baseIncome = budget && typeof budget.income === 'number' ? budget.income : data.baselineMonthlyIncome;
+    
+    // All items (both incomes and expenses) for this month
+    const expenses = budget ? budget.expenses : [];
+    
+    // Additional items of type === 'income'
+    const itemizedIncomes = expenses.filter(e => e.type === "income").reduce((sum, e) => sum + e.amount, 0);
+    
+    // Total income = base monthly income + itemized additional incomes
+    const income = baseIncome + itemizedIncomes;
+    
+    // Total expenses = only items that are NOT of type === 'income' (i.e. 'expense' or undefined)
+    const totalExpenses = expenses.filter(e => e.type !== "income").reduce((sum, e) => sum + e.amount, 0);
+    const completedExpenses = expenses.filter(e => e.type !== "income" && e.completed).reduce((sum, e) => sum + e.amount, 0);
+    
+    const net = income - totalExpenses;
+    const startingSavings = runningSavings;
+    const endingSavings = startingSavings + net;
+    
+    const { name, year } = getRussianMonthName(monthStr);
+    
+    calculated.push({
+      monthStr,
+      monthName: name,
+      monthYear: year,
+      isCurrent,
+      isPast,
+      isFuture,
+      baseIncome,
+      income,
+      expenses,
+      totalExpenses,
+      completedExpenses,
+      net,
+      startingSavings,
+      endingSavings
+    });
+    
+    runningSavings = endingSavings;
+  }
+  
+  return calculated;
+};

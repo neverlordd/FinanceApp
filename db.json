@@ -1,0 +1,75 @@
+{
+  "baselineMonthlyIncome": 2000,
+  "baselineBalance": 0,
+  "monthlyBudgets": [
+    {
+      "monthStr": "2026-08",
+      "income": 2000,
+      "expenses": [
+        {
+          "id": "aug-1",
+          "category": "Salary",
+          "description": "Salary advance deduction (2nd part)",
+          "amount": 675,
+          "completed": true
+        },
+        {
+          "id": "aug-2",
+          "category": "Debt",
+          "description": "Debt to Wife",
+          "amount": 150,
+          "completed": false
+        },
+        {
+          "id": "aug-3",
+          "category": "Debt",
+          "description": "Debt to Amal (remaining)",
+          "amount": 175,
+          "completed": false
+        },
+        {
+          "id": "aug-4",
+          "category": "Debt",
+          "description": "Debt to Andrey",
+          "amount": 250,
+          "completed": false
+        },
+        {
+          "id": "aug-5",
+          "category": "Debt",
+          "description": "Small debt",
+          "amount": 50,
+          "completed": false
+        },
+        {
+          "id": "aug-6",
+          "category": "Housing",
+          "description": "Apartment Rent",
+          "amount": 270,
+          "completed": false
+        },
+        {
+          "id": "aug-7",
+          "category": "Living",
+          "description": "Food & Groceries (Tbilisi)",
+          "amount": 189.39,
+          "completed": false
+        },
+        {
+          "category": "Freelance",
+          "description": "Thesis consulting",
+          "amount": 333.33,
+          "completed": false,
+          "type": "income",
+          "originalAmount": 30000,
+          "originalCurrency": "RUB",
+          "originalRate": 90,
+          "id": "m594k9mtf"
+        }
+      ]
+    }
+  ],
+  "activeMonths": [
+    "2026-08"
+  ]
+}
