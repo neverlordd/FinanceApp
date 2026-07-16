@@ -6,8 +6,14 @@ type TelegramWebApp = {
     };
   };
   colorScheme: "light" | "dark";
+  isFullscreen?: boolean;
   ready: () => void;
   expand: () => void;
+  isVersionAtLeast?: (version: string) => boolean;
+  requestFullscreen?: () => void;
+  disableVerticalSwipes?: () => void;
+  setBottomBarColor?: (color: string) => void;
+  onEvent?: (eventType: string, eventHandler: () => void) => void;
   setHeaderColor: (color: string) => void;
   setBackgroundColor: (color: string) => void;
   CloudStorage?: {
@@ -45,8 +51,27 @@ export const initTelegramMiniApp = () => {
 
   webApp.setHeaderColor("#06080d");
   webApp.setBackgroundColor("#06080d");
-  webApp.expand();
+  webApp.setBottomBarColor?.("#06080d");
+  webApp.disableVerticalSwipes?.();
   webApp.ready();
+
+  const enterFullscreen = () => {
+    webApp.expand();
+    if (
+      webApp.isVersionAtLeast?.("8.0") &&
+      webApp.requestFullscreen &&
+      !webApp.isFullscreen
+    ) {
+      try {
+        webApp.requestFullscreen();
+      } catch {
+        webApp.expand();
+      }
+    }
+  };
+
+  enterFullscreen();
+  webApp.onEvent?.("activated", enterFullscreen);
 };
 
 export {};

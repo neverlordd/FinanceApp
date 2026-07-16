@@ -67,6 +67,7 @@ body {
 .liquid-glass,
 .liquid-glass-strong {
   position: relative;
+  border-radius: 2rem;
   background:
     linear-gradient(145deg, rgba(255, 255, 255, 0.095), rgba(255, 255, 255, 0.025) 45%, rgba(255, 255, 255, 0.045)),
     rgba(7, 11, 19, 0.52);
@@ -80,6 +81,7 @@ body {
 }
 
 .liquid-glass-strong {
+  border-radius: 2.25rem;
   background:
     linear-gradient(145deg, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0.035) 46%, rgba(255, 255, 255, 0.055)),
     rgba(6, 9, 16, 0.7);
@@ -109,13 +111,14 @@ body {
 
 .liquid-sidebar {
   padding: 0.45rem;
-  border-radius: 1.45rem;
+  border-radius: 1.8rem;
   height: fit-content;
   position: sticky;
   top: 5.8rem;
 }
 
 .liquid-input {
+  border-radius: 1.15rem !important;
   background: rgba(0, 0, 0, 0.24) !important;
   border-color: rgba(255, 255, 255, 0.11) !important;
   box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.28), 0 1px 0 rgba(255, 255, 255, 0.035);
@@ -125,6 +128,10 @@ body {
 
 .telegram-app-shell button {
   transform: translateZ(0);
+}
+
+.telegram-app-shell button:not(.rounded-full) {
+  border-radius: 1.05rem;
 }
 
 .telegram-app-shell button:hover {
@@ -138,6 +145,7 @@ body {
 .telegram-app-shell input,
 .telegram-app-shell select {
   -webkit-appearance: none;
+  border-radius: 1.05rem;
 }
 
 @keyframes ambient-drift {
@@ -162,7 +170,7 @@ body {
   height: 4rem;
   padding: 0.35rem;
   border: 1px solid rgba(255, 255, 255, 0.14);
-  border-radius: 1.65rem;
+  border-radius: 2rem;
   background: rgba(10, 14, 23, 0.72);
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.14), 0 18px 45px rgba(0, 0, 0, 0.48);
   -webkit-backdrop-filter: blur(28px) saturate(170%);
