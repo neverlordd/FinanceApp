@@ -113,7 +113,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
 
   // Expense Form fields
   const [transactionType, setTransactionType] = useState<"expense" | "income">("expense");
-  const [category, setCategory] = useState("Жизнь");
+  const [category, setCategory] = useState("Living");
   const [customCategory, setCustomCategory] = useState("");
   const [isCustomCategory, setIsCustomCategory] = useState(false);
   const [description, setDescription] = useState("");
@@ -212,25 +212,33 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
   }, [currency, editingExpense]);
 
   // Calculate equivalent USD for preview
-  const parsedRawAmount = parseFloat(rawAmount) || 0;
-  const parsedRate = parseFloat(exchangeRate) || 1.0;
-  const calculatedUsdAmount = currency === "USD" ? parsedRawAmount : Number((parsedRawAmount / parsedRate).toFixed(2));
+  const parsedRawAmount = parseFloat(rawAmount);
+  const parsedRate = parseFloat(exchangeRate);
+  const calculatedUsdAmount = currency === "USD"
+    ? (Number.isFinite(parsedRawAmount) ? parsedRawAmount : 0)
+    : Number.isFinite(parsedRawAmount) && Number.isFinite(parsedRate) && parsedRate > 0
+      ? Number((parsedRawAmount / parsedRate).toFixed(2))
+      : 0;
 
   // Handle Form Submit
   const handleFormSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!description.trim()) {
-      triggerAlert("Validation Error", "Please enter a description");
+      triggerAlert("Check your entries", "Add a transaction description.");
       return;
     }
-    if (parsedRawAmount <= 0) {
-      triggerAlert("Validation Error", "Amount must be greater than zero");
+    if (!Number.isFinite(parsedRawAmount) || parsedRawAmount <= 0) {
+      triggerAlert("Check your entries", "The amount must be greater than zero.");
+      return;
+    }
+    if (currency !== "USD" && (!Number.isFinite(parsedRate) || parsedRate <= 0)) {
+      triggerAlert("Check your entries", "The exchange rate must be greater than zero.");
       return;
     }
 
     const finalCategory = isCustomCategory ? customCategory.trim() : category;
     if (!finalCategory) {
-      triggerAlert("Validation Error", "Please select or specify a category");
+      triggerAlert("Check your entries", "Select or enter a category.");
       return;
     }
 
@@ -270,7 +278,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
       onUpdateMonthIncome(selectedMonthStr, val);
       setIsEditingIncome(false);
     } else {
-      triggerAlert("Invalid Amount", "Please enter a valid positive number for income.");
+      triggerAlert("Invalid amount", "Enter an income amount of zero or greater.");
     }
   };
 
@@ -280,7 +288,21 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
     if (currentMonth) {
       setIncomeInput(currentMonth.baseIncome !== undefined ? currentMonth.baseIncome.toString() : currentMonth.income.toString());
     }
-  }, [selectedMonthStr, currentMonth]);
+  }, [selectedMonthStr, currentMonth?.monthStr, currentMonth?.baseIncome]);
+
+  useEffect(() => {
+    if (!isFormOpen) return;
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setIsFormOpen(false);
+    };
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    window.addEventListener("keydown", closeOnEscape);
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      window.removeEventListener("keydown", closeOnEscape);
+    };
+  }, [isFormOpen]);
 
   if (!currentMonth) return null;
 
@@ -356,7 +378,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                 <button
                   onClick={onAddMonth}
                   className="snap-start shrink-0 px-3 py-2 rounded-2xl text-[11px] font-bold bg-emerald-500/10 text-emerald-400 hover:text-emerald-300 hover:bg-emerald-500/20 border border-emerald-500/20 hover:border-emerald-500/30 transition-all duration-300 flex items-center gap-1 cursor-pointer active:scale-95"
-                  title="Add Next Month"
+                  title="Add next month"
                 >
                   <Plus size={11} strokeWidth={3} />
                   <span>Add</span>
@@ -386,6 +408,12 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                       type="number"
                       value={incomeInput}
                       onChange={(e) => setIncomeInput(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") handleSaveIncome();
+                        if (e.key === "Escape") setIsEditingIncome(false);
+                      }}
+                      min="0"
+                      step="0.01"
                       className="w-full bg-slate-950/80 border border-white/[0.15] text-xs font-mono rounded-lg px-2 py-1 text-white outline-none focus:border-emerald-500/50 transition-all"
                       autoFocus
                     />
@@ -445,7 +473,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
               <div className="absolute right-0 top-0 translate-x-4 -translate-y-4 w-16 h-16 bg-emerald-500/5 rounded-full blur-xl pointer-events-none group-hover:bg-emerald-500/10 transition-all duration-300" />
 
               <div className="flex items-center justify-between mb-2">
-                <span className="text-[9px] font-bold text-white/40 tracking-wider uppercase">Spent</span>
+                <span className="text-[9px] font-bold text-white/40 tracking-wider uppercase">Paid</span>
                 <div className="p-1.5 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 rounded-lg">
                   <CheckCircle2 size={12} strokeWidth={2.2} />
                 </div>
@@ -459,7 +487,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                 {/* Embedded Progress Bar */}
                 <div className="space-y-1">
                   <div className="flex items-center justify-between text-[7px] text-white/30 font-medium">
-                    <span>Paid {expensePercentage}%</span>
+                    <span>Completed {expensePercentage}%</span>
                   </div>
                   <div className="w-full h-1 bg-white/[0.05] rounded-full overflow-hidden">
                     <div
@@ -544,9 +572,9 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                   <div className="w-10 h-10 rounded-2xl bg-white/[0.02] border border-white/[0.04] flex items-center justify-center mx-auto mb-2 text-white/30">
                     <HelpCircle size={18} />
                   </div>
-                  <p className="text-xs text-white/40 font-bold tracking-wide">No transactions found</p>
+                  <p className="text-xs text-white/40 font-bold tracking-wide">No transactions yet</p>
                   <p className="text-[10px] text-white/20 mt-1 max-w-[200px] mx-auto">
-                    Add income or expense items for this month using the buttons below
+                    Add income or expenses using the buttons below
                   </p>
                 </div>
               ) : (
@@ -570,7 +598,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                                 <button
                                   onClick={(e) => handleToggleStatus(item.id, e)}
                                   className="p-1 -m-1 cursor-pointer outline-none shrink-0"
-                                  title={item.completed ? "Mark as unpaid" : "Mark as paid"}
+                                  title={item.completed ? "Mark as not received" : "Mark as received"}
                                 >
                                   <div
                                     className={`w-5 h-5 rounded-md border flex items-center justify-center transition-all duration-200 ${
@@ -633,8 +661,8 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                                     onClick={(e) => {
                                       e.stopPropagation();
                                       triggerConfirm(
-                                        "Delete Item",
-                                        `Are you sure you want to delete "${item.description || item.category}"?`,
+                                        "Delete transaction",
+                                        `Delete “${item.description || item.category}”?`,
                                         () => onDeleteExpense(selectedMonthStr, item.id)
                                       );
                                     }}
@@ -656,13 +684,13 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                   {filterType !== "income" && (
                     <div>
                       <div className="bg-white/[0.02] border-b border-white/[0.04] py-1.5 px-4 flex items-center justify-between">
-                        <span className="text-[9px] uppercase font-black tracking-widest text-rose-400 font-mono">To Spend</span>
+                        <span className="text-[9px] uppercase font-black tracking-widest text-rose-400 font-mono">To Pay</span>
                         <span className="text-[9px] font-mono font-bold text-white/30">-{formatCurrency(toSpendItems.reduce((sum, item) => sum + item.amount, 0))}</span>
                       </div>
                       <div className="divide-y divide-white/[0.02]">
                         {toSpendItems.length === 0 ? (
                           <div className="py-4 text-center text-[10px] text-white/30 italic">
-                            No expenses remaining to spend
+                            No unpaid expenses
                           </div>
                         ) : (
                           toSpendItems.map((item) => {
@@ -735,8 +763,8 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                                       onClick={(e) => {
                                         e.stopPropagation();
                                         triggerConfirm(
-                                          "Delete Item",
-                                          `Are you sure you want to delete "${item.description || item.category}"?`,
+                                          "Delete transaction",
+                                          `Delete “${item.description || item.category}”?`,
                                           () => onDeleteExpense(selectedMonthStr, item.id)
                                         );
                                       }}
@@ -759,13 +787,13 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                   {filterType !== "income" && (
                     <div>
                       <div className="bg-white/[0.02] border-b border-white/[0.04] py-1.5 px-4 flex items-center justify-between">
-                        <span className="text-[9px] uppercase font-black tracking-widest text-emerald-400 font-mono">Spent / Paid</span>
+                        <span className="text-[9px] uppercase font-black tracking-widest text-emerald-400 font-mono">Paid</span>
                         <span className="text-[9px] font-mono font-bold text-white/30">-{formatCurrency(spentItems.reduce((sum, item) => sum + item.amount, 0))}</span>
                       </div>
                       <div className="divide-y divide-white/[0.02]">
                         {spentItems.length === 0 ? (
                           <div className="py-4 text-center text-[10px] text-white/30 italic">
-                            No expenses paid yet
+                            No paid expenses yet
                           </div>
                         ) : (
                           spentItems.map((item) => {
@@ -838,8 +866,8 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                                       onClick={(e) => {
                                         e.stopPropagation();
                                         triggerConfirm(
-                                          "Delete Item",
-                                          `Are you sure you want to delete "${item.description || item.category}"?`,
+                                          "Delete transaction",
+                                          `Delete “${item.description || item.category}”?`,
                                           () => onDeleteExpense(selectedMonthStr, item.id)
                                         );
                                       }}
@@ -883,8 +911,14 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
 
       {/* 4. MODAL/POPUP DIALOG (Extremely gorgeous, glassmorphic card with sliding type controllers and editable converter) */}
       {isFormOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-md p-4 animate-fadeIn">
-          <div className="bg-[#0a0d15] border border-white/[0.08] rounded-[32px] w-full max-w-md overflow-hidden shadow-2xl relative animate-scaleUp">
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-md p-4 animate-fadeIn"
+          onMouseDown={(event) => {
+            if (event.target === event.currentTarget) setIsFormOpen(false);
+          }}
+          role="presentation"
+        >
+          <div className="bg-[#0a0d15] border border-white/[0.08] rounded-[28px] w-full max-w-md max-h-[calc(100dvh-2rem)] overflow-y-auto shadow-2xl relative animate-scaleUp" role="dialog" aria-modal="true" aria-label={editingExpense ? "Edit transaction" : "New transaction"}>
 
             {/* Modal header */}
             <div className="px-6 py-5 border-b border-white/[0.06] flex items-center justify-between bg-black/30">
@@ -908,7 +942,11 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                 <div className="grid grid-cols-2 bg-black/40 p-1 rounded-2xl border border-white/[0.04]">
                   <button
                     type="button"
-                    onClick={() => setTransactionType("expense")}
+                    onClick={() => {
+                      setTransactionType("expense");
+                      setCategory("Living");
+                      setIsCustomCategory(false);
+                    }}
                     className={`py-2 text-xs font-bold rounded-xl transition-all duration-200 cursor-pointer text-center ${
                       transactionType === "expense"
                         ? "bg-rose-500/15 text-rose-300 border border-rose-500/20"
@@ -919,7 +957,11 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                   </button>
                   <button
                     type="button"
-                    onClick={() => setTransactionType("income")}
+                    onClick={() => {
+                      setTransactionType("income");
+                      setCategory("Salary");
+                      setIsCustomCategory(false);
+                    }}
                     className={`py-2 text-xs font-bold rounded-xl transition-all duration-200 cursor-pointer text-center ${
                       transactionType === "income"
                         ? "bg-emerald-500/15 text-emerald-300 border border-emerald-500/20"
@@ -940,7 +982,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                     <input
                       type="text"
                       required
-                      placeholder="e.g. Subscriptions"
+                      placeholder="For example, Education"
                       value={customCategory}
                       onChange={(e) => setCustomCategory(e.target.value)}
                       className="flex-1 bg-black/40 border border-white/[0.08] focus:border-emerald-500/50 rounded-2xl px-4 py-2.5 text-xs text-white outline-none focus:ring-0 transition-all"
@@ -982,7 +1024,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                 <input
                   type="text"
                   required
-                  placeholder={transactionType === "income" ? "e.g. Project bonus" : "e.g. Apartment Rent"}
+                  placeholder={transactionType === "income" ? "For example, Project bonus" : "For example, Apartment rent"}
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
                   className="w-full bg-black/40 border border-white/[0.08] focus:border-emerald-500/50 rounded-2xl px-4 py-3 text-xs text-white outline-none focus:ring-0 transition-all placeholder-white/20"
@@ -993,7 +1035,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
               <div className="bg-white/[0.01] border border-white/[0.06] p-4 rounded-2xl space-y-3">
                 <div className="flex items-center justify-between">
                   <span className="text-[10px] font-bold text-white/40 uppercase tracking-widest font-mono flex items-center gap-1">
-                    Multi-Currency Converter
+                    Currency Converter
                   </span>
                   <span className="text-[10px] font-mono text-emerald-400 font-bold">⇒ USD ($)</span>
                 </div>
@@ -1007,11 +1049,11 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                       onChange={(e) => setCurrency(e.target.value)}
                       className="w-full bg-black/45 border border-white/[0.08] rounded-xl px-2.5 py-2 text-xs text-white outline-none cursor-pointer font-mono focus:ring-0"
                     >
-                      <option value="USD" className="bg-slate-950 text-slate-100">USD ($) — Dollar</option>
-                      <option value="RUB" className="bg-slate-950 text-slate-100">RUB (₽) — Ruble</option>
-                      <option value="GEL" className="bg-slate-950 text-slate-100">GEL (₾) — Lari</option>
+                      <option value="USD" className="bg-slate-950 text-slate-100">USD ($) — US Dollar</option>
+                      <option value="RUB" className="bg-slate-950 text-slate-100">RUB (₽) — Russian Ruble</option>
+                      <option value="GEL" className="bg-slate-950 text-slate-100">GEL (₾) — Georgian Lari</option>
                       <option value="EUR" className="bg-slate-950 text-slate-100">EUR (€) — Euro</option>
-                      <option value="KZT" className="bg-slate-950 text-slate-100">KZT (₸) — Tenge</option>
+                      <option value="KZT" className="bg-slate-950 text-slate-100">KZT (₸) — Kazakhstani Tenge</option>
                     </select>
                   </div>
 
@@ -1021,6 +1063,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                     <input
                       type="number"
                       step="any"
+                      min="0.01"
                       required
                       placeholder="0.00"
                       value={rawAmount}
@@ -1042,6 +1085,8 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                       <input
                         type="number"
                         step="any"
+                        min="0.000001"
+                        required
                         value={exchangeRate}
                         onChange={(e) => setExchangeRate(e.target.value)}
                         className="w-full bg-transparent text-right text-xs font-mono text-white outline-none"
@@ -1072,7 +1117,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                   className="w-4.5 h-4.5 rounded-lg border-white/10 bg-black/40 text-emerald-500 focus:ring-0 focus:ring-offset-0 cursor-pointer transition-all"
                 />
                 <label htmlFor="modal-completed" className="text-xs text-white/60 select-none cursor-pointer hover:text-white/80 transition-colors">
-                  {transactionType === "income" ? "Mark as received" : "Mark as paid"}
+                  {transactionType === "income" ? "Income received" : "Expense paid"}
                 </label>
               </div>
 

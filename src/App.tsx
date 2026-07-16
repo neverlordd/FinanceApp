@@ -1,10 +1,11 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { FinanceData, ExpenseItem } from "./types";
 import { calculateMonthlyStats, CalculatedMonth } from "./utils/calculations";
 import { DashboardView } from "./components/DashboardView";
 import { FutureView } from "./components/FutureView";
 import { SettingsView } from "./components/SettingsView";
 import { ConfirmModal } from "./components/ConfirmModal";
+import { apiFetch } from "./api";
 import {
   Wallet,
   Calendar,
@@ -16,7 +17,7 @@ import {
 import { motion, AnimatePresence } from "motion/react";
 
 // Generate ID helper
-const generateId = () => Math.random().toString(36).substring(2, 11);
+const generateId = () => crypto.randomUUID();
 
 // Get current month YYYY-MM helper
 const getCurrentMonthStr = () => {
@@ -35,6 +36,7 @@ export default function App() {
   const [loading, setLoading] = useState<boolean>(true);
   const [syncStatus, setSyncStatus] = useState<'synced' | 'syncing' | 'offline'>('syncing');
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const saveQueueRef = useRef<Promise<void>>(Promise.resolve());
 
   // Month Selection State
   const [selectedMonthStr, setSelectedMonthStr] = useState<string>(getCurrentMonthStr());
@@ -56,7 +58,7 @@ export default function App() {
     onConfirm: () => {}
   });
 
-  const triggerConfirm = (title: string, message: string, onConfirm: () => void, confirmText = "Да", cancelText = "Отмена") => {
+  const triggerConfirm = (title: string, message: string, onConfirm: () => void, confirmText = "Yes", cancelText = "Cancel") => {
     setModalConfig({
       isOpen: true,
       title,
@@ -74,7 +76,7 @@ export default function App() {
     });
   };
 
-  const triggerAlert = (title: string, message: string, confirmText = "ОК") => {
+  const triggerAlert = (title: string, message: string, confirmText = "OK") => {
     setModalConfig({
       isOpen: true,
       title,
@@ -92,8 +94,13 @@ export default function App() {
     if (showLoader) setLoading(true);
     setSyncStatus('syncing');
     try {
-      const res = await fetch("/api/data");
-      if (!res.ok) throw new Error("Не удалось загрузить данные с сервера");
+      const res = await apiFetch("/api/data");
+      if (!res.ok) {
+        const message = res.status === 401
+          ? "Telegram authorization could not be verified. Close and reopen the Mini App."
+          : "Unable to load data from the server.";
+        throw new Error(message);
+      }
       const json = await res.json() as FinanceData;
       setData(json);
       setSyncStatus('synced');
@@ -101,7 +108,7 @@ export default function App() {
     } catch (err: any) {
       console.error("Sync error:", err);
       setSyncStatus('offline');
-      setErrorMsg("Связь с сервером потеряна. Проверьте подключение.");
+      setErrorMsg(err instanceof Error ? err.message : "The server connection was lost. Check your connection.");
     } finally {
       if (showLoader) setLoading(false);
     }
@@ -112,15 +119,7 @@ export default function App() {
     fetchData(true);
   }, []);
 
-  // Background active polling sync every 8 seconds
-  useEffect(() => {
-    const timer = setInterval(() => {
-      fetchData(false);
-    }, 8000);
-    return () => clearInterval(timer);
-  }, []);
-
-  if (loading || !data) {
+  if (loading) {
     return (
       <div className="min-h-screen bg-[#06080d] flex flex-col items-center justify-center font-sans">
         <div className="space-y-4 text-center">
@@ -128,7 +127,27 @@ export default function App() {
             <div className="absolute inset-0 rounded-full border-4 border-emerald-500/20" />
             <div className="absolute inset-0 rounded-full border-4 border-emerald-500 border-t-transparent animate-spin" />
           </div>
-          <p className="text-xs font-semibold text-slate-400 tracking-wide uppercase">Синхронизация данных...</p>
+          <p className="text-xs font-semibold text-slate-400 tracking-wide uppercase">Syncing data...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!data) {
+    return (
+      <div className="min-h-screen bg-[#06080d] flex items-center justify-center p-6 font-sans text-center">
+        <div className="w-full max-w-sm rounded-3xl border border-white/[0.08] bg-white/[0.025] p-7 shadow-2xl">
+          <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-2xl border border-rose-500/20 bg-rose-500/10 text-rose-400">
+            <WifiOff size={21} />
+          </div>
+          <h1 className="text-sm font-black uppercase tracking-wider text-white">Unable to open your budget</h1>
+          <p className="mt-2 text-xs leading-relaxed text-white/50">{errorMsg}</p>
+          <button
+            onClick={() => fetchData(true)}
+            className="mt-5 inline-flex items-center gap-2 rounded-2xl bg-emerald-500 px-5 py-2.5 text-xs font-black text-slate-950 transition hover:bg-emerald-400"
+          >
+            <RefreshCw size={13} /> Try again
+          </button>
         </div>
       </div>
     );
@@ -139,22 +158,27 @@ export default function App() {
   const calculatedMonths = calculateMonthlyStats(data, currentMonth);
 
   // Helper to save state back to DB via Sync API
-  const saveStateToDB = async (updated: FinanceData) => {
+  const saveStateToDB = (updated: FinanceData) => {
     setData(updated);
     setSyncStatus('syncing');
-    try {
-      const res = await fetch("/api/data/sync", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(updated)
+
+    saveQueueRef.current = saveQueueRef.current
+      .catch(() => undefined)
+      .then(async () => {
+        const res = await apiFetch("/api/data/sync", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(updated)
+        });
+        if (!res.ok) throw new Error("Unable to save changes");
+        setSyncStatus('synced');
+        setErrorMsg(null);
+      })
+      .catch((err) => {
+        console.error("Save error:", err);
+        setSyncStatus('offline');
+        setErrorMsg("Changes were not saved. Check your connection and try again.");
       });
-      if (!res.ok) throw new Error("Не удалось синхронизировать изменения");
-      setSyncStatus('synced');
-    } catch (err) {
-      console.error("Save error:", err);
-      setSyncStatus('offline');
-      triggerAlert("Сбой сохранения", "Ошибка при сохранении на сервере. Изменения сохранятся при восстановлении связи.");
-    }
   };
 
   // Helper to ensure a monthly budget object exists for editing
@@ -272,50 +296,50 @@ export default function App() {
             expenses: [
               {
                 id: "aug-1",
-                category: "Работа",
-                description: "Вычет за аванс (2-я часть)",
+                category: "Work",
+                description: "Salary advance deduction (part 2)",
                 amount: 675,
                 completed: true
               },
               {
                 id: "aug-2",
-                category: "Долги",
-                description: "Долг Жене",
+                category: "Debt",
+                description: "Debt to spouse",
                 amount: 150,
                 completed: true
               },
               {
                 id: "aug-3",
-                category: "Долги",
-                description: "Долг Амалю (остаток)",
+                category: "Debt",
+                description: "Debt to Amal (remaining)",
                 amount: 175,
                 completed: true
               },
               {
                 id: "aug-4",
-                category: "Долги",
-                description: "Долг Андрею",
+                category: "Debt",
+                description: "Debt to Andrey",
                 amount: 250,
                 completed: true
               },
               {
                 id: "aug-5",
-                category: "Долги",
-                description: "Малому",
+                category: "Debt",
+                description: "Small debt",
                 amount: 50,
                 completed: false
               },
               {
                 id: "aug-6",
-                category: "Жилье",
-                description: "Аренда квартиры",
+                category: "Housing",
+                description: "Apartment rent",
                 amount: 270,
                 completed: false
               },
               {
                 id: "aug-7",
-                category: "Жизнь",
-                description: "Еда и быт (Тбилиси)",
+                category: "Living",
+                description: "Food and household expenses (Tbilisi)",
                 amount: 189.39,
                 completed: false
               }
@@ -323,17 +347,18 @@ export default function App() {
           }
         ]
       };
-      const res = await fetch("/api/data/sync", {
+      const res = await apiFetch("/api/data/sync", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(demoData)
       });
+      if (!res.ok) throw new Error("Unable to restore the demo data");
       const json = await res.json();
       setData(json.data);
       setSyncStatus('synced');
       setSelectedMonthStr("2026-08"); // Focus August after reset
     } catch (e) {
-      triggerAlert("Сбой сброса", "Не удалось восстановить демонстрационный пример.");
+      triggerAlert("Reset failed", "The demo data could not be restored.");
     } finally {
       setLoading(false);
     }
@@ -342,11 +367,12 @@ export default function App() {
   // Clear All
   const handleClearAll = () => {
     const updated: FinanceData = {
-      baselineMonthlyIncome: 2000,
+      baselineMonthlyIncome: 0,
       baselineBalance: 0,
       monthlyBudgets: []
     };
     saveStateToDB(updated);
+    setSelectedMonthStr(getCurrentMonthStr());
   };
 
   // Add a new month chronologically (sequential after the latest month)
@@ -365,7 +391,7 @@ export default function App() {
 
     const existingActive = data.activeMonths || currentSequence;
     if (existingActive.includes(nextMonthStr)) {
-      triggerAlert("Ошибка добавления", "Этот месяц уже добавлен!");
+      triggerAlert("Unable to add month", "This month has already been added.");
       return;
     }
 
@@ -395,13 +421,13 @@ export default function App() {
     const existingActive = data.activeMonths || currentSequence;
 
     if (existingActive.length <= 1) {
-      triggerAlert("Deletion Impossible", "Cannot delete the only remaining month!");
+      triggerAlert("Unable to delete month", "At least one month must remain in the list.");
       return;
     }
 
     triggerConfirm(
-      "Delete Month",
-      `Are you sure you want to delete month ${monthStr} and all of its associated transactions?`,
+      "Delete month",
+      `Delete ${monthStr} and all of its transactions?`,
       () => {
         const newActiveMonths = existingActive.filter(m => m !== monthStr);
         const budgets = data.monthlyBudgets.filter(b => b.monthStr !== monthStr);
@@ -425,7 +451,7 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen bg-[#06080d] text-slate-100 font-sans flex flex-col pb-20 md:pb-0 relative overflow-hidden">
+    <div className="telegram-app-shell min-h-screen bg-[#06080d] text-slate-100 font-sans flex flex-col pb-20 md:pb-0 relative overflow-hidden">
 
       {/* iOS Liquid Glass Background Glowing Orbs */}
       <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] rounded-full bg-emerald-500/8 blur-[130px] pointer-events-none" />
@@ -441,7 +467,7 @@ export default function App() {
       )}
 
       {/* TOP DESKTOP HEADER */}
-      <header className="relative z-40 bg-white/[0.01] backdrop-blur-xl border-b border-white/[0.06] px-4 py-3 md:px-6">
+      <header className="telegram-app-header relative z-40 bg-white/[0.01] backdrop-blur-xl border-b border-white/[0.06] px-4 py-3 md:px-6">
         <div className="max-w-7xl mx-auto flex items-center justify-between">
 
           {/* Logo */}
@@ -456,13 +482,13 @@ export default function App() {
               {syncStatus === 'synced' && (
                 <>
                   <span className="w-1.5 h-1.5 bg-emerald-400 rounded-full shadow-[0_0_8px_#34d399]" />
-                  <span className="text-white/60 font-medium">Synced</span>
+                  <span className="text-white/60 font-medium">Saved</span>
                 </>
               )}
               {syncStatus === 'syncing' && (
                 <>
                   <RefreshCw size={10} className="text-emerald-400 animate-spin" />
-                  <span className="text-emerald-400 font-medium">Syncing...</span>
+                  <span className="text-emerald-400 font-medium">Saving...</span>
                 </>
               )}
               {syncStatus === 'offline' && (
@@ -476,7 +502,7 @@ export default function App() {
             <button
               onClick={() => fetchData(false)}
               className="p-1.5 bg-white/[0.02] hover:bg-white/[0.06] border border-white/[0.08] rounded-xl text-white/60 hover:text-white transition duration-200 cursor-pointer"
-              title="Sync now"
+              title="Refresh data"
             >
               <RefreshCw size={12} className={syncStatus === 'syncing' ? 'animate-spin' : ''} />
             </button>
@@ -561,9 +587,6 @@ export default function App() {
                   onNavigateToEditor={() => setActiveTab("budget")}
                   onAddMonth={handleAddMonth}
                   onDeleteMonth={handleDeleteMonth}
-                  onUpdateMonthIncome={handleUpdateMonthIncome}
-                  triggerConfirm={triggerConfirm}
-                  triggerAlert={triggerAlert}
                 />
               )}
 
@@ -583,7 +606,7 @@ export default function App() {
       </div>
 
       {/* MOBILE BOTTOM NAVIGATION BAR */}
-      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-[#070b13]/95 backdrop-blur-md border-t border-slate-800/80 px-2 py-1 shadow-2xl flex items-center justify-around h-14">
+      <nav className="telegram-bottom-nav md:hidden fixed bottom-0 left-0 right-0 z-40 bg-[#070b13]/95 backdrop-blur-md border-t border-slate-800/80 px-2 py-1 shadow-2xl flex items-center justify-around h-14">
         <button
           onClick={() => setActiveTab("budget")}
           className={`flex flex-col items-center justify-center flex-1 h-full rounded-xl transition cursor-pointer ${
@@ -601,7 +624,7 @@ export default function App() {
           }`}
         >
           <Calendar size={18} />
-          <span className="text-[9px] font-medium mt-1">Stats</span>
+          <span className="text-[9px] font-medium mt-1">Plans</span>
         </button>
 
         <button

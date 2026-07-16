@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { AlertCircle, Check, X } from "lucide-react";
 
@@ -23,6 +23,25 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = ({
   onCancel,
   isAlert = false,
 }) => {
+  const confirmButtonRef = useRef<HTMLButtonElement>(null);
+  const closeModal = isAlert ? onConfirm : onCancel;
+  const isDestructive = /delete|clear|reset|remove/i.test(`${title} ${confirmText}`);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") closeModal?.();
+    };
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    window.addEventListener("keydown", handleKeyDown);
+    confirmButtonRef.current?.focus();
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [isOpen, closeModal]);
+
   return (
     <AnimatePresence>
       {isOpen && (
@@ -32,7 +51,7 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = ({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            onClick={isAlert ? onConfirm : onCancel}
+            onClick={closeModal}
             className="absolute inset-0 bg-black/60 backdrop-blur-xl"
           />
 
@@ -42,7 +61,11 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = ({
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 15 }}
             transition={{ type: "spring", duration: 0.4, bounce: 0.15 }}
-            className="relative w-full max-w-md bg-slate-950/45 backdrop-blur-2xl border border-white/[0.1] p-6 rounded-3xl shadow-[0_32px_64px_rgba(0,0,0,0.6)] overflow-hidden"
+            className="relative w-full max-w-md bg-slate-950/90 backdrop-blur-2xl border border-white/[0.1] p-6 rounded-3xl shadow-[0_32px_64px_rgba(0,0,0,0.6)] overflow-hidden"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="confirm-modal-title"
+            aria-describedby="confirm-modal-message"
           >
             {/* Glowing effect inside the card */}
             <div className="absolute top-0 left-1/4 right-1/4 h-[1px] bg-gradient-to-r from-transparent via-emerald-500/40 to-transparent" />
@@ -53,10 +76,10 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = ({
                 <AlertCircle size={20} strokeWidth={2.2} />
               </div>
               <div className="space-y-1.5 flex-1 min-w-0">
-                <h3 className="text-sm font-black text-white/95 tracking-wider uppercase font-sans">
+                <h3 id="confirm-modal-title" className="text-sm font-black text-white/95 tracking-wider uppercase font-sans">
                   {title}
                 </h3>
-                <p className="text-xs text-white/60 leading-relaxed font-sans">
+                <p id="confirm-modal-message" className="text-xs text-white/60 leading-relaxed font-sans">
                   {message}
                 </p>
               </div>
@@ -73,8 +96,9 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = ({
                 </button>
               )}
               <button
+                ref={confirmButtonRef}
                 onClick={onConfirm}
-                className="px-5 py-2.5 rounded-2xl bg-emerald-500 text-slate-950 hover:bg-emerald-400 text-xs font-black transition-all cursor-pointer active:scale-95 flex items-center gap-1.5 shadow-[0_4px_16px_rgba(16,185,129,0.3)]"
+                className={`px-5 py-2.5 rounded-2xl text-slate-950 text-xs font-black transition-all cursor-pointer active:scale-95 flex items-center gap-1.5 ${isDestructive ? "bg-rose-500 hover:bg-rose-400 shadow-[0_4px_16px_rgba(244,63,94,0.25)]" : "bg-emerald-500 hover:bg-emerald-400 shadow-[0_4px_16px_rgba(16,185,129,0.3)]"}`}
               >
                 <Check size={13} strokeWidth={3} />
                 <span>{confirmText}</span>

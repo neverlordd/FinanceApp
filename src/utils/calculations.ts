@@ -1,8 +1,8 @@
-import { FinanceData, ExpenseItem, MonthlyBudget } from "../types";
+import { FinanceData, ExpenseItem } from "../types";
 
 export interface CalculatedMonth {
   monthStr: string; // YYYY-MM
-  monthName: string; // "АВГУСТ"
+  monthName: string; // "AUGUST"
   monthYear: string; // "2026"
   isCurrent: boolean;
   isPast: boolean;
@@ -17,15 +17,15 @@ export interface CalculatedMonth {
   endingSavings: number; // startingSavings + net
 }
 
-export const getRussianMonthName = (monthStr: string): { name: string; year: string } => {
+export const getEnglishMonthName = (monthStr: string): { name: string; year: string } => {
   const [year, month] = monthStr.split('-');
   const months = [
-    "ЯНВАРЬ", "ФЕВРАЛЬ", "МАРТ", "АПРЕЛЬ", "МАЙ", "ИЮНЬ",
-    "ИЮЛЬ", "АВГУСТ", "СЕНТЯБРЬ", "ОКТЯБРЬ", "НОЯБРЬ", "ДЕКАБРЬ"
+    "JANUARY", "FEBRUARY", "MARCH", "APRIL", "MAY", "JUNE",
+    "JULY", "AUGUST", "SEPTEMBER", "OCTOBER", "NOVEMBER", "DECEMBER"
   ];
   const index = parseInt(month, 10) - 1;
   return {
-    name: months[index] || "МЕСЯЦ",
+    name: months[index] || "MONTH",
     year
   };
 };
@@ -107,7 +107,7 @@ export const calculateMonthlyStats = (data: FinanceData, currentMonthStr: string
     const startingSavings = runningSavings;
     const endingSavings = startingSavings + net;
 
-    const { name, year } = getRussianMonthName(monthStr);
+    const { name, year } = getEnglishMonthName(monthStr);
 
     calculated.push({
       monthStr,

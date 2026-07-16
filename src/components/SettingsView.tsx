@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { FinanceData } from "../types";
 import {
   Sliders,
@@ -29,13 +29,18 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
   const [baselineBalance, setBaselineBalance] = useState<string>(data.baselineBalance.toString());
   const [isSaved, setIsSaved] = useState(false);
 
+  useEffect(() => {
+    setBaselineIncome(data.baselineMonthlyIncome.toString());
+    setBaselineBalance(data.baselineBalance.toString());
+  }, [data.baselineMonthlyIncome, data.baselineBalance]);
+
   const handleSave = (e: React.FormEvent) => {
     e.preventDefault();
     const parsedIncome = parseFloat(baselineIncome);
     const parsedBalance = parseFloat(baselineBalance);
 
-    if (isNaN(parsedIncome) || isNaN(parsedBalance)) {
-      triggerAlert("Validation Error", "Please enter valid numeric values.");
+    if (!Number.isFinite(parsedIncome) || parsedIncome < 0 || !Number.isFinite(parsedBalance)) {
+      triggerAlert("Check your entries", "Income must be zero or greater, and the balance must be a valid number.");
       return;
     }
 
@@ -61,10 +66,12 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
         <form onSubmit={handleSave} className="space-y-4">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-1.5">
-              <label className="text-[10px] font-bold text-white/40 uppercase tracking-wider">Baseline Monthly Income ($) *</label>
+              <label className="text-[10px] font-bold text-white/40 uppercase tracking-wider">Monthly Income ($) *</label>
               <input
                 type="number"
                 required
+                min="0"
+                step="0.01"
                 value={baselineIncome}
                 onChange={(e) => setBaselineIncome(e.target.value)}
                 className="w-full bg-black/25 border border-white/[0.08] focus:border-emerald-500/50 rounded-xl px-3 py-2.5 text-xs text-white font-mono outline-none transition"
@@ -72,10 +79,11 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
             </div>
 
             <div className="space-y-1.5">
-              <label className="text-[10px] font-bold text-white/40 uppercase tracking-wider">Starting Accumulated Savings ($) *</label>
+              <label className="text-[10px] font-bold text-white/40 uppercase tracking-wider">Starting Balance ($) *</label>
               <input
                 type="number"
                 required
+                step="0.01"
                 value={baselineBalance}
                 onChange={(e) => setBaselineBalance(e.target.value)}
                 className="w-full bg-black/25 border border-white/[0.08] focus:border-emerald-500/50 rounded-xl px-3 py-2.5 text-xs text-white font-mono outline-none transition"
@@ -86,7 +94,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
           <div className="flex items-center justify-between pt-2">
             <div className="flex items-center gap-1.5 text-[10px] text-white/30 font-medium font-mono">
               <Database size={11} className="text-emerald-400" />
-              <span>Database synced to cloud</span>
+              <span>Data is stored securely</span>
             </div>
 
             <button
@@ -98,7 +106,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                   <CheckCircle size={13} className="text-emerald-400" /> Saved
                 </>
               ) : (
-                "Save Parameters"
+                "Save"
               )}
             </button>
           </div>
@@ -109,18 +117,18 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
       <div className="bg-white/[0.015] backdrop-blur-xl border border-white/[0.06] rounded-3xl p-5 shadow-[0_8px_32px_0_rgba(0,0,0,0.2)] space-y-4">
         <h3 className="text-xs font-bold text-rose-400/90 uppercase tracking-wider flex items-center gap-2 pb-3.5 border-b border-white/[0.06]">
           <AlertOctagon size={14} />
-          Reset & Clear Data
+          Reset Data
         </h3>
 
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
           <div className="space-y-0.5">
-            <h4 className="font-semibold text-white/85">Restore Demo Template</h4>
+            <h4 className="font-semibold text-white/85">Demo Template</h4>
           </div>
           <button
             onClick={() => {
               triggerConfirm(
-                "Restore Demo Template",
-                "Are you sure you want to restore the demo template data? All of your current records will be overwritten.",
+                "Restore demo template",
+                "Your current records will be replaced with demo data. Continue?",
                 onResetToDemo
               );
             }}
@@ -132,19 +140,19 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
 
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs pt-3 border-t border-white/[0.06]">
           <div className="space-y-0.5">
-            <h4 className="font-semibold text-white/85">Clear Entire Database</h4>
+            <h4 className="font-semibold text-white/85">Clear All Data</h4>
           </div>
           <button
             onClick={() => {
               triggerConfirm(
-                "Reset Database",
-                "WARNING! Are you absolutely sure you want to completely clear the database? This action is irreversible.",
+                "Clear data",
+                "Delete all income, expenses, and baseline values? This action cannot be undone.",
                 onClearAll
               );
             }}
             className="px-3 py-1.5 bg-rose-500/10 hover:bg-rose-500 border border-rose-500/20 hover:border-transparent text-rose-400 hover:text-slate-950 font-bold rounded-xl transition cursor-pointer text-center shrink-0 flex items-center gap-1"
           >
-            <Trash2 size={12} /> Clear Database
+            <Trash2 size={12} /> Clear
           </button>
         </div>
       </div>

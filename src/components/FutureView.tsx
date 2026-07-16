@@ -1,19 +1,11 @@
-import React, { useState, useEffect } from "react";
+import React from "react";
 import { CalculatedMonth } from "../utils/calculations";
 import {
   Calendar,
-  ArrowUpRight,
-  TrendingUp,
-  TrendingDown,
   Wallet,
-  Coins,
   ArrowRight,
   Plus,
-  Trash2,
-  Edit3,
-  Check,
-  X,
-  CreditCard
+  Trash2
 } from "lucide-react";
 
 interface FutureViewProps {
@@ -23,9 +15,6 @@ interface FutureViewProps {
   onNavigateToEditor: () => void;
   onAddMonth?: () => void;
   onDeleteMonth?: (monthStr: string) => void;
-  onUpdateMonthIncome?: (monthStr: string, income: number) => void;
-  triggerConfirm?: (title: string, message: string, onConfirm: () => void) => void;
-  triggerAlert?: (title: string, message: string) => void;
 }
 
 export const FutureView: React.FC<FutureViewProps> = ({
@@ -34,28 +23,10 @@ export const FutureView: React.FC<FutureViewProps> = ({
   onSelectMonth,
   onNavigateToEditor,
   onAddMonth,
-  onDeleteMonth,
-  onUpdateMonthIncome,
-  triggerConfirm,
-  triggerAlert
+  onDeleteMonth
 }) => {
   // Find currently selected month stats for the executive summary at the top
   const selectedMonthObj = calculatedMonths.find(m => m.monthStr === selectedMonthStr) || calculatedMonths[calculatedMonths.length - 1];
-
-  // Inline income editing state
-  const [isEditingIncome, setIsEditingIncome] = useState(false);
-  const [incomeInput, setIncomeInput] = useState("");
-
-  useEffect(() => {
-    setIsEditingIncome(false);
-    if (selectedMonthObj) {
-      setIncomeInput(
-        selectedMonthObj.baseIncome !== undefined
-          ? selectedMonthObj.baseIncome.toString()
-          : selectedMonthObj.income.toString()
-      );
-    }
-  }, [selectedMonthStr, selectedMonthObj]);
 
   const formatCurrency = (val: number) => {
     return new Intl.NumberFormat('en-US', {
@@ -63,21 +34,6 @@ export const FutureView: React.FC<FutureViewProps> = ({
       currency: 'USD',
       maximumFractionDigits: 2
     }).format(val);
-  };
-
-  const handleSaveIncome = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    const val = parseFloat(incomeInput);
-    if (!isNaN(val) && val >= 0) {
-      if (onUpdateMonthIncome) {
-        onUpdateMonthIncome(selectedMonthStr, val);
-        setIsEditingIncome(false);
-      }
-    } else {
-      if (triggerAlert) {
-        triggerAlert("Invalid Amount", "Please enter a valid positive number for income.");
-      }
-    }
   };
 
   return (
@@ -99,21 +55,11 @@ export const FutureView: React.FC<FutureViewProps> = ({
           )}
           {calculatedMonths.length > 1 && onDeleteMonth && (
             <button
-              onClick={() => {
-                if (triggerConfirm) {
-                  triggerConfirm(
-                    "Delete Month",
-                    `Are you sure you want to delete month ${selectedMonthStr} and all of its associated transactions?`,
-                    () => onDeleteMonth(selectedMonthStr)
-                  );
-                } else {
-                  onDeleteMonth(selectedMonthStr);
-                }
-              }}
+              onClick={() => onDeleteMonth(selectedMonthStr)}
               className="text-xs font-bold text-rose-400 hover:text-rose-300 transition-all flex items-center gap-1.5 px-4 py-2 bg-rose-500/10 hover:bg-rose-500/20 rounded-xl border border-rose-500/20 hover:border-rose-500/30 cursor-pointer active:scale-95"
             >
               <Trash2 size={13} strokeWidth={2.5} />
-              <span>Delete This Month</span>
+              <span>Delete Month</span>
             </button>
           )}
         </div>
@@ -128,7 +74,7 @@ export const FutureView: React.FC<FutureViewProps> = ({
 
           <div>
             <div className="flex items-center justify-between mb-4">
-              <span className="text-[10px] font-bold text-white/40 tracking-wider uppercase">Cumulative Savings</span>
+              <span className="text-[10px] font-bold text-white/40 tracking-wider uppercase">End-of-Month Savings</span>
               <div className="p-2.5 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 rounded-xl">
                 <Wallet size={18} strokeWidth={2.2} />
               </div>
@@ -148,7 +94,7 @@ export const FutureView: React.FC<FutureViewProps> = ({
         <div className="flex items-center justify-between">
           <h3 className="text-xs font-bold text-white/50 uppercase tracking-wider flex items-center gap-1.5">
             <Calendar size={13} className="text-emerald-400" />
-            Monthly Cash Flow & Forecast
+            Cash Flow & Forecast
           </h3>
         </div>
 
@@ -201,18 +147,10 @@ export const FutureView: React.FC<FutureViewProps> = ({
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
-                              if (triggerConfirm) {
-                                triggerConfirm(
-                                  "Delete Month",
-                                  `Are you sure you want to delete month ${month.monthName} ${month.monthYear} and all of its associated transactions?`,
-                                  () => onDeleteMonth(month.monthStr)
-                                );
-                              } else {
-                                onDeleteMonth(month.monthStr);
-                              }
+                              onDeleteMonth(month.monthStr);
                             }}
                             className="p-1.5 rounded-lg bg-rose-500/5 hover:bg-rose-500/20 border border-rose-500/10 hover:border-rose-500/25 text-rose-400/80 hover:text-rose-400 transition-all cursor-pointer"
-                            title="Delete Month"
+                            title="Delete month"
                           >
                             <Trash2 size={11} />
                           </button>
@@ -224,7 +162,7 @@ export const FutureView: React.FC<FutureViewProps> = ({
                             onNavigateToEditor();
                           }}
                           className="p-1.5 rounded-lg border bg-white/[0.03] border-white/[0.05] hover:bg-white/[0.1] text-white/50 hover:text-white transition-all cursor-pointer"
-                          title="Open Budget Editor"
+                          title="Open monthly budget"
                         >
                           <ArrowRight size={11} strokeWidth={2.5} />
                         </button>
@@ -261,7 +199,7 @@ export const FutureView: React.FC<FutureViewProps> = ({
 
                       {/* Expenses row */}
                       <div className="flex items-center justify-between text-white/50">
-                        <span className="text-[10px] uppercase font-bold tracking-wider">Spend:</span>
+                        <span className="text-[10px] uppercase font-bold tracking-wider">Expenses:</span>
                         <span className="text-rose-400/90 font-bold">-{formatCurrency(month.totalExpenses)}</span>
                       </div>
 
@@ -289,18 +227,10 @@ export const FutureView: React.FC<FutureViewProps> = ({
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
-                              if (triggerConfirm) {
-                                triggerConfirm(
-                                  "Delete Month",
-                                  `Are you sure you want to delete month ${month.monthName} ${month.monthYear} and all of its associated transactions?`,
-                                  () => onDeleteMonth(month.monthStr)
-                                );
-                              } else {
-                                onDeleteMonth(month.monthStr);
-                              }
+                              onDeleteMonth(month.monthStr);
                             }}
                             className="p-2 rounded-xl bg-rose-500/5 hover:bg-rose-500/20 border border-rose-500/10 hover:border-rose-500/20 text-rose-400 transition-all cursor-pointer"
-                            title="Delete Month"
+                            title="Delete month"
                           >
                             <Trash2 size={12} />
                           </button>
@@ -312,7 +242,7 @@ export const FutureView: React.FC<FutureViewProps> = ({
                             onNavigateToEditor();
                           }}
                           className="p-2 rounded-xl border transition-all duration-150 cursor-pointer flex items-center justify-center shrink-0 bg-emerald-500 text-slate-950 border-transparent hover:bg-emerald-400"
-                          title="Open Budget Editor"
+                          title="Open monthly budget"
                         >
                           <ArrowRight size={12} strokeWidth={2.5} />
                         </button>
