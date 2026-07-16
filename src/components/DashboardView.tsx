@@ -572,24 +572,24 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
               <div className="grid grid-cols-2 gap-2">
                 <button
                   onClick={() => handleOpenAddForm("expense")}
-                  className="flex min-w-0 items-center justify-center gap-1.5 px-3 py-2.5 bg-rose-500/10 hover:bg-rose-500/15 border border-rose-500/20 hover:border-rose-500/30 text-rose-300 hover:text-rose-200 text-[11px] font-bold tracking-wide transition-all duration-200 cursor-pointer active:scale-95"
+                  className="mobile-primary-action flex min-w-0 items-center justify-center gap-2 px-3 py-3 bg-rose-500/10 hover:bg-rose-500/15 border border-rose-500/20 hover:border-rose-500/30 text-rose-300 hover:text-rose-200 text-xs font-bold tracking-wide transition-all duration-200 cursor-pointer active:scale-95"
                 >
-                  <Plus size={13} strokeWidth={2.5} />
+                  <Plus size={16} strokeWidth={2.5} />
                   <span className="truncate">Add Expense</span>
                 </button>
 
                 <button
                   onClick={() => handleOpenAddForm("income")}
-                  className="flex min-w-0 items-center justify-center gap-1.5 px-3 py-2.5 bg-emerald-500/10 hover:bg-emerald-500/15 border border-emerald-500/20 hover:border-emerald-500/30 text-emerald-300 hover:text-emerald-200 text-[11px] font-bold tracking-wide transition-all duration-200 cursor-pointer active:scale-95"
+                  className="mobile-primary-action flex min-w-0 items-center justify-center gap-2 px-3 py-3 bg-emerald-500/10 hover:bg-emerald-500/15 border border-emerald-500/20 hover:border-emerald-500/30 text-emerald-300 hover:text-emerald-200 text-xs font-bold tracking-wide transition-all duration-200 cursor-pointer active:scale-95"
                 >
-                  <Plus size={13} strokeWidth={2.5} />
+                  <Plus size={16} strokeWidth={2.5} />
                   <span className="truncate">Add Income</span>
                 </button>
               </div>
             </div>
 
             {/* The Core Transaction List (Highly polished, compact, and fully mobile responsive) */}
-            <div className="divide-y divide-white/[0.04] bg-slate-950/20 max-h-[500px] overflow-y-auto scrollbar-thin">
+            <div className="transaction-list divide-y divide-white/[0.04] bg-slate-950/20 max-h-[500px] overflow-y-auto scrollbar-thin">
               {filteredItems.length === 0 ? (
                 <div className="py-12 text-center px-4">
                   <div className="w-10 h-10 rounded-2xl bg-white/[0.02] border border-white/[0.04] flex items-center justify-center mx-auto mb-2 text-white/30">

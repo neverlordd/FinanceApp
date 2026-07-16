@@ -43,22 +43,22 @@ export const FutureView: React.FC<FutureViewProps> = ({
         <div>
           <h2 className="text-xl font-black text-white tracking-tight uppercase">Savings & Statistics</h2>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="grid grid-cols-2 sm:flex items-center gap-2 w-full sm:w-auto">
           {onAddMonth && (
             <button
               onClick={onAddMonth}
-              className="px-4 py-2 rounded-xl text-xs font-bold bg-emerald-500/10 text-emerald-400 hover:text-emerald-300 hover:bg-emerald-500/20 border border-emerald-500/20 hover:border-emerald-500/35 transition-all duration-300 flex items-center gap-1.5 cursor-pointer active:scale-95"
+              className="mobile-primary-action px-3 sm:px-4 py-2.5 text-xs font-bold bg-emerald-500/10 text-emerald-400 hover:text-emerald-300 hover:bg-emerald-500/20 border border-emerald-500/20 hover:border-emerald-500/35 transition-all duration-300 flex items-center justify-center gap-2 cursor-pointer active:scale-95"
             >
-              <Plus size={13} strokeWidth={3} />
+              <Plus size={16} strokeWidth={3} />
               <span>Add Month</span>
             </button>
           )}
           {calculatedMonths.length > 1 && onDeleteMonth && (
             <button
               onClick={() => onDeleteMonth(selectedMonthStr)}
-              className="text-xs font-bold text-rose-400 hover:text-rose-300 transition-all flex items-center gap-1.5 px-4 py-2 bg-rose-500/10 hover:bg-rose-500/20 rounded-xl border border-rose-500/20 hover:border-rose-500/30 cursor-pointer active:scale-95"
+              className="mobile-primary-action text-xs font-bold text-rose-400 hover:text-rose-300 transition-all flex items-center justify-center gap-2 px-3 sm:px-4 py-2.5 bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/20 hover:border-rose-500/30 cursor-pointer active:scale-95"
             >
-              <Trash2 size={13} strokeWidth={2.5} />
+              <Trash2 size={16} strokeWidth={2.5} />
               <span>Delete Month</span>
             </button>
           )}
@@ -149,7 +149,7 @@ export const FutureView: React.FC<FutureViewProps> = ({
                               e.stopPropagation();
                               onDeleteMonth(month.monthStr);
                             }}
-                            className="p-1.5 rounded-lg bg-rose-500/5 hover:bg-rose-500/20 border border-rose-500/10 hover:border-rose-500/25 text-rose-400/80 hover:text-rose-400 transition-all cursor-pointer"
+                            className="plan-icon-button bg-rose-500/5 hover:bg-rose-500/20 border border-rose-500/10 hover:border-rose-500/25 text-rose-400/80 hover:text-rose-400 transition-all cursor-pointer"
                             title="Delete month"
                           >
                             <Trash2 size={11} />
@@ -161,7 +161,7 @@ export const FutureView: React.FC<FutureViewProps> = ({
                             onSelectMonth(month.monthStr);
                             onNavigateToEditor();
                           }}
-                          className="p-1.5 rounded-lg border bg-white/[0.03] border-white/[0.05] hover:bg-white/[0.1] text-white/50 hover:text-white transition-all cursor-pointer"
+                          className="plan-icon-button border bg-white/[0.03] border-white/[0.05] hover:bg-white/[0.1] text-white/50 hover:text-white transition-all cursor-pointer"
                           title="Open monthly budget"
                         >
                           <ArrowRight size={11} strokeWidth={2.5} />
@@ -229,7 +229,7 @@ export const FutureView: React.FC<FutureViewProps> = ({
                               e.stopPropagation();
                               onDeleteMonth(month.monthStr);
                             }}
-                            className="p-2 rounded-xl bg-rose-500/5 hover:bg-rose-500/20 border border-rose-500/10 hover:border-rose-500/20 text-rose-400 transition-all cursor-pointer"
+                            className="plan-icon-button bg-rose-500/5 hover:bg-rose-500/20 border border-rose-500/10 hover:border-rose-500/20 text-rose-400 transition-all cursor-pointer"
                             title="Delete month"
                           >
                             <Trash2 size={12} />
@@ -241,7 +241,7 @@ export const FutureView: React.FC<FutureViewProps> = ({
                             onSelectMonth(month.monthStr);
                             onNavigateToEditor();
                           }}
-                          className="p-2 rounded-xl border transition-all duration-150 cursor-pointer flex items-center justify-center shrink-0 bg-emerald-500 text-slate-950 border-transparent hover:bg-emerald-400"
+                          className="plan-icon-button border transition-all duration-150 cursor-pointer bg-emerald-500 text-slate-950 border-transparent hover:bg-emerald-400"
                           title="Open monthly budget"
                         >
                           <ArrowRight size={12} strokeWidth={2.5} />
