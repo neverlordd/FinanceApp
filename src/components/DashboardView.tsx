@@ -379,7 +379,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                 <button
                   onClick={onAddMonth}
                   className="shrink-0 px-3 py-2 rounded-2xl text-[11px] font-bold bg-emerald-500/10 text-emerald-400 hover:text-emerald-300 hover:bg-emerald-500/20 border border-emerald-500/20 hover:border-emerald-500/30 transition-all duration-300 flex items-center justify-center gap-1 cursor-pointer active:scale-95"
-                  title="Add next month"
+                  aria-label="Add next month"
                 >
                   <Plus size={14} strokeWidth={3} />
                   <span className="hidden sm:inline">Add</span>
@@ -442,7 +442,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                     <button
                       onClick={() => setIsEditingIncome(true)}
                       className="p-0.5 text-white/30 hover:text-emerald-400 rounded transition duration-150 opacity-0 group-hover/edit:opacity-100 sm:opacity-100 cursor-pointer"
-                      title="Edit baseline income"
+                      aria-label="Edit baseline income"
                     >
                       <Edit3 size={11} />
                     </button>
@@ -598,9 +598,6 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                     <HelpCircle size={18} />
                   </div>
                   <p className="text-xs text-white/40 font-bold tracking-wide">No transactions yet</p>
-                  <p className="text-[10px] text-white/20 mt-1 max-w-[200px] mx-auto">
-                    Add income or expenses using the buttons above
-                  </p>
                 </div>
               ) : (
                 <>
@@ -622,8 +619,8 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                                 {/* Checkbox with custom padding for easy click */}
                                 <button
                                   onClick={(e) => handleToggleStatus(item.id, e)}
-                                  className="p-1 -m-1 cursor-pointer outline-none shrink-0"
-                                  title={item.completed ? "Mark as not received" : "Mark as received"}
+                                  className="transaction-check-button p-1 -m-1 cursor-pointer outline-none shrink-0"
+                                  aria-label={item.completed ? "Mark as not received" : "Mark as received"}
                                 >
                                   <div
                                     className={`w-5 h-5 rounded-md border flex items-center justify-center transition-all duration-200 ${
@@ -674,8 +671,8 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                                       e.stopPropagation();
                                       handleOpenEditForm(item);
                                     }}
-                                    className="p-1 bg-white/[0.03] hover:bg-white/[0.08] border border-white/[0.06] hover:border-white/[0.12] text-white/40 hover:text-white rounded-md transition-all cursor-pointer"
-                                    title="Edit"
+                                    className="transaction-row-action p-1 bg-white/[0.03] hover:bg-white/[0.08] border border-white/[0.06] hover:border-white/[0.12] text-white/40 hover:text-white rounded-md transition-all cursor-pointer"
+                                    aria-label="Edit"
                                   >
                                     <Edit3 size={11} />
                                   </button>
@@ -688,8 +685,8 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                                         () => onDeleteExpense(selectedMonthStr, item.id)
                                       );
                                     }}
-                                    className="p-1 bg-rose-500/5 hover:bg-rose-500/20 border border-rose-500/10 text-rose-400 hover:text-rose-300 rounded-md transition-all cursor-pointer"
-                                    title="Delete"
+                                    className="transaction-row-action p-1 bg-rose-500/5 hover:bg-rose-500/20 border border-rose-500/10 text-rose-400 hover:text-rose-300 rounded-md transition-all cursor-pointer"
+                                    aria-label="Delete"
                                   >
                                     <Trash2 size={11} />
                                   </button>
@@ -725,8 +722,8 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                                   {/* Checkbox */}
                                   <button
                                     onClick={(e) => handleToggleStatus(item.id, e)}
-                                    className="p-1 -m-1 cursor-pointer outline-none shrink-0"
-                                    title="Mark as paid"
+                                    className="transaction-check-button p-1 -m-1 cursor-pointer outline-none shrink-0"
+                                    aria-label="Mark as paid"
                                   >
                                     <div
                                       className="w-5 h-5 rounded-md border flex items-center justify-center transition-all duration-200 border-white/20 bg-white/5 hover:border-emerald-500 hover:bg-emerald-500/10 text-transparent"
@@ -773,8 +770,8 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                                         e.stopPropagation();
                                         handleOpenEditForm(item);
                                       }}
-                                      className="p-1 bg-white/[0.03] hover:bg-white/[0.08] border border-white/[0.06] hover:border-white/[0.12] text-white/40 hover:text-white rounded-md transition-all cursor-pointer"
-                                      title="Edit"
+                                      className="transaction-row-action p-1 bg-white/[0.03] hover:bg-white/[0.08] border border-white/[0.06] hover:border-white/[0.12] text-white/40 hover:text-white rounded-md transition-all cursor-pointer"
+                                      aria-label="Edit"
                                     >
                                       <Edit3 size={11} />
                                     </button>
@@ -787,8 +784,8 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                                           () => onDeleteExpense(selectedMonthStr, item.id)
                                         );
                                       }}
-                                      className="p-1 bg-rose-500/5 hover:bg-rose-500/20 border border-rose-500/10 text-rose-400 hover:text-rose-300 rounded-md transition-all cursor-pointer"
-                                      title="Delete"
+                                      className="transaction-row-action p-1 bg-rose-500/5 hover:bg-rose-500/20 border border-rose-500/10 text-rose-400 hover:text-rose-300 rounded-md transition-all cursor-pointer"
+                                      aria-label="Delete"
                                     >
                                       <Trash2 size={11} />
                                     </button>
@@ -825,8 +822,8 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                                   {/* Checkbox */}
                                   <button
                                     onClick={(e) => handleToggleStatus(item.id, e)}
-                                    className="p-1 -m-1 cursor-pointer outline-none shrink-0"
-                                    title="Mark as unpaid"
+                                    className="transaction-check-button p-1 -m-1 cursor-pointer outline-none shrink-0"
+                                    aria-label="Mark as unpaid"
                                   >
                                     <div
                                       className="w-5 h-5 rounded-md border flex items-center justify-center transition-all duration-200 bg-emerald-500/20 border-emerald-500/50 text-emerald-400 shadow-[0_0_8px_rgba(16,185,129,0.2)]"
@@ -873,8 +870,8 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                                         e.stopPropagation();
                                         handleOpenEditForm(item);
                                       }}
-                                      className="p-1 bg-white/[0.03] hover:bg-white/[0.08] border border-white/[0.06] hover:border-white/[0.12] text-white/40 hover:text-white rounded-md transition-all cursor-pointer"
-                                      title="Edit"
+                                      className="transaction-row-action p-1 bg-white/[0.03] hover:bg-white/[0.08] border border-white/[0.06] hover:border-white/[0.12] text-white/40 hover:text-white rounded-md transition-all cursor-pointer"
+                                      aria-label="Edit"
                                     >
                                       <Edit3 size={11} />
                                     </button>
@@ -887,8 +884,8 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                                           () => onDeleteExpense(selectedMonthStr, item.id)
                                         );
                                       }}
-                                      className="p-1 bg-rose-500/5 hover:bg-rose-500/20 border border-rose-500/10 text-rose-400 hover:text-rose-300 rounded-md transition-all cursor-pointer"
-                                      title="Delete"
+                                      className="transaction-row-action p-1 bg-rose-500/5 hover:bg-rose-500/20 border border-rose-500/10 text-rose-400 hover:text-rose-300 rounded-md transition-all cursor-pointer"
+                                      aria-label="Delete"
                                     >
                                       <Trash2 size={11} />
                                     </button>
@@ -982,7 +979,6 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                     <input
                       type="text"
                       required
-                      placeholder="For example, Education"
                       value={customCategory}
                       onChange={(e) => setCustomCategory(e.target.value)}
                       className="flex-1 bg-black/40 border border-white/[0.08] focus:border-emerald-500/50 rounded-2xl px-4 py-2.5 text-xs text-white outline-none focus:ring-0 transition-all"
@@ -1024,7 +1020,6 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                 <input
                   type="text"
                   required
-                  placeholder={transactionType === "income" ? "For example, Project bonus" : "For example, Apartment rent"}
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
                   className="w-full bg-black/40 border border-white/[0.08] focus:border-emerald-500/50 rounded-2xl px-4 py-3 text-xs text-white outline-none focus:ring-0 transition-all placeholder-white/20"
@@ -1065,7 +1060,6 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                       step="any"
                       min="0.01"
                       required
-                      placeholder="0.00"
                       value={rawAmount}
                       onChange={(e) => setRawAmount(e.target.value)}
                       className="w-full bg-black/45 border border-white/[0.08] rounded-xl px-2.5 py-2 text-xs text-white font-mono outline-none focus:border-emerald-500/30 focus:ring-0 transition-all placeholder-white/20"

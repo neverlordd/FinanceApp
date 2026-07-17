@@ -44,8 +44,7 @@ const syncDebtPayments = (debts: DebtItem[], monthlyBudgets: FinanceData["monthl
     .sort((a, b) => a.monthStr.localeCompare(b.monthStr) || a.expense.id.localeCompare(b.expense.id));
 
   return debts.map(debt => {
-    const manualPayments = debt.payments.filter(payment => !payment.sourceExpenseId);
-    let paid = manualPayments.reduce((sum, payment) => sum + payment.amount, 0);
+    let paid = 0;
     const linkedPayments = [] as DebtItem["payments"];
 
     for (const { expense, monthStr } of completedDebtExpenses) {
@@ -63,7 +62,7 @@ const syncDebtPayments = (debts: DebtItem[], monthlyBudgets: FinanceData["monthl
       paid += amount;
     }
 
-    return { ...debt, payments: [...manualPayments, ...linkedPayments] };
+    return { ...debt, payments: linkedPayments };
   });
 };
 
@@ -593,7 +592,7 @@ export default function App() {
             <button
               onClick={() => fetchData(false)}
               className="liquid-glass p-2 rounded-xl text-white/60 hover:text-white transition duration-200 cursor-pointer"
-              title="Refresh data"
+              aria-label="Refresh data"
             >
               <RefreshCw size={12} className={syncStatus === 'syncing' ? 'animate-spin' : ''} />
             </button>

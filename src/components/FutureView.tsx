@@ -150,7 +150,7 @@ export const FutureView: React.FC<FutureViewProps> = ({
                               onDeleteMonth(month.monthStr);
                             }}
                             className="plan-icon-button bg-rose-500/5 hover:bg-rose-500/20 border border-rose-500/10 hover:border-rose-500/25 text-rose-400/80 hover:text-rose-400 transition-all cursor-pointer"
-                            title="Delete month"
+                            aria-label="Delete month"
                           >
                             <Trash2 size={11} />
                           </button>
@@ -162,7 +162,7 @@ export const FutureView: React.FC<FutureViewProps> = ({
                             onNavigateToEditor();
                           }}
                           className="plan-icon-button border bg-white/[0.03] border-white/[0.05] hover:bg-white/[0.1] text-white/50 hover:text-white transition-all cursor-pointer"
-                          title="Open monthly budget"
+                          aria-label="Open monthly budget"
                         >
                           <ArrowRight size={11} strokeWidth={2.5} />
                         </button>
@@ -230,7 +230,7 @@ export const FutureView: React.FC<FutureViewProps> = ({
                               onDeleteMonth(month.monthStr);
                             }}
                             className="plan-icon-button bg-rose-500/5 hover:bg-rose-500/20 border border-rose-500/10 hover:border-rose-500/20 text-rose-400 transition-all cursor-pointer"
-                            title="Delete month"
+                            aria-label="Delete month"
                           >
                             <Trash2 size={12} />
                           </button>
@@ -242,7 +242,7 @@ export const FutureView: React.FC<FutureViewProps> = ({
                             onNavigateToEditor();
                           }}
                           className="plan-icon-button border transition-all duration-150 cursor-pointer bg-emerald-500 text-slate-950 border-transparent hover:bg-emerald-400"
-                          title="Open monthly budget"
+                          aria-label="Open monthly budget"
                         >
                           <ArrowRight size={12} strokeWidth={2.5} />
                         </button>

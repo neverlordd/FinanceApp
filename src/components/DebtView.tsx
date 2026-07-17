@@ -93,23 +93,12 @@ export const DebtView: React.FC<DebtViewProps> = ({
       </div>
 
       <div className="liquid-glass rounded-[2rem] p-4 md:p-5">
-        <div className="mb-4 flex items-start gap-3 rounded-2xl border border-emerald-500/15 bg-emerald-500/[0.06] p-3.5">
-          <HandCoins size={17} className="mt-0.5 shrink-0 text-emerald-400" />
-          <div>
-            <p className="text-[11px] font-bold text-white/85">Payments are linked automatically</p>
-            <p className="mt-1 text-[10px] leading-relaxed text-white/40">
-              Add an expense with category Debt and the exact same Title. Marking it paid reduces this balance; unmarking it restores the balance.
-            </p>
-          </div>
-        </div>
-
         {debts.length === 0 ? (
           <div className="rounded-3xl border border-white/[0.05] bg-black/10 px-5 py-12 text-center">
             <div className="mx-auto mb-3 flex h-11 w-11 items-center justify-center rounded-2xl border border-white/[0.06] bg-white/[0.03] text-white/25">
               <HandCoins size={19} />
             </div>
             <p className="text-xs font-bold text-white/55">No debts added yet</p>
-            <p className="mt-1 text-[10px] text-white/25">Add a debt, then pay it through your expense list.</p>
           </div>
         ) : (
           <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
@@ -136,7 +125,7 @@ export const DebtView: React.FC<DebtViewProps> = ({
                         () => onDeleteDebt(debt.id)
                       )}
                       className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-white/[0.06] bg-white/[0.03] text-white/30 transition hover:border-rose-500/20 hover:bg-rose-500/10 hover:text-rose-300"
-                      title="Delete debt"
+                      aria-label="Delete debt"
                     >
                       <Trash2 size={13} />
                     </button>
@@ -184,11 +173,11 @@ export const DebtView: React.FC<DebtViewProps> = ({
             <div className="space-y-4">
               <div className="space-y-1.5">
                 <label className="text-[10px] font-bold uppercase tracking-widest text-white/40">Debt title</label>
-                <input value={name} onChange={event => setName(event.target.value)} placeholder="For example, Debt to Amal" className="w-full rounded-2xl border border-white/[0.08] bg-black/40 px-4 py-3 text-sm text-white outline-none placeholder:text-white/20 focus:border-rose-500/40" autoFocus />
+                <input value={name} onChange={event => setName(event.target.value)} className="w-full rounded-2xl border border-white/[0.08] bg-black/40 px-4 py-3 text-sm text-white outline-none focus:border-rose-500/40" autoFocus />
               </div>
               <div className="space-y-1.5">
                 <label className="text-[10px] font-bold uppercase tracking-widest text-white/40">Total debt, USD</label>
-                <input type="number" min="0.01" step="0.01" value={amount} onChange={event => setAmount(event.target.value)} placeholder="0.00" className="w-full rounded-2xl border border-white/[0.08] bg-black/40 px-4 py-3 text-lg font-bold text-white outline-none placeholder:text-white/20 focus:border-emerald-500/40" />
+                <input type="number" min="0.01" step="0.01" value={amount} onChange={event => setAmount(event.target.value)} className="w-full rounded-2xl border border-white/[0.08] bg-black/40 px-4 py-3 text-lg font-bold text-white outline-none focus:border-emerald-500/40" />
               </div>
             </div>
 

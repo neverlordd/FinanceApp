@@ -4,8 +4,7 @@ import {
   Sliders,
   Trash2,
   AlertOctagon,
-  CheckCircle,
-  Database
+  CheckCircle
 } from "lucide-react";
 
 interface SettingsViewProps {
@@ -91,12 +90,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
             </div>
           </div>
 
-          <div className="flex items-center justify-between pt-2">
-            <div className="flex items-center gap-1.5 text-[10px] text-white/30 font-medium font-mono">
-              <Database size={11} className="text-emerald-400" />
-              <span>Data is stored securely</span>
-            </div>
-
+          <div className="flex items-center justify-end pt-2">
             <button
               type="submit"
               className="px-4 py-2 bg-white/[0.06] hover:bg-white/[0.12] border border-white/[0.1] text-white font-semibold text-xs rounded-xl transition cursor-pointer flex items-center gap-1.5"
