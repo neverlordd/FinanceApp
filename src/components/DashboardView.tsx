@@ -521,14 +521,13 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
 
         </div>
 
-        {/* Right Column (Transactions Table Card) - Spans 8 columns on large screens */}
+        {/* Right Column (Transactions) - Spans 8 columns on large screens */}
         <div className="lg:col-span-7 xl:col-span-8">
 
-          {/* 3. CORE TABLE CONTAINER */}
-          <div className="liquid-glass-strong rounded-3xl overflow-hidden">
+          <div className="space-y-5">
 
             {/* Filter controls */}
-            <div className="p-3.5 border-b border-white/[0.06] bg-black/10 space-y-3">
+            <div className="liquid-glass rounded-[2rem] p-3.5 space-y-3">
 
               {/* Segmented Filter Tab */}
               <div className="transaction-tabs flex bg-slate-950/80 p-1 border border-white/[0.06] w-full" role="tablist" aria-label="Transaction filter">
@@ -590,10 +589,10 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
               </div>
             </div>
 
-            {/* The Core Transaction List (Highly polished, compact, and fully mobile responsive) */}
-            <div className="transaction-list divide-y divide-white/[0.04] bg-slate-950/20 max-h-[500px] overflow-y-auto scrollbar-thin">
+            {/* Transactions remain on the page instead of inside a nested scroll container. */}
+            <div className="transaction-list space-y-6">
               {filteredItems.length === 0 ? (
-                <div className="py-12 text-center px-4">
+                <div className="liquid-glass rounded-[2rem] py-12 text-center px-4">
                   <div className="w-10 h-10 rounded-2xl bg-white/[0.02] border border-white/[0.04] flex items-center justify-center mx-auto mb-2 text-white/30">
                     <HelpCircle size={18} />
                   </div>
@@ -603,17 +602,17 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                 <>
                   {/* 1. INCOME GROUP */}
                   {incomeItems.length > 0 && (
-                    <div>
-                      <div className="bg-white/[0.02] border-b border-white/[0.04] py-1.5 px-4 flex items-center justify-between">
+                    <div className="space-y-2">
+                      <div className="px-1 flex items-center justify-between">
                         <span className="text-[9px] uppercase font-black tracking-widest text-emerald-400 font-mono">Income Received</span>
                         <span className="text-[9px] font-mono font-bold text-white/30">+{formatCurrency(incomeItems.reduce((sum, item) => sum + item.amount, 0))}</span>
                       </div>
-                      <div className="divide-y divide-white/[0.02]">
+                      <div className="space-y-2">
                         {incomeItems.map((item) => {
                           return (
                             <div
                               key={item.id}
-                              className={`flex items-center justify-between p-3.5 sm:p-4 hover:bg-white/[0.02] transition-all duration-150 border-b border-white/[0.02] last:border-b-0 group ${item.completed ? "opacity-60 bg-white/[0.002]" : "bg-transparent"}`}
+                              className={`liquid-glass flex items-center justify-between rounded-[1.65rem] p-3.5 sm:p-4 transition-all duration-150 group hover:border-emerald-500/15 ${item.completed ? "opacity-60" : ""}`}
                             >
                               <div className="flex items-center gap-3 min-w-0 flex-1">
                                 {/* Checkbox with custom padding for easy click */}
@@ -700,23 +699,18 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                   )}
 
                   {/* 2. TO SPEND GROUP */}
-                  {filterType !== "income" && (
-                    <div>
-                      <div className="bg-white/[0.02] border-b border-white/[0.04] py-1.5 px-4 flex items-center justify-between">
+                  {filterType !== "income" && toSpendItems.length > 0 && (
+                    <div className="space-y-2">
+                      <div className="px-1 flex items-center justify-between">
                         <span className="text-[9px] uppercase font-black tracking-widest text-rose-400 font-mono">To Pay</span>
                         <span className="text-[9px] font-mono font-bold text-white/30">-{formatCurrency(toSpendItems.reduce((sum, item) => sum + item.amount, 0))}</span>
                       </div>
-                      <div className="divide-y divide-white/[0.02]">
-                        {toSpendItems.length === 0 ? (
-                          <div className="py-4 text-center text-[10px] text-white/30 italic">
-                            No unpaid expenses
-                          </div>
-                        ) : (
-                          toSpendItems.map((item) => {
+                      <div className="space-y-2">
+                        {toSpendItems.map((item) => {
                             return (
                               <div
                                 key={item.id}
-                                className="flex items-center justify-between p-3.5 sm:p-4 hover:bg-white/[0.02] transition-all duration-150 border-b border-white/[0.02] last:border-b-0 group bg-transparent"
+                                className="liquid-glass flex items-center justify-between rounded-[1.65rem] p-3.5 sm:p-4 transition-all duration-150 group hover:border-rose-500/15"
                               >
                                 <div className="flex items-center gap-3 min-w-0 flex-1">
                                   {/* Checkbox */}
@@ -793,30 +787,24 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                                 </div>
                               </div>
                             );
-                          })
-                        )}
+                          })}
                       </div>
                     </div>
                   )}
 
                   {/* 3. SPENT GROUP */}
-                  {filterType !== "income" && (
-                    <div>
-                      <div className="bg-white/[0.02] border-b border-white/[0.04] py-1.5 px-4 flex items-center justify-between">
+                  {filterType !== "income" && spentItems.length > 0 && (
+                    <div className="space-y-2">
+                      <div className="px-1 flex items-center justify-between">
                         <span className="text-[9px] uppercase font-black tracking-widest text-emerald-400 font-mono">Paid</span>
                         <span className="text-[9px] font-mono font-bold text-white/30">-{formatCurrency(spentItems.reduce((sum, item) => sum + item.amount, 0))}</span>
                       </div>
-                      <div className="divide-y divide-white/[0.02]">
-                        {spentItems.length === 0 ? (
-                          <div className="py-4 text-center text-[10px] text-white/30 italic">
-                            No paid expenses yet
-                          </div>
-                        ) : (
-                          spentItems.map((item) => {
+                      <div className="space-y-2">
+                        {spentItems.map((item) => {
                             return (
                               <div
                                 key={item.id}
-                                className="flex items-center justify-between p-3.5 sm:p-4 hover:bg-white/[0.02] transition-all duration-150 border-b border-white/[0.02] last:border-b-0 group opacity-60 bg-white/[0.002]"
+                                className="liquid-glass flex items-center justify-between rounded-[1.65rem] p-3.5 sm:p-4 transition-all duration-150 group opacity-60 hover:border-emerald-500/15"
                               >
                                 <div className="flex items-center gap-3 min-w-0 flex-1">
                                   {/* Checkbox */}
@@ -893,8 +881,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                                 </div>
                               </div>
                             );
-                          })
-                        )}
+                          })}
                       </div>
                     </div>
                   )}

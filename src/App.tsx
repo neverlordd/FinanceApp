@@ -15,7 +15,8 @@ import {
   WifiOff,
   LineChart,
   Database,
-  HandCoins
+  HandCoins,
+  PartyPopper
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 
@@ -78,6 +79,9 @@ export default function App() {
   const [storageProvider, setStorageProvider] = useState<string | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const saveQueueRef = useRef<Promise<void>>(Promise.resolve());
+  const previousClosedDebtIdsRef = useRef<Set<string> | null>(null);
+  const celebrationTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [debtCelebration, setDebtCelebration] = useState<string | null>(null);
 
   // Month Selection State
   const [selectedMonthStr, setSelectedMonthStr] = useState<string>(getCurrentMonthStr());
@@ -85,6 +89,30 @@ export default function App() {
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: "auto" });
   }, [activeTab]);
+
+  useEffect(() => {
+    if (!data) return;
+    const closedDebts = (data.debts ?? []).filter(debt =>
+      debt.payments.reduce((sum, payment) => sum + payment.amount, 0) >= debt.totalAmount - 0.005
+    );
+    const closedIds = new Set(closedDebts.map(debt => debt.id));
+    const previousIds = previousClosedDebtIdsRef.current;
+
+    if (previousIds) {
+      const newlyClosed = closedDebts.find(debt => !previousIds.has(debt.id));
+      if (newlyClosed) {
+        setDebtCelebration(newlyClosed.name);
+        if (celebrationTimerRef.current) clearTimeout(celebrationTimerRef.current);
+        celebrationTimerRef.current = setTimeout(() => setDebtCelebration(null), 2600);
+      }
+    }
+
+    previousClosedDebtIdsRef.current = closedIds;
+  }, [data]);
+
+  useEffect(() => () => {
+    if (celebrationTimerRef.current) clearTimeout(celebrationTimerRef.current);
+  }, []);
 
   // Interactive dialog/modal state
   const [modalConfig, setModalConfig] = useState<{
@@ -763,6 +791,23 @@ export default function App() {
           <span className="text-[10px] font-semibold mt-1">Settings</span>
         </button>
       </nav>
+
+      {debtCelebration && (
+        <div className="debt-celebration pointer-events-none fixed inset-x-0 top-[22%] z-[70] flex justify-center px-4" role="status" aria-live="polite">
+          <div className="debt-confetti" aria-hidden="true">
+            {Array.from({ length: 10 }, (_, index) => <span key={index} />)}
+          </div>
+          <div className="liquid-glass-strong debt-celebration-card flex items-center gap-3 rounded-full border border-emerald-300/25 px-5 py-3.5 shadow-[0_20px_60px_rgba(16,185,129,0.28)]">
+            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-emerald-400 text-slate-950">
+              <PartyPopper size={19} />
+            </div>
+            <div>
+              <p className="text-sm font-black text-white">Debt paid off!</p>
+              <p className="max-w-52 truncate text-[10px] text-emerald-200/65">{debtCelebration}</p>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Glassmorphic Global Confirmation/Alert Modal */}
       <ConfirmModal

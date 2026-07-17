@@ -92,9 +92,8 @@ export const DebtView: React.FC<DebtViewProps> = ({
         </button>
       </div>
 
-      <div className="liquid-glass rounded-[2rem] p-4 md:p-5">
-        {debts.length === 0 ? (
-          <div className="rounded-3xl border border-white/[0.05] bg-black/10 px-5 py-12 text-center">
+      {debts.length === 0 ? (
+          <div className="liquid-glass rounded-[2rem] px-5 py-12 text-center">
             <div className="mx-auto mb-3 flex h-11 w-11 items-center justify-center rounded-2xl border border-white/[0.06] bg-white/[0.03] text-white/25">
               <HandCoins size={19} />
             </div>
@@ -111,7 +110,7 @@ export const DebtView: React.FC<DebtViewProps> = ({
               return (
                 <article
                   key={debt.id}
-                  className={`rounded-3xl border p-4 ${isPaid ? "border-emerald-500/15 bg-emerald-500/[0.06]" : "border-rose-500/15 bg-rose-500/[0.06]"}`}
+                  className={`liquid-glass rounded-3xl border p-4 ${isPaid ? "border-emerald-500/20 bg-emerald-500/[0.06]" : "border-rose-500/20 bg-rose-500/[0.06]"}`}
                 >
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0">
@@ -150,7 +149,6 @@ export const DebtView: React.FC<DebtViewProps> = ({
             })}
           </div>
         )}
-      </div>
 
       {isFormOpen && (
         <div
