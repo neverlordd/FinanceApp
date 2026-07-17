@@ -12,6 +12,7 @@ const defaultData = (): FinanceData => ({
   baselineMonthlyIncome: 0,
   baselineBalance: 0,
   monthlyBudgets: [],
+  debts: [],
 });
 
 const localStorageKey = () => {
@@ -44,6 +45,7 @@ const readLocalData = (): FinanceData | null => {
       parsed.baselineMonthlyIncome !== 0 ||
       parsed.baselineBalance !== 0 ||
       parsed.monthlyBudgets.length > 0 ||
+      parsed.debts?.length ||
       parsed.activeMonths?.length
     ) return parsed;
   }
@@ -59,6 +61,7 @@ const hasUserData = (data: FinanceData) =>
   data.baselineMonthlyIncome !== 0 ||
   data.baselineBalance !== 0 ||
   data.monthlyBudgets.length > 0 ||
+  Boolean(data.debts?.length) ||
   Boolean(data.activeMonths?.length);
 
 const staticApiFetch = async (input: RequestInfo | URL, init: RequestInit): Promise<Response> => {

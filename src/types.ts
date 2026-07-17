@@ -16,9 +16,24 @@ export interface MonthlyBudget {
   expenses: ExpenseItem[];
 }
 
+export interface DebtPayment {
+  id: string;
+  amount: number;
+  createdAt: string;
+}
+
+export interface DebtItem {
+  id: string;
+  name: string;
+  totalAmount: number;
+  createdAt: string;
+  payments: DebtPayment[];
+}
+
 export interface FinanceData {
   baselineMonthlyIncome: number; // default monthly income in USD
   baselineBalance: number; // initial savings/balance in USD
   monthlyBudgets: MonthlyBudget[];
   activeMonths?: string[]; // stored in database
+  debts?: DebtItem[];
 }

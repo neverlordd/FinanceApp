@@ -36,6 +36,25 @@ const isFinanceData = (value: unknown): value is FinanceData => {
     data.activeMonths.some(month => typeof month !== "string" || !/^\d{4}-(0[1-9]|1[0-2])$/.test(month))
   )) return false;
 
+  if (data.debts !== undefined && (
+    !Array.isArray(data.debts) ||
+    data.debts.some(debt =>
+      !debt ||
+      typeof debt.id !== "string" || debt.id.length === 0 ||
+      typeof debt.name !== "string" || debt.name.trim().length === 0 ||
+      !isFiniteNumber(debt.totalAmount) || debt.totalAmount <= 0 ||
+      typeof debt.createdAt !== "string" ||
+      !Array.isArray(debt.payments) ||
+      debt.payments.some(payment =>
+        !payment ||
+        typeof payment.id !== "string" || payment.id.length === 0 ||
+        !isFiniteNumber(payment.amount) || payment.amount <= 0 ||
+        typeof payment.createdAt !== "string"
+      ) ||
+      debt.payments.reduce((sum, payment) => sum + payment.amount, 0) > debt.totalAmount + 0.01
+    )
+  )) return false;
+
   return data.monthlyBudgets.every(budget =>
     budget &&
     /^\d{4}-(0[1-9]|1[0-2])$/.test(budget.monthStr) &&

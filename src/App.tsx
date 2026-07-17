@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { FinanceData, ExpenseItem } from "./types";
+import { FinanceData, ExpenseItem, DebtItem } from "./types";
 import { calculateMonthlyStats, CalculatedMonth } from "./utils/calculations";
 import { DashboardView } from "./components/DashboardView";
 import { FutureView } from "./components/FutureView";
@@ -277,6 +277,35 @@ export default function App() {
       monthlyBudgets: budgets
     };
     saveStateToDB(updated);
+  };
+
+  const handleAddDebt = (name: string, totalAmount: number) => {
+    const debt: DebtItem = {
+      id: generateId(),
+      name,
+      totalAmount,
+      createdAt: new Date().toISOString(),
+      payments: [],
+    };
+    saveStateToDB({ ...data, debts: [...(data.debts ?? []), debt] });
+  };
+
+  const handleAddDebtPayment = (debtId: string, amount: number) => {
+    const debts = (data.debts ?? []).map(debt => debt.id === debtId
+      ? {
+          ...debt,
+          payments: [
+            ...debt.payments,
+            { id: generateId(), amount, createdAt: new Date().toISOString() },
+          ],
+        }
+      : debt
+    );
+    saveStateToDB({ ...data, debts });
+  };
+
+  const handleDeleteDebt = (debtId: string) => {
+    saveStateToDB({ ...data, debts: (data.debts ?? []).filter(debt => debt.id !== debtId) });
   };
 
   // Update Settings Baseline parameters
@@ -596,6 +625,10 @@ export default function App() {
                   onEditExpense={handleEditExpense}
                   onDeleteExpense={handleDeleteExpense}
                   onToggleExpenseCompleted={handleToggleExpenseCompleted}
+                  debts={data.debts ?? []}
+                  onAddDebt={handleAddDebt}
+                  onAddDebtPayment={handleAddDebtPayment}
+                  onDeleteDebt={handleDeleteDebt}
                   onAddMonth={handleAddMonth}
                   onDeleteMonth={handleDeleteMonth}
                   triggerConfirm={triggerConfirm}

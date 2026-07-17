@@ -58,7 +58,11 @@ const parseMeta = (value: string): CloudMeta | null => {
   }
 };
 
-export const getTelegramCloudStorage = () => window.Telegram?.WebApp.CloudStorage ?? null;
+export const getTelegramCloudStorage = () => {
+  const webApp = window.Telegram?.WebApp;
+  if (!webApp || webApp.platform === "unknown" || !webApp.initDataUnsafe?.user?.id) return null;
+  return webApp.CloudStorage ?? null;
+};
 
 export const readTelegramCloudData = async (storage: CloudStorage): Promise<FinanceData | null> => {
   const meta = parseMeta(await getItem(storage, META_KEY));

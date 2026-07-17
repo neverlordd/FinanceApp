@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { CalculatedMonth } from "../utils/calculations";
-import { ExpenseItem } from "../types";
+import { DebtItem, ExpenseItem } from "../types";
 import {
   Wallet,
   ChevronLeft,
@@ -22,7 +22,8 @@ import {
   DollarSign,
   Briefcase,
   AlertCircle,
-  Calendar
+  Calendar,
+  HandCoins
 } from "lucide-react";
 
 interface DashboardViewProps {
@@ -34,6 +35,10 @@ interface DashboardViewProps {
   onEditExpense: (monthStr: string, expense: ExpenseItem & { originalAmount?: number; originalCurrency?: string; originalRate?: number }) => void;
   onDeleteExpense: (monthStr: string, expenseId: string) => void;
   onToggleExpenseCompleted: (monthStr: string, expenseId: string) => void;
+  debts: DebtItem[];
+  onAddDebt: (name: string, totalAmount: number) => void;
+  onAddDebtPayment: (debtId: string, amount: number) => void;
+  onDeleteDebt: (debtId: string) => void;
   onAddMonth?: () => void;
   onDeleteMonth?: (monthStr: string) => void;
   triggerConfirm: (title: string, message: string, onConfirm: () => void) => void;
@@ -85,6 +90,10 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
   onEditExpense,
   onDeleteExpense,
   onToggleExpenseCompleted,
+  debts,
+  onAddDebt,
+  onAddDebtPayment,
+  onDeleteDebt,
   onAddMonth,
   onDeleteMonth,
   triggerConfirm,
@@ -118,6 +127,11 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
   const [isCustomCategory, setIsCustomCategory] = useState(false);
   const [description, setDescription] = useState("");
   const [completed, setCompleted] = useState(false);
+
+  const [debtFormMode, setDebtFormMode] = useState<"add" | "payment" | null>(null);
+  const [selectedDebtId, setSelectedDebtId] = useState<string | null>(null);
+  const [debtName, setDebtName] = useState("");
+  const [debtAmount, setDebtAmount] = useState("");
 
   // Converter sub-state
   const [currency, setCurrency] = useState("USD");
@@ -291,9 +305,12 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
   }, [selectedMonthStr, currentMonth?.monthStr, currentMonth?.baseIncome]);
 
   useEffect(() => {
-    if (!isFormOpen) return;
+    if (!isFormOpen && !debtFormMode) return;
     const closeOnEscape = (event: KeyboardEvent) => {
-      if (event.key === "Escape") setIsFormOpen(false);
+      if (event.key === "Escape") {
+        setIsFormOpen(false);
+        setDebtFormMode(null);
+      }
     };
     const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
@@ -302,7 +319,50 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
       document.body.style.overflow = previousOverflow;
       window.removeEventListener("keydown", closeOnEscape);
     };
-  }, [isFormOpen]);
+  }, [isFormOpen, debtFormMode]);
+
+  const openAddDebtForm = () => {
+    setSelectedDebtId(null);
+    setDebtName("");
+    setDebtAmount("");
+    setDebtFormMode("add");
+  };
+
+  const openDebtPaymentForm = (debt: DebtItem) => {
+    setSelectedDebtId(debt.id);
+    setDebtName(debt.name);
+    setDebtAmount("");
+    setDebtFormMode("payment");
+  };
+
+  const handleDebtFormSubmit = (event: React.FormEvent) => {
+    event.preventDefault();
+    const amount = Number(Number.parseFloat(debtAmount).toFixed(2));
+    if (!Number.isFinite(amount) || amount <= 0) {
+      triggerAlert("Check the amount", "Enter an amount greater than zero.");
+      return;
+    }
+
+    if (debtFormMode === "add") {
+      if (!debtName.trim()) {
+        triggerAlert("Check the name", "Enter the debt name or creditor.");
+        return;
+      }
+      onAddDebt(debtName.trim(), amount);
+    } else if (debtFormMode === "payment" && selectedDebtId) {
+      const debt = debts.find(item => item.id === selectedDebtId);
+      if (!debt) return;
+      const paid = debt.payments.reduce((sum, payment) => sum + payment.amount, 0);
+      const remaining = Number(Math.max(debt.totalAmount - paid, 0).toFixed(2));
+      if (amount > remaining) {
+        triggerAlert("Payment is too large", `The remaining debt is ${formatCurrency(remaining)}.`);
+        return;
+      }
+      onAddDebtPayment(debt.id, amount);
+    }
+
+    setDebtFormMode(null);
+  };
 
   if (!currentMonth) return null;
 
@@ -517,6 +577,96 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                 </h3>
               </div>
             </div>
+          </div>
+
+          {/* Debt tracker */}
+          <div className="liquid-glass rounded-3xl p-4 space-y-3">
+            <div className="flex items-center justify-between gap-3">
+              <div className="flex items-center gap-2 min-w-0">
+                <div className="p-1.5 rounded-xl border border-rose-500/15 bg-rose-500/[0.08] text-rose-300">
+                  <HandCoins size={14} />
+                </div>
+                <div className="min-w-0">
+                  <h3 className="text-xs font-bold text-white/95">Debts</h3>
+                  <p className="text-[9px] text-white/35">Track each balance separately</p>
+                </div>
+              </div>
+              <button
+                onClick={openAddDebtForm}
+                className="min-h-10 shrink-0 rounded-2xl border border-rose-500/20 bg-rose-500/10 px-3 text-[10px] font-bold text-rose-300 transition hover:bg-rose-500/15 active:scale-95"
+              >
+                + Add debt
+              </button>
+            </div>
+
+            {debts.length === 0 ? (
+              <div className="rounded-2xl border border-white/[0.05] bg-black/10 px-4 py-5 text-center">
+                <p className="text-[10px] text-white/35">No debts added yet</p>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {debts.map(debt => {
+                  const paid = debt.payments.reduce((sum, payment) => sum + payment.amount, 0);
+                  const remaining = Math.max(debt.totalAmount - paid, 0);
+                  const progress = Math.min((paid / debt.totalAmount) * 100, 100);
+                  const isPaid = remaining <= 0.005;
+
+                  return (
+                    <div
+                      key={debt.id}
+                      className={`rounded-2xl border p-3.5 ${isPaid ? "border-emerald-500/15 bg-emerald-500/[0.06]" : "border-rose-500/15 bg-rose-500/[0.06]"}`}
+                    >
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="min-w-0">
+                          <p className="truncate text-[13px] font-bold text-white/90">{debt.name}</p>
+                          <p className="mt-0.5 text-[9px] text-white/35">
+                            Paid {formatCurrency(paid)} of {formatCurrency(debt.totalAmount)}
+                          </p>
+                        </div>
+                        <div className="shrink-0 text-right">
+                          <p className={`text-[13px] font-black ${isPaid ? "text-emerald-400" : "text-rose-300"}`}>
+                            {formatCurrency(remaining)}
+                          </p>
+                          <p className="text-[8px] font-bold uppercase tracking-wider text-white/30">
+                            {isPaid ? "Paid off" : "Remaining"}
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="my-3 h-1.5 overflow-hidden rounded-full bg-black/25">
+                        <div
+                          className={`h-full rounded-full transition-all duration-500 ${isPaid ? "bg-emerald-400" : "bg-gradient-to-r from-rose-500 to-amber-400"}`}
+                          style={{ width: `${progress}%` }}
+                        />
+                      </div>
+
+                      <div className="flex gap-2">
+                        {!isPaid && (
+                          <button
+                            onClick={() => openDebtPaymentForm(debt)}
+                            className="min-h-10 flex-1 rounded-xl border border-emerald-500/20 bg-emerald-500/10 text-[10px] font-bold text-emerald-300 transition hover:bg-emerald-500/15 active:scale-[0.98]"
+                          >
+                            Add payment
+                          </button>
+                        )}
+                        <button
+                          onClick={() => triggerConfirm(
+                            "Delete debt",
+                            `Delete “${debt.name}” and its payment history?`,
+                            () => onDeleteDebt(debt.id)
+                          )}
+                          className={`${isPaid ? "flex-1" : "w-10"} min-h-10 rounded-xl border border-white/[0.06] bg-white/[0.03] text-white/35 transition hover:border-rose-500/20 hover:bg-rose-500/10 hover:text-rose-300 active:scale-95 flex items-center justify-center`}
+                          title="Delete debt"
+                        >
+                          <Trash2 size={13} />
+                          {isPaid && <span className="ml-2 text-[10px] font-bold">Remove</span>}
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
         </div>
 
@@ -907,6 +1057,81 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
           </div>
         </div>
       </div>
+
+      {debtFormMode && (
+        <div
+          className="app-modal-overlay fixed inset-0 z-50 flex items-center justify-center bg-black/75 p-4 backdrop-blur-md animate-fadeIn"
+          onMouseDown={event => {
+            if (event.target === event.currentTarget) setDebtFormMode(null);
+          }}
+        >
+          <form
+            onSubmit={handleDebtFormSubmit}
+            className="liquid-glass-strong w-full max-w-sm rounded-[2rem] border border-white/[0.09] p-5 shadow-2xl"
+          >
+            <div className="mb-5 flex items-start justify-between gap-4">
+              <div>
+                <p className="text-[9px] font-bold uppercase tracking-[0.18em] text-rose-300/70">Debt tracker</p>
+                <h3 className="mt-1 text-lg font-black text-white">
+                  {debtFormMode === "add" ? "Add a debt" : `Payment to ${debtName}`}
+                </h3>
+                {debtFormMode === "payment" && selectedDebtId && (() => {
+                  const debt = debts.find(item => item.id === selectedDebtId);
+                  if (!debt) return null;
+                  const paid = debt.payments.reduce((sum, payment) => sum + payment.amount, 0);
+                  return <p className="mt-1 text-[10px] text-white/40">Remaining: {formatCurrency(Math.max(debt.totalAmount - paid, 0))}</p>;
+                })()}
+              </div>
+              <button
+                type="button"
+                onClick={() => setDebtFormMode(null)}
+                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl border border-white/[0.07] bg-white/[0.04] text-white/50 transition hover:text-white"
+                aria-label="Close"
+              >
+                <X size={16} />
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              {debtFormMode === "add" && (
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-bold uppercase tracking-widest text-white/40">Name or creditor</label>
+                  <input
+                    value={debtName}
+                    onChange={event => setDebtName(event.target.value)}
+                    placeholder="For example, Amal"
+                    className="w-full rounded-2xl border border-white/[0.08] bg-black/40 px-4 py-3 text-sm text-white outline-none transition placeholder:text-white/20 focus:border-rose-500/40"
+                    autoFocus
+                  />
+                </div>
+              )}
+
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-bold uppercase tracking-widest text-white/40">
+                  {debtFormMode === "add" ? "Total debt, USD" : "Payment amount, USD"}
+                </label>
+                <input
+                  type="number"
+                  min="0.01"
+                  step="0.01"
+                  value={debtAmount}
+                  onChange={event => setDebtAmount(event.target.value)}
+                  placeholder="0.00"
+                  className="w-full rounded-2xl border border-white/[0.08] bg-black/40 px-4 py-3 text-lg font-bold text-white outline-none transition placeholder:text-white/20 focus:border-emerald-500/40"
+                  autoFocus={debtFormMode === "payment"}
+                />
+              </div>
+            </div>
+
+            <button
+              type="submit"
+              className="mt-5 min-h-12 w-full rounded-2xl border border-emerald-400/20 bg-emerald-500 font-bold text-slate-950 shadow-[0_10px_30px_rgba(16,185,129,0.18)] transition hover:bg-emerald-400 active:scale-[0.98]"
+            >
+              {debtFormMode === "add" ? "Save debt" : "Record payment"}
+            </button>
+          </form>
+        </div>
+      )}
 
       {/* 4. MODAL/POPUP DIALOG (Extremely gorgeous, glassmorphic card with sliding type controllers and editable converter) */}
       {isFormOpen && (
