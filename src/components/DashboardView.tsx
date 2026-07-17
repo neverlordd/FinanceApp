@@ -635,21 +635,18 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                                   </div>
                                 </button>
 
-                                {/* Category & Description Stacked */}
+                                {/* Title & Category Stacked */}
                                 <div
                                   className="min-w-0 flex-1 cursor-pointer"
                                   onClick={() => handleOpenEditForm(item)}
                                 >
-                                  <div className="flex items-center gap-2">
-                                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shrink-0" />
-                                    <span className={`text-[12px] font-bold text-white/90 truncate ${item.completed ? "line-through text-white/40" : ""}`}>
+                                  <p className={`text-[13px] font-bold text-white/90 truncate ${item.completed ? "line-through text-white/40" : ""}`}>
+                                    {item.description || item.category}
+                                  </p>
+                                  {item.description && (
+                                    <span className={`inline-flex max-w-[160px] sm:max-w-xs truncate mt-1 rounded-lg border border-emerald-500/15 bg-emerald-500/[0.08] px-2 py-0.5 text-[9px] font-semibold text-emerald-300/70 ${item.completed ? "line-through opacity-60" : ""}`}>
                                       {item.category}
                                     </span>
-                                  </div>
-                                  {item.description && (
-                                    <p className={`text-[10px] text-white/40 truncate mt-0.5 max-w-[160px] sm:max-w-xs ${item.completed ? "line-through text-white/20" : ""}`}>
-                                      {item.description}
-                                    </p>
                                   )}
                                 </div>
                               </div>
@@ -737,21 +734,18 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                                     </div>
                                   </button>
 
-                                  {/* Category & Description Stacked */}
+                                  {/* Title & Category Stacked */}
                                   <div
                                     className="min-w-0 flex-1 cursor-pointer"
                                     onClick={() => handleOpenEditForm(item)}
                                   >
-                                    <div className="flex items-center gap-2">
-                                      <span className="w-1.5 h-1.5 rounded-full bg-rose-400 shrink-0" />
-                                      <span className="text-[12px] font-bold text-white/90 truncate">
+                                    <p className="text-[13px] font-bold text-white/90 truncate">
+                                      {item.description || item.category}
+                                    </p>
+                                    {item.description && (
+                                      <span className="inline-flex max-w-[160px] sm:max-w-xs truncate mt-1 rounded-lg border border-rose-500/15 bg-rose-500/[0.08] px-2 py-0.5 text-[9px] font-semibold text-rose-300/70">
                                         {item.category}
                                       </span>
-                                    </div>
-                                    {item.description && (
-                                      <p className="text-[10px] text-white/40 truncate mt-0.5 max-w-[160px] sm:max-w-xs">
-                                        {item.description}
-                                      </p>
                                     )}
                                   </div>
                                 </div>
@@ -840,21 +834,18 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                                     </div>
                                   </button>
 
-                                  {/* Category & Description Stacked */}
+                                  {/* Title & Category Stacked */}
                                   <div
                                     className="min-w-0 flex-1 cursor-pointer"
                                     onClick={() => handleOpenEditForm(item)}
                                   >
-                                    <div className="flex items-center gap-2">
-                                      <span className="w-1.5 h-1.5 rounded-full bg-rose-400/50 shrink-0" />
-                                      <span className="text-[12px] font-bold text-white/50 line-through truncate">
+                                    <p className="text-[13px] font-bold text-white/50 line-through truncate">
+                                      {item.description || item.category}
+                                    </p>
+                                    {item.description && (
+                                      <span className="inline-flex max-w-[160px] sm:max-w-xs truncate mt-1 rounded-lg border border-rose-500/10 bg-rose-500/[0.06] px-2 py-0.5 text-[9px] font-semibold text-rose-300/40 line-through">
                                         {item.category}
                                       </span>
-                                    </div>
-                                    {item.description && (
-                                      <p className="text-[10px] text-white/30 line-through truncate mt-0.5 max-w-[160px] sm:max-w-xs">
-                                        {item.description}
-                                      </p>
                                     )}
                                   </div>
                                 </div>
@@ -1026,9 +1017,9 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                 )}
               </div>
 
-              {/* Description Input */}
+              {/* Title Input */}
               <div className="space-y-1.5">
-                <label className="text-[10px] font-bold text-white/40 uppercase tracking-widest font-mono">Description *</label>
+                <label className="text-[10px] font-bold text-white/40 uppercase tracking-widest font-mono">Title *</label>
                 <input
                   type="text"
                   required
