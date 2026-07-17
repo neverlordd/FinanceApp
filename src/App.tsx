@@ -4,6 +4,7 @@ import { calculateMonthlyStats, CalculatedMonth } from "./utils/calculations";
 import { DashboardView } from "./components/DashboardView";
 import { FutureView } from "./components/FutureView";
 import { SettingsView } from "./components/SettingsView";
+import { DebtView } from "./components/DebtView";
 import { ConfirmModal } from "./components/ConfirmModal";
 import { apiFetch } from "./api";
 import {
@@ -13,7 +14,8 @@ import {
   RefreshCw,
   WifiOff,
   LineChart,
-  Database
+  Database,
+  HandCoins
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 
@@ -26,6 +28,43 @@ const getCurrentMonthStr = () => {
   const year = d.getFullYear();
   const month = String(d.getMonth() + 1).padStart(2, '0');
   return `${year}-${month}`;
+};
+
+const normalizeDebtTitle = (value: string) => value.trim().replace(/\s+/g, " ").toLocaleLowerCase();
+
+const syncDebtPayments = (debts: DebtItem[], monthlyBudgets: FinanceData["monthlyBudgets"]): DebtItem[] => {
+  const completedDebtExpenses = monthlyBudgets
+    .flatMap(budget => budget.expenses
+      .filter(expense =>
+        expense.type !== "income" &&
+        expense.completed &&
+        normalizeDebtTitle(expense.category) === "debt"
+      )
+      .map(expense => ({ expense, monthStr: budget.monthStr })))
+    .sort((a, b) => a.monthStr.localeCompare(b.monthStr) || a.expense.id.localeCompare(b.expense.id));
+
+  return debts.map(debt => {
+    const manualPayments = debt.payments.filter(payment => !payment.sourceExpenseId);
+    let paid = manualPayments.reduce((sum, payment) => sum + payment.amount, 0);
+    const linkedPayments = [] as DebtItem["payments"];
+
+    for (const { expense, monthStr } of completedDebtExpenses) {
+      if (normalizeDebtTitle(expense.description) !== normalizeDebtTitle(debt.name)) continue;
+      const remaining = Number(Math.max(debt.totalAmount - paid, 0).toFixed(2));
+      if (remaining <= 0) break;
+      const amount = Math.min(expense.amount, remaining);
+      linkedPayments.push({
+        id: `expense:${monthStr}:${expense.id}`,
+        amount,
+        createdAt: `${monthStr}-01T00:00:00.000Z`,
+        sourceExpenseId: expense.id,
+        sourceMonthStr: monthStr,
+      });
+      paid += amount;
+    }
+
+    return { ...debt, payments: [...manualPayments, ...linkedPayments] };
+  });
 };
 
 export default function App() {
@@ -43,6 +82,10 @@ export default function App() {
 
   // Month Selection State
   const [selectedMonthStr, setSelectedMonthStr] = useState<string>(getCurrentMonthStr());
+
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: "auto" });
+  }, [activeTab]);
 
   // Interactive dialog/modal state
   const [modalConfig, setModalConfig] = useState<{
@@ -105,9 +148,12 @@ export default function App() {
         throw new Error(message);
       }
       const json = await res.json() as FinanceData;
+      const reconciledData = json.debts?.length
+        ? { ...json, debts: syncDebtPayments(json.debts, json.monthlyBudgets) }
+        : json;
       setStoragePersistent(res.headers.get("X-Storage-Persistent") !== "false");
       setStorageProvider(res.headers.get("X-Storage-Provider"));
-      setData(json);
+      setData(reconciledData);
       setSyncStatus('synced');
       setErrorMsg(null);
     } catch (err: any) {
@@ -214,7 +260,8 @@ export default function App() {
     };
     const updated: FinanceData = {
       ...data,
-      monthlyBudgets: budgets
+      monthlyBudgets: budgets,
+      debts: syncDebtPayments(data.debts ?? [], budgets),
     };
     saveStateToDB(updated);
   };
@@ -232,7 +279,8 @@ export default function App() {
     };
     const updated: FinanceData = {
       ...data,
-      monthlyBudgets: budgets
+      monthlyBudgets: budgets,
+      debts: syncDebtPayments(data.debts ?? [], budgets),
     };
     saveStateToDB(updated);
   };
@@ -246,7 +294,8 @@ export default function App() {
     };
     const updated: FinanceData = {
       ...data,
-      monthlyBudgets: budgets
+      monthlyBudgets: budgets,
+      debts: syncDebtPayments(data.debts ?? [], budgets),
     };
     saveStateToDB(updated);
   };
@@ -260,7 +309,8 @@ export default function App() {
     };
     const updated: FinanceData = {
       ...data,
-      monthlyBudgets: budgets
+      monthlyBudgets: budgets,
+      debts: syncDebtPayments(data.debts ?? [], budgets),
     };
     saveStateToDB(updated);
   };
@@ -274,7 +324,8 @@ export default function App() {
     };
     const updated: FinanceData = {
       ...data,
-      monthlyBudgets: budgets
+      monthlyBudgets: budgets,
+      debts: syncDebtPayments(data.debts ?? [], budgets),
     };
     saveStateToDB(updated);
   };
@@ -287,20 +338,7 @@ export default function App() {
       createdAt: new Date().toISOString(),
       payments: [],
     };
-    saveStateToDB({ ...data, debts: [...(data.debts ?? []), debt] });
-  };
-
-  const handleAddDebtPayment = (debtId: string, amount: number) => {
-    const debts = (data.debts ?? []).map(debt => debt.id === debtId
-      ? {
-          ...debt,
-          payments: [
-            ...debt.payments,
-            { id: generateId(), amount, createdAt: new Date().toISOString() },
-          ],
-        }
-      : debt
-    );
+    const debts = syncDebtPayments([...(data.debts ?? []), debt], data.monthlyBudgets);
     saveStateToDB({ ...data, debts });
   };
 
@@ -593,6 +631,18 @@ export default function App() {
           </button>
 
           <button
+            onClick={() => setActiveTab("debts")}
+            className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-semibold tracking-wide transition duration-150 cursor-pointer ${
+              activeTab === "debts"
+                ? "bg-white/[0.06] border border-white/[0.1] text-white shadow-[0_4px_12px_rgba(255,255,255,0.02)]"
+                : "text-white/50 hover:text-white hover:bg-white/[0.03] border border-transparent"
+            }`}
+          >
+            <HandCoins size={16} />
+            Debts
+          </button>
+
+          <button
             onClick={() => setActiveTab("settings")}
             className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-semibold tracking-wide transition duration-150 cursor-pointer ${
               activeTab === "settings"
@@ -625,10 +675,6 @@ export default function App() {
                   onEditExpense={handleEditExpense}
                   onDeleteExpense={handleDeleteExpense}
                   onToggleExpenseCompleted={handleToggleExpenseCompleted}
-                  debts={data.debts ?? []}
-                  onAddDebt={handleAddDebt}
-                  onAddDebtPayment={handleAddDebtPayment}
-                  onDeleteDebt={handleDeleteDebt}
                   onAddMonth={handleAddMonth}
                   onDeleteMonth={handleDeleteMonth}
                   triggerConfirm={triggerConfirm}
@@ -644,6 +690,16 @@ export default function App() {
                   onNavigateToEditor={() => setActiveTab("budget")}
                   onAddMonth={handleAddMonth}
                   onDeleteMonth={handleDeleteMonth}
+                />
+              )}
+
+              {activeTab === "debts" && (
+                <DebtView
+                  debts={data.debts ?? []}
+                  onAddDebt={handleAddDebt}
+                  onDeleteDebt={handleDeleteDebt}
+                  triggerConfirm={triggerConfirm}
+                  triggerAlert={triggerAlert}
                 />
               )}
 
@@ -684,6 +740,17 @@ export default function App() {
         >
           <Calendar size={19} />
           <span className="text-[10px] font-semibold mt-1">Plans</span>
+        </button>
+
+        <button
+          onClick={() => setActiveTab("debts")}
+          aria-current={activeTab === "debts" ? "page" : undefined}
+          className={`flex flex-col items-center justify-center flex-1 h-full rounded-xl transition cursor-pointer ${
+            activeTab === "debts" ? "text-emerald-400" : "text-slate-400 hover:text-slate-200"
+          }`}
+        >
+          <HandCoins size={19} />
+          <span className="text-[10px] font-semibold mt-1">Debts</span>
         </button>
 
         <button

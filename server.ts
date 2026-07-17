@@ -49,7 +49,9 @@ const isFinanceData = (value: unknown): value is FinanceData => {
         !payment ||
         typeof payment.id !== "string" || payment.id.length === 0 ||
         !isFiniteNumber(payment.amount) || payment.amount <= 0 ||
-        typeof payment.createdAt !== "string"
+        typeof payment.createdAt !== "string" ||
+        (payment.sourceExpenseId !== undefined && typeof payment.sourceExpenseId !== "string") ||
+        (payment.sourceMonthStr !== undefined && typeof payment.sourceMonthStr !== "string")
       ) ||
       debt.payments.reduce((sum, payment) => sum + payment.amount, 0) > debt.totalAmount + 0.01
     )

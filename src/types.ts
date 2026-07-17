@@ -20,6 +20,8 @@ export interface DebtPayment {
   id: string;
   amount: number;
   createdAt: string;
+  sourceExpenseId?: string;
+  sourceMonthStr?: string;
 }
 
 export interface DebtItem {
