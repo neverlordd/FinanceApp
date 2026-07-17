@@ -5,12 +5,12 @@ import {
   Wallet,
   ArrowRight,
   Plus,
-  Trash2
+  Trash2,
+  ChevronDown
 } from "lucide-react";
 
 interface FutureViewProps {
   calculatedMonths: CalculatedMonth[];
-  selectedMonthStr: string;
   onSelectMonth: (monthStr: string) => void;
   onNavigateToEditor: () => void;
   onAddMonth?: () => void;
@@ -19,14 +19,26 @@ interface FutureViewProps {
 
 export const FutureView: React.FC<FutureViewProps> = ({
   calculatedMonths,
-  selectedMonthStr,
   onSelectMonth,
   onNavigateToEditor,
   onAddMonth,
   onDeleteMonth
 }) => {
-  // Find currently selected month stats for the executive summary at the top
-  const selectedMonthObj = calculatedMonths.find(m => m.monthStr === selectedMonthStr) || calculatedMonths[calculatedMonths.length - 1];
+  const [expandedMonthStr, setExpandedMonthStr] = React.useState<string | null>(null);
+  const currentMonthObj = calculatedMonths.find(month => month.isCurrent) ?? calculatedMonths[0];
+  const summaryMonthObj = calculatedMonths.find(month => month.monthStr === expandedMonthStr) ?? currentMonthObj;
+
+  React.useEffect(() => {
+    if (expandedMonthStr && !calculatedMonths.some(month => month.monthStr === expandedMonthStr)) {
+      setExpandedMonthStr(null);
+    }
+  }, [calculatedMonths, expandedMonthStr]);
+
+  const toggleMonth = (monthStr: string) => {
+    const next = expandedMonthStr === monthStr ? null : monthStr;
+    setExpandedMonthStr(next);
+    if (next) onSelectMonth(next);
+  };
 
   const formatCurrency = (val: number) => {
     return new Intl.NumberFormat('en-US', {
@@ -39,30 +51,8 @@ export const FutureView: React.FC<FutureViewProps> = ({
   return (
     <div className="space-y-6">
       {/* HEADER */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h2 className="text-xl font-black text-white tracking-tight uppercase">Savings & Statistics</h2>
-        </div>
-        <div className="grid grid-cols-2 sm:flex items-center gap-2 w-full sm:w-auto">
-          {onAddMonth && (
-            <button
-              onClick={onAddMonth}
-              className="mobile-primary-action px-3 sm:px-4 py-2.5 text-xs font-bold bg-emerald-500/10 text-emerald-400 hover:text-emerald-300 hover:bg-emerald-500/20 border border-emerald-500/20 hover:border-emerald-500/35 transition-all duration-300 flex items-center justify-center gap-2 cursor-pointer active:scale-95"
-            >
-              <Plus size={16} strokeWidth={3} />
-              <span>Add Month</span>
-            </button>
-          )}
-          {calculatedMonths.length > 1 && onDeleteMonth && (
-            <button
-              onClick={() => onDeleteMonth(selectedMonthStr)}
-              className="mobile-primary-action text-xs font-bold text-rose-400 hover:text-rose-300 transition-all flex items-center justify-center gap-2 px-3 sm:px-4 py-2.5 bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/20 hover:border-rose-500/30 cursor-pointer active:scale-95"
-            >
-              <Trash2 size={16} strokeWidth={2.5} />
-              <span>Delete Month</span>
-            </button>
-          )}
-        </div>
+      <div>
+        <h2 className="text-xl font-black text-white tracking-tight uppercase">Savings & Statistics</h2>
       </div>
 
       {/* EXECUTIVE SUMMARY AT THE TOP: Cumulative Savings card (full-width, clean, no description) */}
@@ -74,7 +64,9 @@ export const FutureView: React.FC<FutureViewProps> = ({
 
           <div>
             <div className="flex items-center justify-between mb-4">
-              <span className="text-[10px] font-bold text-white/40 tracking-wider uppercase">End-of-Month Savings</span>
+              <span className="text-[10px] font-bold text-white/40 tracking-wider uppercase">
+                End-of-Month Savings{summaryMonthObj ? ` · ${summaryMonthObj.monthName} '${summaryMonthObj.monthYear.slice(2)}` : ""}
+              </span>
               <div className="p-2.5 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 rounded-xl">
                 <Wallet size={18} strokeWidth={2.2} />
               </div>
@@ -82,7 +74,7 @@ export const FutureView: React.FC<FutureViewProps> = ({
 
             <div className="space-y-1">
               <h3 className="text-3xl font-black text-white tracking-tight font-sans">
-                {formatCurrency(selectedMonthObj?.endingSavings ?? 0)}
+                {formatCurrency(summaryMonthObj?.endingSavings ?? 0)}
               </h3>
             </div>
           </div>
@@ -91,6 +83,18 @@ export const FutureView: React.FC<FutureViewProps> = ({
 
       {/* MONTHLY BREAKDOWN BENTO BLOCKS */}
       <div className="space-y-4">
+        {onAddMonth && (
+          <div className="flex justify-end">
+            <button
+              onClick={onAddMonth}
+              className="mobile-primary-action flex min-h-11 items-center justify-center gap-2 border border-emerald-400/20 bg-gradient-to-r from-emerald-500/15 to-cyan-500/10 px-4 text-xs font-bold text-emerald-300 shadow-[0_10px_28px_rgba(16,185,129,0.08)] transition-all duration-300 hover:border-emerald-400/35 hover:from-emerald-500/25 hover:to-cyan-500/15 active:scale-95"
+            >
+              <Plus size={16} strokeWidth={3} />
+              <span>Add Month</span>
+            </button>
+          </div>
+        )}
+
         <div className="flex items-center justify-between">
           <h3 className="text-xs font-bold text-white/50 uppercase tracking-wider flex items-center gap-1.5">
             <Calendar size={13} className="text-emerald-400" />
@@ -101,26 +105,36 @@ export const FutureView: React.FC<FutureViewProps> = ({
         {/* Dynamic Bento Block Display */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-start">
           {calculatedMonths.map((month) => {
-            const isSelected = month.monthStr === selectedMonthStr;
+            const isExpanded = month.monthStr === expandedMonthStr;
             const netPositive = month.net >= 0;
             return (
               <div
                 key={month.monthStr}
-                onClick={() => {
-                  onSelectMonth(month.monthStr);
+                onClick={() => toggleMonth(month.monthStr)}
+                onKeyDown={(event) => {
+                  if (event.target !== event.currentTarget) return;
+                  if (event.key === "Enter" || event.key === " ") {
+                    event.preventDefault();
+                    toggleMonth(month.monthStr);
+                  }
                 }}
+                role="button"
+                tabIndex={0}
+                aria-expanded={isExpanded}
                 className={`group transition-all duration-300 relative overflow-hidden flex flex-col justify-between ${
-                  isSelected
+                  isExpanded
                     ? "liquid-glass-strong p-5 rounded-3xl border-emerald-500/40 shadow-[0_16px_36px_rgba(16,185,129,0.12)] scale-[1.01]"
-                    : "liquid-glass p-3.5 rounded-2xl hover:border-white/[0.2] cursor-pointer"
+                    : month.isCurrent
+                      ? "liquid-glass p-3.5 rounded-2xl border-emerald-500/30 bg-emerald-500/[0.04] shadow-[0_10px_28px_rgba(16,185,129,0.08)] hover:border-emerald-400/40 cursor-pointer"
+                      : "liquid-glass p-3.5 rounded-2xl hover:border-white/[0.2] cursor-pointer"
                 }`}
               >
                 {/* Visual Accent Glow on selection */}
-                {isSelected && (
+                {isExpanded && (
                   <div className="absolute top-0 right-0 w-24 h-24 bg-emerald-500/10 rounded-full blur-2xl pointer-events-none" />
                 )}
 
-                {!isSelected ? (
+                {!isExpanded ? (
                   /* Collapsed Card Layout for inactive months */
                   <div className="flex items-center justify-between w-full gap-3">
                     <div className="flex items-center gap-2 min-w-0">
@@ -140,6 +154,8 @@ export const FutureView: React.FC<FutureViewProps> = ({
                           {formatCurrency(month.endingSavings)}
                         </span>
                       </div>
+
+                      <ChevronDown size={14} className="text-white/30 transition-transform duration-300" />
 
                       {/* Action buttons */}
                       <div className="flex items-center gap-1">
@@ -183,10 +199,12 @@ export const FutureView: React.FC<FutureViewProps> = ({
                         </h4>
                       </div>
 
-                      {/* Status indicator pill */}
-                      <span className={`text-[8px] font-mono font-extrabold px-1.5 py-0.5 rounded ${netPositive ? "bg-emerald-500/10 text-emerald-400" : "bg-rose-500/10 text-rose-400"}`}>
-                        {netPositive ? "SURPLUS" : "DEFICIT"}
-                      </span>
+                      <div className="flex items-center gap-2">
+                        <span className={`text-[8px] font-mono font-extrabold px-1.5 py-0.5 rounded ${netPositive ? "bg-emerald-500/10 text-emerald-400" : "bg-rose-500/10 text-rose-400"}`}>
+                          {netPositive ? "SURPLUS" : "DEFICIT"}
+                        </span>
+                        <ChevronDown size={15} className="rotate-180 text-white/35 transition-transform duration-300" />
+                      </div>
                     </div>
 
                     {/* Stats Breakdown */}

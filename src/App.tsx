@@ -712,7 +712,6 @@ export default function App() {
               {activeTab === "projections" && (
                 <FutureView
                   calculatedMonths={calculatedMonths}
-                  selectedMonthStr={selectedMonthStr}
                   onSelectMonth={setSelectedMonthStr}
                   onNavigateToEditor={() => setActiveTab("budget")}
                   onAddMonth={handleAddMonth}
