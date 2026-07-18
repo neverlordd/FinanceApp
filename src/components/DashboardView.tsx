@@ -18,7 +18,6 @@ import {
   Sparkles,
   CheckCircle2,
   HelpCircle,
-  PiggyBank,
   DollarSign,
   Briefcase,
   AlertCircle,
@@ -30,7 +29,6 @@ interface DashboardViewProps {
   selectedMonthStr: string;
   onSetSelectedMonthStr: (month: string) => void;
   onUpdateMonthIncome: (monthStr: string, income: number) => void;
-  onUpdateActualBalance: (monthStr: string, actualEndingBalance: number | null) => void;
   onAddExpense: (monthStr: string, expense: Omit<ExpenseItem, 'id'> & { originalAmount?: number; originalCurrency?: string; originalRate?: number }) => void;
   onEditExpense: (monthStr: string, expense: ExpenseItem & { originalAmount?: number; originalCurrency?: string; originalRate?: number }) => void;
   onDeleteExpense: (monthStr: string, expenseId: string) => void;
@@ -82,7 +80,6 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
   selectedMonthStr,
   onSetSelectedMonthStr,
   onUpdateMonthIncome,
-  onUpdateActualBalance,
   onAddExpense,
   onEditExpense,
   onDeleteExpense,
@@ -105,8 +102,6 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
   // Income inline edit state
   const [isEditingIncome, setIsEditingIncome] = useState(false);
   const [incomeInput, setIncomeInput] = useState("");
-  const [isEditingActualBalance, setIsEditingActualBalance] = useState(false);
-  const [actualBalanceInput, setActualBalanceInput] = useState("");
 
   // Table filter state
   const [filterType, setFilterType] = useState<"all" | "expense" | "income">("all");
@@ -286,25 +281,13 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
     }
   };
 
-  const handleSaveActualBalance = () => {
-    const value = parseFloat(actualBalanceInput);
-    if (!Number.isFinite(value)) {
-      triggerAlert("Invalid balance", "Enter a valid balance.");
-      return;
-    }
-    onUpdateActualBalance(selectedMonthStr, value);
-    setIsEditingActualBalance(false);
-  };
-
   // When selected month changes, cancel active state editors
   useEffect(() => {
     setIsEditingIncome(false);
-    setIsEditingActualBalance(false);
     if (currentMonth) {
       setIncomeInput(currentMonth.baseIncome !== undefined ? currentMonth.baseIncome.toString() : currentMonth.income.toString());
-      setActualBalanceInput((currentMonth.actualEndingBalance ?? currentMonth.endingSavings).toString());
     }
-  }, [selectedMonthStr, currentMonth?.monthStr, currentMonth?.baseIncome, currentMonth?.actualEndingBalance, currentMonth?.endingSavings]);
+  }, [selectedMonthStr, currentMonth?.monthStr, currentMonth?.baseIncome]);
 
   useEffect(() => {
     if (!isFormOpen) return;
@@ -532,76 +515,6 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                   {currentMonth.net >= 0 ? "+" : ""}{formatCurrency(currentMonth.net)}
                 </h3>
               </div>
-            </div>
-          </div>
-
-          <div className={`liquid-glass rounded-3xl p-4 transition-all duration-300 ${currentMonth.actualEndingBalance !== undefined ? "border-cyan-400/25 bg-cyan-500/[0.04]" : ""}`}>
-            <div className="flex items-center justify-between gap-3">
-              <div className="flex min-w-0 items-center gap-2.5">
-                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-cyan-400/20 bg-cyan-500/10 text-cyan-300">
-                  <PiggyBank size={15} />
-                </div>
-                <div className="min-w-0">
-                  <div className="flex items-center gap-2">
-                    <span className="text-[9px] font-bold uppercase tracking-wider text-white/40">Actual Balance</span>
-                    <span className={`text-[8px] font-bold uppercase tracking-wider ${currentMonth.actualEndingBalance !== undefined ? "text-cyan-300" : "text-white/25"}`}>
-                      {currentMonth.actualEndingBalance !== undefined ? "Actual" : "Calculated"}
-                    </span>
-                  </div>
-                  {!isEditingActualBalance && (
-                    <p className={`mt-0.5 truncate text-lg font-black ${currentMonth.endingSavings >= 0 ? "text-white" : "text-rose-400"}`}>
-                      {formatCurrency(currentMonth.endingSavings)}
-                    </p>
-                  )}
-                </div>
-              </div>
-
-              {isEditingActualBalance ? (
-                <div className="flex min-w-0 flex-1 items-center justify-end gap-1.5">
-                  <input
-                    type="number"
-                    step="0.01"
-                    value={actualBalanceInput}
-                    onChange={event => setActualBalanceInput(event.target.value)}
-                    onKeyDown={event => {
-                      if (event.key === "Enter") handleSaveActualBalance();
-                      if (event.key === "Escape") setIsEditingActualBalance(false);
-                    }}
-                    className="min-w-0 max-w-36 rounded-full border border-white/[0.12] bg-black/35 px-3 py-2 text-right text-xs font-bold text-white outline-none focus:border-cyan-400/40"
-                    autoFocus
-                  />
-                  <button onClick={handleSaveActualBalance} className="flex h-10 w-10 shrink-0 items-center justify-center bg-cyan-400 text-slate-950" aria-label="Save actual balance">
-                    <Check size={13} strokeWidth={3} />
-                  </button>
-                  <button onClick={() => setIsEditingActualBalance(false)} className="flex h-10 w-10 shrink-0 items-center justify-center border border-white/[0.08] bg-white/[0.04] text-white/45" aria-label="Cancel actual balance">
-                    <X size={13} />
-                  </button>
-                </div>
-              ) : (
-                <div className="flex shrink-0 items-center gap-1.5">
-                  {currentMonth.actualEndingBalance !== undefined && (
-                    <button
-                      onClick={() => {
-                        onUpdateActualBalance(selectedMonthStr, null);
-                        setActualBalanceInput(currentMonth.projectedEndingSavings.toString());
-                      }}
-                      className="flex h-10 w-10 items-center justify-center border border-white/[0.08] bg-white/[0.03] text-white/35 hover:text-white"
-                      aria-label="Use calculated balance"
-                    >
-                      <X size={13} />
-                    </button>
-                  )}
-                  <button
-                    onClick={() => {
-                      setActualBalanceInput((currentMonth.actualEndingBalance ?? currentMonth.endingSavings).toString());
-                      setIsEditingActualBalance(true);
-                    }}
-                    className="flex min-h-10 items-center gap-2 border border-cyan-400/20 bg-cyan-500/10 px-3 text-[10px] font-bold text-cyan-300"
-                  >
-                    <Edit3 size={12} /> Edit
-                  </button>
-                </div>
-              )}
             </div>
           </div>
 

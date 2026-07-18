@@ -709,7 +709,6 @@ export default function App() {
                   selectedMonthStr={selectedMonthStr}
                   onSetSelectedMonthStr={setSelectedMonthStr}
                   onUpdateMonthIncome={handleUpdateMonthIncome}
-                  onUpdateActualBalance={handleUpdateActualBalance}
                   onAddExpense={handleAddExpense}
                   onEditExpense={handleEditExpense}
                   onDeleteExpense={handleDeleteExpense}
