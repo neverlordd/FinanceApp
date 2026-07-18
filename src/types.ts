@@ -33,10 +33,29 @@ export interface DebtItem {
   payments: DebtPayment[];
 }
 
+export interface ExpenseTemplate {
+  id: string;
+  title: string;
+  category: string;
+  amount?: number;
+  originalAmount?: number;
+  originalCurrency?: string;
+  originalRate?: number;
+  source: "recurring" | "debt";
+}
+
+export interface ExpenseTemplateOverride {
+  templateId: string;
+  title?: string;
+  category?: string;
+  amount?: number | null;
+}
+
 export interface FinanceData {
   baselineMonthlyIncome: number; // default monthly income in USD
   baselineBalance: number; // initial savings/balance in USD
   monthlyBudgets: MonthlyBudget[];
   activeMonths?: string[]; // stored in database
   debts?: DebtItem[];
+  expenseTemplateOverrides?: ExpenseTemplateOverride[];
 }

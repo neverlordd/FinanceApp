@@ -1,9 +1,11 @@
 import { useState, useEffect, useRef } from "react";
-import { FinanceData, ExpenseItem, DebtItem } from "./types";
+import { FinanceData, ExpenseItem, DebtItem, ExpenseTemplateOverride } from "./types";
 import { calculateMonthlyStats, CalculatedMonth } from "./utils/calculations";
+import { buildExpenseTemplates } from "./utils/expenseTemplates";
 import { DashboardView } from "./components/DashboardView";
 import { FutureView } from "./components/FutureView";
 import { SettingsView } from "./components/SettingsView";
+import { TemplateSettingsView } from "./components/TemplateSettingsView";
 import { DebtView } from "./components/DebtView";
 import { ConfirmModal } from "./components/ConfirmModal";
 import { apiFetch } from "./api";
@@ -234,6 +236,7 @@ export default function App() {
   // Calculate forward projections and statistics cascading recursively
   const currentMonth = getCurrentMonthStr();
   const calculatedMonths = calculateMonthlyStats(data, currentMonth);
+  const expenseTemplates = buildExpenseTemplates(data);
 
   // Helper to save state back to DB via Sync API
   const saveStateToDB = (updated: FinanceData) => {
@@ -392,6 +395,19 @@ export default function App() {
       baselineBalance
     };
     saveStateToDB(updated);
+  };
+
+  const handleSaveExpenseTemplate = (templateId: string, override: ExpenseTemplateOverride) => {
+    const expenseTemplateOverrides = (data.expenseTemplateOverrides ?? []).filter(item => item.templateId !== templateId);
+    expenseTemplateOverrides.push(override);
+    saveStateToDB({ ...data, expenseTemplateOverrides });
+  };
+
+  const handleResetExpenseTemplate = (templateId: string) => {
+    saveStateToDB({
+      ...data,
+      expenseTemplateOverrides: (data.expenseTemplateOverrides ?? []).filter(item => item.templateId !== templateId),
+    });
   };
 
   // Reset to screenshot Demo Data
@@ -683,7 +699,7 @@ export default function App() {
           <button
             onClick={() => setActiveTab("settings")}
             className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-semibold tracking-wide transition duration-150 cursor-pointer ${
-              activeTab === "settings"
+              activeTab === "settings" || activeTab === "template-settings"
                 ? "bg-white/[0.06] border border-white/[0.1] text-white shadow-[0_4px_12px_rgba(255,255,255,0.02)]"
                 : "text-white/50 hover:text-white hover:bg-white/[0.03] border border-transparent"
             }`}
@@ -713,9 +729,21 @@ export default function App() {
                   onEditExpense={handleEditExpense}
                   onDeleteExpense={handleDeleteExpense}
                   onToggleExpenseCompleted={handleToggleExpenseCompleted}
+                  expenseTemplates={expenseTemplates}
                   onAddMonth={handleAddMonth}
                   onDeleteMonth={handleDeleteMonth}
                   triggerConfirm={triggerConfirm}
+                  triggerAlert={triggerAlert}
+                />
+              )}
+
+              {activeTab === "template-settings" && (
+                <TemplateSettingsView
+                  templates={expenseTemplates}
+                  overrides={data.expenseTemplateOverrides ?? []}
+                  onBack={() => setActiveTab("settings")}
+                  onSave={handleSaveExpenseTemplate}
+                  onReset={handleResetExpenseTemplate}
                   triggerAlert={triggerAlert}
                 />
               )}
@@ -749,6 +777,8 @@ export default function App() {
                   onClearAll={handleClearAll}
                   triggerConfirm={triggerConfirm}
                   triggerAlert={triggerAlert}
+                  onOpenTemplates={() => setActiveTab("template-settings")}
+                  templateCount={expenseTemplates.length}
                 />
               )}
             </motion.div>
@@ -793,9 +823,9 @@ export default function App() {
 
         <button
           onClick={() => setActiveTab("settings")}
-          aria-current={activeTab === "settings" ? "page" : undefined}
+          aria-current={activeTab === "settings" || activeTab === "template-settings" ? "page" : undefined}
           className={`flex flex-col items-center justify-center flex-1 h-full rounded-xl transition cursor-pointer ${
-            activeTab === "settings" ? "text-emerald-400" : "text-slate-400 hover:text-slate-200"
+            activeTab === "settings" || activeTab === "template-settings" ? "text-emerald-400" : "text-slate-400 hover:text-slate-200"
           }`}
         >
           <Settings size={19} />

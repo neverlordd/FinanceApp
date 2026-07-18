@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { CalculatedMonth } from "../utils/calculations";
-import { ExpenseItem } from "../types";
+import { ExpenseItem, ExpenseTemplate } from "../types";
 import {
   Wallet,
   ChevronLeft,
@@ -33,6 +33,7 @@ interface DashboardViewProps {
   onEditExpense: (monthStr: string, expense: ExpenseItem & { originalAmount?: number; originalCurrency?: string; originalRate?: number }) => void;
   onDeleteExpense: (monthStr: string, expenseId: string) => void;
   onToggleExpenseCompleted: (monthStr: string, expenseId: string) => void;
+  expenseTemplates: ExpenseTemplate[];
   onAddMonth?: () => void;
   onDeleteMonth?: (monthStr: string) => void;
   triggerConfirm: (title: string, message: string, onConfirm: () => void) => void;
@@ -75,6 +76,8 @@ const INCOME_CATEGORIES = [
   "Other"
 ];
 
+const normalizeTemplateTitle = (value: string) => value.trim().replace(/\s+/g, " ").toLocaleLowerCase();
+
 export const DashboardView: React.FC<DashboardViewProps> = ({
   calculatedMonths,
   selectedMonthStr,
@@ -84,6 +87,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
   onEditExpense,
   onDeleteExpense,
   onToggleExpenseCompleted,
+  expenseTemplates,
   onAddMonth,
   onDeleteMonth,
   triggerConfirm,
@@ -171,6 +175,27 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
     setCurrency("USD");
     setRawAmount("");
     setExchangeRate("1.0");
+    setIsFormOpen(true);
+  };
+
+  const handleOpenTemplate = (template: ExpenseTemplate) => {
+    setEditingExpense(null);
+    setTransactionType("expense");
+    if (EXPENSE_CATEGORIES.includes(template.category)) {
+      setCategory(template.category);
+      setCustomCategory("");
+      setIsCustomCategory(false);
+    } else {
+      setCategory("Other");
+      setCustomCategory(template.category);
+      setIsCustomCategory(true);
+    }
+    setDescription(template.title);
+    setCompleted(false);
+    const templateCurrency = template.originalCurrency || "USD";
+    setCurrency(templateCurrency);
+    setRawAmount((template.originalAmount ?? template.amount)?.toString() ?? "");
+    setExchangeRate((template.originalRate ?? DEFAULT_RATES[templateCurrency] ?? 1).toString());
     setIsFormOpen(true);
   };
 
@@ -587,6 +612,53 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                 </button>
               </div>
             </div>
+
+            {expenseTemplates.length > 0 && (
+              <section className="space-y-2" aria-label="Expense templates">
+                <div className="flex items-center justify-between px-1">
+                  <h3 className="flex items-center gap-1.5 text-[9px] font-black uppercase tracking-widest text-white/45">
+                    <Sparkles size={12} className="text-cyan-300" /> Templates
+                  </h3>
+                  <span className="text-[9px] font-bold text-white/25">{expenseTemplates.length}</span>
+                </div>
+                <div className="scrollbar-none flex gap-2 overflow-x-auto pb-1">
+                  {expenseTemplates.map(template => {
+                    const alreadyAdded = template.source === "recurring" && currentMonth.expenses.some(item =>
+                      item.type !== "income" && normalizeTemplateTitle(item.description) === normalizeTemplateTitle(template.title)
+                    );
+
+                    return (
+                      <button
+                        key={template.id}
+                        onClick={() => handleOpenTemplate(template)}
+                        disabled={alreadyAdded}
+                        className={`liquid-glass flex min-h-14 min-w-[9.5rem] shrink-0 items-center justify-between gap-3 px-4 py-2.5 text-left transition-all ${
+                          alreadyAdded
+                            ? "cursor-default opacity-45"
+                            : template.source === "debt"
+                              ? "border-rose-500/15 bg-rose-500/[0.05] hover:border-rose-400/30"
+                              : "border-cyan-400/15 bg-cyan-500/[0.04] hover:border-cyan-300/30"
+                        }`}
+                      >
+                        <span className="min-w-0">
+                          <span className="block max-w-32 truncate text-[11px] font-bold text-white/90">{template.title}</span>
+                          <span className={`mt-0.5 block text-[8px] font-bold uppercase tracking-wider ${template.source === "debt" ? "text-rose-300/65" : "text-cyan-300/60"}`}>
+                            {alreadyAdded ? "Added" : template.source === "debt" ? "Debt" : template.category}
+                          </span>
+                        </span>
+                        {alreadyAdded ? (
+                          <Check size={14} className="shrink-0 text-emerald-400" />
+                        ) : template.amount !== undefined ? (
+                          <span className="shrink-0 text-[10px] font-black text-white/60">{formatCurrency(template.amount)}</span>
+                        ) : (
+                          <Plus size={14} className="shrink-0 text-white/35" />
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+              </section>
+            )}
 
             {/* Transactions remain on the page instead of inside a nested scroll container. */}
             <div className="transaction-list space-y-6">

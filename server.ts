@@ -57,6 +57,17 @@ const isFinanceData = (value: unknown): value is FinanceData => {
     )
   )) return false;
 
+  if (data.expenseTemplateOverrides !== undefined && (
+    !Array.isArray(data.expenseTemplateOverrides) ||
+    data.expenseTemplateOverrides.some(template =>
+      !template ||
+      typeof template.templateId !== "string" || template.templateId.length === 0 ||
+      (template.title !== undefined && (typeof template.title !== "string" || template.title.trim().length === 0)) ||
+      (template.category !== undefined && (typeof template.category !== "string" || template.category.trim().length === 0)) ||
+      (template.amount !== undefined && template.amount !== null && (!isFiniteNumber(template.amount) || template.amount <= 0))
+    )
+  )) return false;
+
   return data.monthlyBudgets.every(budget =>
     budget &&
     /^\d{4}-(0[1-9]|1[0-2])$/.test(budget.monthStr) &&
