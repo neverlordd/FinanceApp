@@ -14,6 +14,7 @@ export interface MonthlyBudget {
   monthStr: string; // YYYY-MM
   income: number; // monthly income in USD
   expenses: ExpenseItem[];
+  actualEndingBalance?: number;
 }
 
 export interface DebtPayment {

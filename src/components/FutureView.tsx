@@ -6,12 +6,15 @@ import {
   ArrowRight,
   Plus,
   Trash2,
-  ChevronDown
+  ChevronDown,
+  Check,
+  X
 } from "lucide-react";
 
 interface FutureViewProps {
   calculatedMonths: CalculatedMonth[];
   onSelectMonth: (monthStr: string) => void;
+  onUpdateActualBalance: (monthStr: string, actualEndingBalance: number | null) => void;
   onNavigateToEditor: () => void;
   onAddMonth?: () => void;
   onDeleteMonth?: (monthStr: string) => void;
@@ -20,11 +23,13 @@ interface FutureViewProps {
 export const FutureView: React.FC<FutureViewProps> = ({
   calculatedMonths,
   onSelectMonth,
+  onUpdateActualBalance,
   onNavigateToEditor,
   onAddMonth,
   onDeleteMonth
 }) => {
   const [expandedMonthStr, setExpandedMonthStr] = React.useState<string | null>(null);
+  const [actualBalanceInput, setActualBalanceInput] = React.useState("");
   const currentMonthObj = calculatedMonths.find(month => month.isCurrent) ?? calculatedMonths[0];
   const summaryMonthObj = calculatedMonths.find(month => month.monthStr === expandedMonthStr) ?? currentMonthObj;
 
@@ -34,10 +39,23 @@ export const FutureView: React.FC<FutureViewProps> = ({
     }
   }, [calculatedMonths, expandedMonthStr]);
 
+  React.useEffect(() => {
+    const expandedMonth = calculatedMonths.find(month => month.monthStr === expandedMonthStr);
+    if (expandedMonth) {
+      setActualBalanceInput((expandedMonth.actualEndingBalance ?? expandedMonth.endingSavings).toString());
+    }
+  }, [calculatedMonths, expandedMonthStr]);
+
   const toggleMonth = (monthStr: string) => {
     const next = expandedMonthStr === monthStr ? null : monthStr;
     setExpandedMonthStr(next);
     if (next) onSelectMonth(next);
+  };
+
+  const saveActualBalance = (monthStr: string) => {
+    const value = parseFloat(actualBalanceInput);
+    if (!Number.isFinite(value)) return;
+    onUpdateActualBalance(monthStr, value);
   };
 
   const formatCurrency = (val: number) => {
@@ -65,7 +83,8 @@ export const FutureView: React.FC<FutureViewProps> = ({
           <div>
             <div className="flex items-center justify-between mb-4">
               <span className="text-[10px] font-bold text-white/40 tracking-wider uppercase">
-                End-of-Month Savings{summaryMonthObj ? ` · ${summaryMonthObj.monthName} '${summaryMonthObj.monthYear.slice(2)}` : ""}
+                {summaryMonthObj?.actualEndingBalance !== undefined ? "Actual End Balance" : "End-of-Month Savings"}
+                {summaryMonthObj ? ` · ${summaryMonthObj.monthName} '${summaryMonthObj.monthYear.slice(2)}` : ""}
               </span>
               <div className="p-2.5 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 rounded-xl">
                 <Wallet size={18} strokeWidth={2.2} />
@@ -230,10 +249,46 @@ export const FutureView: React.FC<FutureViewProps> = ({
                       </div>
                     </div>
 
+                    <form
+                      onSubmit={event => {
+                        event.preventDefault();
+                        saveActualBalance(month.monthStr);
+                      }}
+                      onClick={event => event.stopPropagation()}
+                      className="mt-4 flex items-end gap-2 border-t border-white/[0.05] pt-3"
+                    >
+                      <label className="min-w-0 flex-1">
+                        <span className="mb-1 block text-[8px] font-bold uppercase tracking-wider text-white/30">Actual Balance</span>
+                        <input
+                          type="number"
+                          step="0.01"
+                          value={actualBalanceInput}
+                          onChange={event => setActualBalanceInput(event.target.value)}
+                          className="w-full rounded-full border border-white/[0.09] bg-black/30 px-3 py-2 text-xs font-bold text-white outline-none focus:border-cyan-400/40"
+                        />
+                      </label>
+                      {month.actualEndingBalance !== undefined && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            onUpdateActualBalance(month.monthStr, null);
+                            setActualBalanceInput(month.projectedEndingSavings.toString());
+                          }}
+                          className="flex h-10 w-10 shrink-0 items-center justify-center border border-white/[0.08] bg-white/[0.03] text-white/35"
+                          aria-label="Use calculated balance"
+                        >
+                          <X size={13} />
+                        </button>
+                      )}
+                      <button type="submit" className="flex h-10 w-10 shrink-0 items-center justify-center bg-cyan-400 text-slate-950" aria-label="Save actual balance">
+                        <Check size={13} strokeWidth={3} />
+                      </button>
+                    </form>
+
                     {/* Savings Goal Progress Summary */}
                     <div className="mt-4 pt-3 border-t border-white/[0.04] flex items-end justify-between">
                       <div className="space-y-0.5">
-                        <p className="text-[8px] uppercase tracking-wider font-bold text-white/30">Savings</p>
+                        <p className="text-[8px] uppercase tracking-wider font-bold text-white/30">{month.actualEndingBalance !== undefined ? "Actual Savings" : "Savings"}</p>
                         <p className={`text-sm font-bold font-mono tracking-tight ${month.endingSavings >= 0 ? "text-white" : "text-rose-400"}`}>
                           {formatCurrency(month.endingSavings)}
                         </p>

@@ -61,6 +61,7 @@ const isFinanceData = (value: unknown): value is FinanceData => {
     budget &&
     /^\d{4}-(0[1-9]|1[0-2])$/.test(budget.monthStr) &&
     isFiniteNumber(budget.income) && budget.income >= 0 &&
+    (budget.actualEndingBalance === undefined || isFiniteNumber(budget.actualEndingBalance)) &&
     Array.isArray(budget.expenses) &&
     budget.expenses.every(item =>
       item &&

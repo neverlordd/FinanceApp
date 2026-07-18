@@ -14,7 +14,9 @@ export interface CalculatedMonth {
   completedExpenses: number; // USD (only items of type !== 'income' and completed)
   net: number; // USD (income - totalExpenses)
   startingSavings: number; // cumulative from prior months + baselineBalance
-  endingSavings: number; // startingSavings + net
+  projectedEndingSavings: number;
+  actualEndingBalance?: number;
+  endingSavings: number; // actual balance when set, otherwise startingSavings + net
 }
 
 export const getEnglishMonthName = (monthStr: string): { name: string; year: string } => {
@@ -105,7 +107,11 @@ export const calculateMonthlyStats = (data: FinanceData, currentMonthStr: string
 
     const net = income - totalExpenses;
     const startingSavings = runningSavings;
-    const endingSavings = startingSavings + net;
+    const projectedEndingSavings = startingSavings + net;
+    const actualEndingBalance = budget && Number.isFinite(budget.actualEndingBalance)
+      ? budget.actualEndingBalance
+      : undefined;
+    const endingSavings = actualEndingBalance ?? projectedEndingSavings;
 
     const { name, year } = getEnglishMonthName(monthStr);
 
@@ -123,6 +129,8 @@ export const calculateMonthlyStats = (data: FinanceData, currentMonthStr: string
       completedExpenses,
       net,
       startingSavings,
+      projectedEndingSavings,
+      actualEndingBalance,
       endingSavings
     });
 

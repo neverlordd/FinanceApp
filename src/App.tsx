@@ -293,6 +293,17 @@ export default function App() {
     saveStateToDB(updated);
   };
 
+  const handleUpdateActualBalance = (monthStr: string, actualEndingBalance: number | null) => {
+    const { budgets, index } = getOrCreateMonthlyBudget(data, monthStr);
+    if (actualEndingBalance === null) {
+      const { actualEndingBalance: _removed, ...budgetWithoutActualBalance } = budgets[index];
+      budgets[index] = budgetWithoutActualBalance;
+    } else {
+      budgets[index] = { ...budgets[index], actualEndingBalance };
+    }
+    saveStateToDB({ ...data, monthlyBudgets: budgets });
+  };
+
   // Add Expense to specific month
   const handleAddExpense = (monthStr: string, newExp: Omit<ExpenseItem, 'id'>) => {
     const { budgets, index } = getOrCreateMonthlyBudget(data, monthStr);
@@ -698,6 +709,7 @@ export default function App() {
                   selectedMonthStr={selectedMonthStr}
                   onSetSelectedMonthStr={setSelectedMonthStr}
                   onUpdateMonthIncome={handleUpdateMonthIncome}
+                  onUpdateActualBalance={handleUpdateActualBalance}
                   onAddExpense={handleAddExpense}
                   onEditExpense={handleEditExpense}
                   onDeleteExpense={handleDeleteExpense}
@@ -713,6 +725,7 @@ export default function App() {
                 <FutureView
                   calculatedMonths={calculatedMonths}
                   onSelectMonth={setSelectedMonthStr}
+                  onUpdateActualBalance={handleUpdateActualBalance}
                   onNavigateToEditor={() => setActiveTab("budget")}
                   onAddMonth={handleAddMonth}
                   onDeleteMonth={handleDeleteMonth}
