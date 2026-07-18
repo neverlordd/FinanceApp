@@ -12,7 +12,6 @@ import {
 interface SettingsViewProps {
   data: FinanceData;
   onUpdateBaseline: (baselineMonthlyIncome: number, baselineBalance: number) => void;
-  onResetToDemo: () => void;
   onClearAll: () => void;
   triggerConfirm: (title: string, message: string, onConfirm: () => void) => void;
   triggerAlert: (title: string, message: string) => void;
@@ -23,7 +22,6 @@ interface SettingsViewProps {
 export const SettingsView: React.FC<SettingsViewProps> = ({
   data,
   onUpdateBaseline,
-  onResetToDemo,
   onClearAll,
   triggerConfirm,
   triggerAlert,
@@ -136,24 +134,6 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
         </h3>
 
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
-          <div className="space-y-0.5">
-            <h4 className="font-semibold text-white/85">Demo Template</h4>
-          </div>
-          <button
-            onClick={() => {
-              triggerConfirm(
-                "Restore demo template",
-                "Your current records will be replaced with demo data. Continue?",
-                onResetToDemo
-              );
-            }}
-            className="px-4 py-2.5 border border-white/[0.08] hover:border-white/[0.2] hover:bg-white/[0.04] rounded-full text-white/70 hover:text-white font-semibold transition cursor-pointer text-center shrink-0"
-          >
-            Restore Demo
-          </button>
-        </div>
-
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs pt-3 border-t border-white/[0.06]">
           <div className="space-y-0.5">
             <h4 className="font-semibold text-white/85">Clear All Data</h4>
           </div>

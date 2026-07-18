@@ -237,7 +237,6 @@ export default function App() {
   const currentMonth = getCurrentMonthStr();
   const calculatedMonths = calculateMonthlyStats(data, currentMonth);
   const expenseTemplates = buildExpenseTemplates(data);
-  const allExpenseTemplates = buildExpenseTemplates(data, true);
 
   // Helper to save state back to DB via Sync API
   const saveStateToDB = (updated: FinanceData) => {
@@ -748,13 +747,12 @@ export default function App() {
 
               {activeTab === "template-settings" && (
                 <TemplateSettingsView
-                  templates={allExpenseTemplates}
+                  templates={expenseTemplates}
                   overrides={data.expenseTemplateOverrides ?? []}
                   onBack={() => setActiveTab("settings")}
                   onSave={handleSaveExpenseTemplate}
                   onReset={handleResetExpenseTemplate}
                   onDelete={templateId => handleSetExpenseTemplateHidden(templateId, true)}
-                  onRestore={templateId => handleSetExpenseTemplateHidden(templateId, false)}
                   triggerConfirm={triggerConfirm}
                   triggerAlert={triggerAlert}
                 />
@@ -785,7 +783,6 @@ export default function App() {
                 <SettingsView
                   data={data}
                   onUpdateBaseline={handleUpdateBaseline}
-                  onResetToDemo={handleResetToDemo}
                   onClearAll={handleClearAll}
                   triggerConfirm={triggerConfirm}
                   triggerAlert={triggerAlert}
