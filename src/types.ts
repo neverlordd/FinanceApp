@@ -49,6 +49,7 @@ export interface ExpenseTemplateOverride {
   title?: string;
   category?: string;
   amount?: number | null;
+  hidden?: boolean;
 }
 
 export interface FinanceData {

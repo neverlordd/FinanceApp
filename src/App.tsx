@@ -237,6 +237,7 @@ export default function App() {
   const currentMonth = getCurrentMonthStr();
   const calculatedMonths = calculateMonthlyStats(data, currentMonth);
   const expenseTemplates = buildExpenseTemplates(data);
+  const allExpenseTemplates = buildExpenseTemplates(data, true);
 
   // Helper to save state back to DB via Sync API
   const saveStateToDB = (updated: FinanceData) => {
@@ -408,6 +409,14 @@ export default function App() {
       ...data,
       expenseTemplateOverrides: (data.expenseTemplateOverrides ?? []).filter(item => item.templateId !== templateId),
     });
+  };
+
+  const handleSetExpenseTemplateHidden = (templateId: string, hidden: boolean) => {
+    const current = data.expenseTemplateOverrides ?? [];
+    const existing = current.find(item => item.templateId === templateId) ?? { templateId };
+    const expenseTemplateOverrides = current.filter(item => item.templateId !== templateId);
+    expenseTemplateOverrides.push({ ...existing, hidden });
+    saveStateToDB({ ...data, expenseTemplateOverrides });
   };
 
   // Reset to screenshot Demo Data
@@ -739,11 +748,14 @@ export default function App() {
 
               {activeTab === "template-settings" && (
                 <TemplateSettingsView
-                  templates={expenseTemplates}
+                  templates={allExpenseTemplates}
                   overrides={data.expenseTemplateOverrides ?? []}
                   onBack={() => setActiveTab("settings")}
                   onSave={handleSaveExpenseTemplate}
                   onReset={handleResetExpenseTemplate}
+                  onDelete={templateId => handleSetExpenseTemplateHidden(templateId, true)}
+                  onRestore={templateId => handleSetExpenseTemplateHidden(templateId, false)}
+                  triggerConfirm={triggerConfirm}
                   triggerAlert={triggerAlert}
                 />
               )}

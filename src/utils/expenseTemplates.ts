@@ -12,7 +12,7 @@ type ExpenseOccurrence = {
   item: ExpenseItem;
 };
 
-export const buildExpenseTemplates = (data: FinanceData): ExpenseTemplate[] => {
+export const buildExpenseTemplates = (data: FinanceData, includeHidden = false): ExpenseTemplate[] => {
   const occurrencesByTitle = new Map<string, ExpenseOccurrence[]>();
 
   for (const budget of data.monthlyBudgets) {
@@ -79,7 +79,9 @@ export const buildExpenseTemplates = (data: FinanceData): ExpenseTemplate[] => {
   }
 
   const overrides = new Map((data.expenseTemplateOverrides ?? []).map(override => [override.templateId, override]));
-  const resolvedTemplates = [...templates.values()].map(template => {
+  const resolvedTemplates = [...templates.values()].filter(template => {
+    return includeHidden || !overrides.get(template.id)?.hidden;
+  }).map(template => {
     const override = overrides.get(template.id);
     if (!override) return template;
 

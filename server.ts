@@ -64,7 +64,8 @@ const isFinanceData = (value: unknown): value is FinanceData => {
       typeof template.templateId !== "string" || template.templateId.length === 0 ||
       (template.title !== undefined && (typeof template.title !== "string" || template.title.trim().length === 0)) ||
       (template.category !== undefined && (typeof template.category !== "string" || template.category.trim().length === 0)) ||
-      (template.amount !== undefined && template.amount !== null && (!isFiniteNumber(template.amount) || template.amount <= 0))
+      (template.amount !== undefined && template.amount !== null && (!isFiniteNumber(template.amount) || template.amount <= 0)) ||
+      (template.hidden !== undefined && typeof template.hidden !== "boolean")
     )
   )) return false;
 

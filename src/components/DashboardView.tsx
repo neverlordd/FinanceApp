@@ -21,7 +21,8 @@ import {
   DollarSign,
   Briefcase,
   AlertCircle,
-  Calendar
+  Calendar,
+  ChevronDown
 } from "lucide-react";
 
 interface DashboardViewProps {
@@ -106,6 +107,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
   // Income inline edit state
   const [isEditingIncome, setIsEditingIncome] = useState(false);
   const [incomeInput, setIncomeInput] = useState("");
+  const [templatesExpanded, setTemplatesExpanded] = useState(false);
 
   // Table filter state
   const [filterType, setFilterType] = useState<"all" | "expense" | "income">("all");
@@ -615,13 +617,19 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
 
             {expenseTemplates.length > 0 && (
               <section className="space-y-2" aria-label="Expense templates">
-                <div className="flex items-center justify-between px-1">
-                  <h3 className="flex items-center gap-1.5 text-[9px] font-black uppercase tracking-widest text-white/45">
-                    <Sparkles size={12} className="text-cyan-300" /> Templates
-                  </h3>
-                  <span className="text-[9px] font-bold text-white/25">{expenseTemplates.length}</span>
-                </div>
-                <div className="scrollbar-none flex gap-2 overflow-x-auto pb-1">
+                <button
+                  type="button"
+                  onClick={() => setTemplatesExpanded(value => !value)}
+                  aria-expanded={templatesExpanded}
+                  className="flex min-h-11 w-full items-center justify-between rounded-full border border-white/[0.08] bg-white/[0.025] px-4 text-left transition hover:bg-white/[0.05]"
+                >
+                  <span className="text-[10px] font-black uppercase tracking-widest text-white/55">Templates</span>
+                  <span className="flex items-center gap-2 text-[9px] font-bold text-white/30">
+                    {expenseTemplates.length}
+                    <ChevronDown size={14} className={`transition-transform duration-200 ${templatesExpanded ? "rotate-180" : ""}`} />
+                  </span>
+                </button>
+                {templatesExpanded && <div className="scrollbar-none flex gap-2 overflow-x-auto pb-1">
                   {expenseTemplates.map(template => {
                     const alreadyAdded = template.source === "recurring" && currentMonth.expenses.some(item =>
                       item.type !== "income" && normalizeTemplateTitle(item.description) === normalizeTemplateTitle(template.title)
@@ -656,7 +664,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                       </button>
                     );
                   })}
-                </div>
+                </div>}
               </section>
             )}
 
