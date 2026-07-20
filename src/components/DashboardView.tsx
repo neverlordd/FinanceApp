@@ -12,7 +12,6 @@ import {
   Trash2,
   Check,
   ArrowDownRight,
-  Sparkles,
   HelpCircle,
   DollarSign,
   Briefcase,
@@ -385,7 +384,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                     <button
                       key={m.monthStr}
                       onClick={() => onSetSelectedMonthStr(m.monthStr)}
-                      className={`budget-month-pill snap-start shrink-0 px-3.5 py-2 rounded-2xl text-[11px] font-bold transition-all duration-300 cursor-pointer border flex items-center gap-1.5 ${
+                      className={`budget-month-pill snap-start shrink-0 px-3.5 py-2 rounded-full text-[11px] font-bold transition-all duration-300 cursor-pointer border flex items-center gap-1.5 ${
                         isActive
                           ? "bg-emerald-500 text-slate-950 border-emerald-400/30 shadow-[0_4px_12px_rgba(16,185,129,0.25)] scale-[1.01]"
                           : "bg-white/[0.02] text-white/50 hover:text-white hover:bg-white/[0.05] border-white/[0.04] hover:border-white/[0.1]"
@@ -399,11 +398,10 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
               {onAddMonth && (
                 <button
                   onClick={onAddMonth}
-                  className="shrink-0 px-3 py-2 rounded-2xl text-[11px] font-bold bg-emerald-500/10 text-emerald-400 hover:text-emerald-300 hover:bg-emerald-500/20 border border-emerald-500/20 hover:border-emerald-500/30 transition-all duration-300 flex items-center justify-center gap-1 cursor-pointer active:scale-95"
+                  className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-emerald-500/20 bg-emerald-500/10 text-emerald-400 transition-all duration-300 hover:border-emerald-500/30 hover:bg-emerald-500/20 hover:text-emerald-300 active:scale-95"
                   aria-label="Add next month"
                 >
                   <Plus size={14} strokeWidth={3} />
-                  <span className="hidden sm:inline">Add</span>
                 </button>
               )}
             </div>
@@ -462,7 +460,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                     </h3>
                     <button
                       onClick={() => setIsEditingIncome(true)}
-                      className="p-0.5 text-white/30 hover:text-emerald-400 rounded transition duration-150 opacity-0 group-hover/edit:opacity-100 sm:opacity-100 cursor-pointer"
+                      className="flex h-8 w-8 items-center justify-center rounded-full text-white/30 transition duration-150 hover:bg-white/[0.05] hover:text-emerald-400 sm:opacity-100"
                       aria-label="Edit baseline income"
                     >
                       <Edit3 size={11} />
@@ -597,7 +595,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                   className="mobile-primary-action flex min-w-0 items-center justify-center gap-2 px-3 py-3 bg-rose-500/10 hover:bg-rose-500/15 border border-rose-500/20 hover:border-rose-500/30 text-rose-300 hover:text-rose-200 text-xs font-bold tracking-wide transition-all duration-200 cursor-pointer active:scale-95"
                 >
                   <FigmaIcon name="add-red" size={14} />
-                  <span className="truncate">Expence</span>
+                  <span className="truncate">Expense</span>
                 </button>
 
                 <button
@@ -691,7 +689,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                                   aria-label={item.completed ? "Mark as not received" : "Mark as received"}
                                 >
                                   <div
-                                    className={`w-5 h-5 rounded-md border flex items-center justify-center transition-all duration-200 ${
+                                    className={`w-5 h-5 rounded-full border flex items-center justify-center transition-all duration-200 ${
                                       item.completed
                                         ? "bg-emerald-500/20 border-emerald-500/50 text-emerald-400 shadow-[0_0_8px_rgba(16,185,129,0.2)]"
                                         : "border-white/20 bg-white/5 hover:border-emerald-500 hover:bg-emerald-500/10 text-transparent"
@@ -739,7 +737,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                                       e.stopPropagation();
                                       handleOpenEditForm(item);
                                     }}
-                                    className="transaction-row-action p-1 bg-white/[0.03] hover:bg-white/[0.08] border border-white/[0.06] hover:border-white/[0.12] text-white/40 hover:text-white rounded-md transition-all cursor-pointer"
+                                    className="transaction-row-action rounded-full border border-white/[0.06] bg-white/[0.03] p-1 text-white/40 transition-all hover:border-white/[0.12] hover:bg-white/[0.08] hover:text-white"
                                     aria-label="Edit"
                                   >
                                     <FigmaIcon name="edit-2" size={16} />
@@ -753,7 +751,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                                         () => onDeleteExpense(selectedMonthStr, item.id)
                                       );
                                     }}
-                                    className="transaction-row-action p-1 bg-rose-500/5 hover:bg-rose-500/20 border border-rose-500/10 text-rose-400 hover:text-rose-300 rounded-md transition-all cursor-pointer"
+                                    className="transaction-row-action rounded-full border border-rose-500/10 bg-rose-500/5 p-1 text-rose-400 transition-all hover:bg-rose-500/20 hover:text-rose-300"
                                     aria-label="Delete"
                                   >
                                     <FigmaIcon name="trash" size={16} />
@@ -789,7 +787,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                                     aria-label="Mark as paid"
                                   >
                                     <div
-                                      className="w-5 h-5 rounded-md border flex items-center justify-center transition-all duration-200 border-white/20 bg-white/5 hover:border-emerald-500 hover:bg-emerald-500/10 text-transparent"
+                                      className="w-5 h-5 rounded-full border flex items-center justify-center transition-all duration-200 border-white/20 bg-white/5 hover:border-emerald-500 hover:bg-emerald-500/10 text-transparent"
                                     >
                                       <Check size={11} className="scale-50 opacity-0" strokeWidth={3} />
                                     </div>
@@ -833,7 +831,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                                         e.stopPropagation();
                                         handleOpenEditForm(item);
                                       }}
-                                      className="transaction-row-action p-1 bg-white/[0.03] hover:bg-white/[0.08] border border-white/[0.06] hover:border-white/[0.12] text-white/40 hover:text-white rounded-md transition-all cursor-pointer"
+                                      className="transaction-row-action rounded-full border border-white/[0.06] bg-white/[0.03] p-1 text-white/40 transition-all hover:border-white/[0.12] hover:bg-white/[0.08] hover:text-white"
                                       aria-label="Edit"
                                     >
                                       <FigmaIcon name="edit-2" size={16} />
@@ -847,7 +845,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                                           () => onDeleteExpense(selectedMonthStr, item.id)
                                         );
                                       }}
-                                      className="transaction-row-action p-1 bg-rose-500/5 hover:bg-rose-500/20 border border-rose-500/10 text-rose-400 hover:text-rose-300 rounded-md transition-all cursor-pointer"
+                                      className="transaction-row-action rounded-full border border-rose-500/10 bg-rose-500/5 p-1 text-rose-400 transition-all hover:bg-rose-500/20 hover:text-rose-300"
                                       aria-label="Delete"
                                     >
                                       <FigmaIcon name="trash" size={16} />
@@ -883,7 +881,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                                     aria-label="Mark as unpaid"
                                   >
                                     <div
-                                      className="w-5 h-5 rounded-md border flex items-center justify-center transition-all duration-200 bg-emerald-500/20 border-emerald-500/50 text-emerald-400 shadow-[0_0_8px_rgba(16,185,129,0.2)]"
+                                      className="w-5 h-5 rounded-full border flex items-center justify-center transition-all duration-200 bg-emerald-500/20 border-emerald-500/50 text-emerald-400 shadow-[0_0_8px_rgba(16,185,129,0.2)]"
                                     >
                                       <FigmaIcon name="tick-circle" size={24} />
                                     </div>
@@ -927,7 +925,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                                         e.stopPropagation();
                                         handleOpenEditForm(item);
                                       }}
-                                      className="transaction-row-action p-1 bg-white/[0.03] hover:bg-white/[0.08] border border-white/[0.06] hover:border-white/[0.12] text-white/40 hover:text-white rounded-md transition-all cursor-pointer"
+                                      className="transaction-row-action rounded-full border border-white/[0.06] bg-white/[0.03] p-1 text-white/40 transition-all hover:border-white/[0.12] hover:bg-white/[0.08] hover:text-white"
                                       aria-label="Edit"
                                     >
                                       <FigmaIcon name="edit-2" size={16} />
@@ -941,7 +939,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                                           () => onDeleteExpense(selectedMonthStr, item.id)
                                         );
                                       }}
-                                      className="transaction-row-action p-1 bg-rose-500/5 hover:bg-rose-500/20 border border-rose-500/10 text-rose-400 hover:text-rose-300 rounded-md transition-all cursor-pointer"
+                                      className="transaction-row-action rounded-full border border-rose-500/10 bg-rose-500/5 p-1 text-rose-400 transition-all hover:bg-rose-500/20 hover:text-rose-300"
                                       aria-label="Delete"
                                     >
                                       <FigmaIcon name="trash" size={16} />
@@ -971,28 +969,28 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
           }}
           role="presentation"
         >
-          <div className="liquid-glass-strong rounded-[28px] w-full max-w-md max-h-[calc(100dvh-2rem)] overflow-y-auto relative animate-scaleUp" role="dialog" aria-modal="true" aria-label={editingExpense ? "Edit transaction" : "New transaction"}>
+          <div className="transaction-modal liquid-glass-strong w-full max-w-md max-h-[calc(100dvh-2rem)] overflow-y-auto relative animate-scaleUp" role="dialog" aria-modal="true" aria-label={editingExpense ? "Edit transaction" : "New transaction"}>
 
             {/* Modal header */}
-            <div className="px-6 py-5 border-b border-white/[0.06] flex items-center justify-between bg-black/30">
-              <h3 className="text-sm font-black text-white uppercase tracking-wider flex items-center gap-2">
-                <Sparkles size={16} className={transactionType === "income" ? "text-emerald-400" : "text-rose-400"} />
-                {editingExpense ? "Edit Transaction" : "New Transaction"}
+            <div className="transaction-modal-header flex items-center justify-between border-b border-white/[0.09] px-5 py-4">
+              <h3 className="text-base font-semibold text-white">
+                {editingExpense ? "Edit transaction" : "New transaction"}
               </h3>
               <button
                 onClick={() => setIsFormOpen(false)}
-                className="p-1.5 text-white/40 hover:text-white hover:bg-white/[0.04] rounded-xl transition duration-150 cursor-pointer"
+                className="figma-icon-button text-white/45 transition hover:text-white"
+                aria-label="Close"
               >
                 <X size={18} />
               </button>
             </div>
 
-            <form onSubmit={handleFormSubmit} className="p-6 space-y-5">
+            <form onSubmit={handleFormSubmit} className="transaction-modal-form space-y-4 p-5">
 
               {/* Type Switcher Segmented Control */}
               <div className="space-y-1.5">
-                <label className="text-[10px] font-bold text-white/40 uppercase tracking-widest font-mono">Transaction Type</label>
-                <div className="grid grid-cols-2 bg-black/40 p-1 rounded-2xl border border-white/[0.04]">
+                <label className="text-[11px] text-white/45">Transaction type</label>
+                <div className="grid grid-cols-2 rounded-full border border-white/[0.04] bg-black/40 p-1">
                   <button
                     type="button"
                     onClick={() => {
@@ -1000,7 +998,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                       setCategory("Living");
                       setIsCustomCategory(false);
                     }}
-                    className={`py-2 text-xs font-bold rounded-xl transition-all duration-200 cursor-pointer text-center ${
+                    className={`rounded-full py-2 text-center text-xs font-bold transition-all duration-200 ${
                       transactionType === "expense"
                         ? "bg-rose-500/15 text-rose-300 border border-rose-500/20"
                         : "text-white/40 hover:text-white"
@@ -1015,7 +1013,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                       setCategory("Salary");
                       setIsCustomCategory(false);
                     }}
-                    className={`py-2 text-xs font-bold rounded-xl transition-all duration-200 cursor-pointer text-center ${
+                    className={`rounded-full py-2 text-center text-xs font-bold transition-all duration-200 ${
                       transactionType === "income"
                         ? "bg-emerald-500/15 text-emerald-300 border border-emerald-500/20"
                         : "text-white/40 hover:text-white"
@@ -1028,7 +1026,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
 
               {/* Category selector */}
               <div className="space-y-1.5">
-                <label className="text-[10px] font-bold text-white/40 uppercase tracking-widest font-mono">Category</label>
+                <label className="text-[11px] text-white/45">Category</label>
 
                 {isCustomCategory ? (
                   <div className="flex gap-2 animate-fadeIn">
@@ -1072,7 +1070,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
 
               {/* Title Input */}
               <div className="space-y-1.5">
-                <label className="text-[10px] font-bold text-white/40 uppercase tracking-widest font-mono">Title *</label>
+                <label className="text-[11px] text-white/45">Title</label>
                 <input
                   type="text"
                   required
@@ -1083,34 +1081,34 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
               </div>
 
               {/* CURRENCY CONVERTER SECTION (Pristine visual component) */}
-              <div className="bg-white/[0.01] border border-white/[0.06] p-4 rounded-2xl space-y-3">
+              <div className="space-y-3 border-t border-white/[0.09] pt-4">
                 <div className="flex items-center justify-between">
-                  <span className="text-[10px] font-bold text-white/40 uppercase tracking-widest font-mono flex items-center gap-1">
-                    Currency Converter
+                  <span className="text-[11px] text-white/45">
+                    Currency
                   </span>
-                  <span className="text-[10px] font-mono text-emerald-400 font-bold">⇒ USD ($)</span>
+                  <span className="text-[11px] font-semibold text-[#29ff5e]">to USD</span>
                 </div>
 
                 <div className="grid grid-cols-2 gap-3">
                   {/* Currency Select */}
                   <div className="space-y-1">
-                    <label className="text-[8px] text-white/40 font-bold uppercase tracking-wider">Currency</label>
+                    <label className="text-[10px] text-white/40">Currency</label>
                     <select
                       value={currency}
                       onChange={(e) => setCurrency(e.target.value)}
                       className="w-full bg-black/45 border border-white/[0.08] rounded-xl px-2.5 py-2 text-xs text-white outline-none cursor-pointer font-mono focus:ring-0"
                     >
-                      <option value="USD" className="bg-slate-950 text-slate-100">USD ($) — US Dollar</option>
-                      <option value="RUB" className="bg-slate-950 text-slate-100">RUB (₽) — Russian Ruble</option>
-                      <option value="GEL" className="bg-slate-950 text-slate-100">GEL (₾) — Georgian Lari</option>
-                      <option value="EUR" className="bg-slate-950 text-slate-100">EUR (€) — Euro</option>
-                      <option value="KZT" className="bg-slate-950 text-slate-100">KZT (₸) — Kazakhstani Tenge</option>
+                      <option value="USD" className="bg-slate-950 text-slate-100">USD ($)</option>
+                      <option value="RUB" className="bg-slate-950 text-slate-100">RUB (₽)</option>
+                      <option value="GEL" className="bg-slate-950 text-slate-100">GEL (₾)</option>
+                      <option value="EUR" className="bg-slate-950 text-slate-100">EUR (€)</option>
+                      <option value="KZT" className="bg-slate-950 text-slate-100">KZT (₸)</option>
                     </select>
                   </div>
 
                   {/* Amount in Selected Currency */}
                   <div className="space-y-1">
-                    <label className="text-[8px] text-white/40 font-bold uppercase tracking-wider">Amount ({CURRENCY_SYMBOLS[currency]})</label>
+                    <label className="text-[10px] text-white/40">Amount ({CURRENCY_SYMBOLS[currency]})</label>
                     <input
                       type="number"
                       step="any"
@@ -1164,7 +1162,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                   id="modal-completed"
                   checked={completed}
                   onChange={(e) => setCompleted(e.target.checked)}
-                  className="w-4.5 h-4.5 rounded-lg border-white/10 bg-black/40 text-emerald-500 focus:ring-0 focus:ring-offset-0 cursor-pointer transition-all"
+                  className="transaction-status-checkbox cursor-pointer transition-all"
                 />
                 <label htmlFor="modal-completed" className="text-xs text-white/60 select-none cursor-pointer hover:text-white/80 transition-colors">
                   {transactionType === "income" ? "Income received" : "Expense paid"}
@@ -1172,17 +1170,17 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
               </div>
 
               {/* Action Buttons */}
-              <div className="flex justify-end gap-2.5 pt-4 border-t border-white/[0.06]">
+              <div className="flex justify-end gap-2.5 border-t border-white/[0.09] pt-4">
                 <button
                   type="button"
                   onClick={() => setIsFormOpen(false)}
-                  className="px-5 py-2.5 text-xs font-bold hover:bg-white/[0.03] border border-transparent hover:border-white/[0.08] text-white/60 hover:text-white rounded-2xl transition duration-150 cursor-pointer"
+                  className="figma-soft-button min-h-11 px-5 text-xs font-semibold text-white/60 transition hover:text-white"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2.5 text-xs font-bold bg-white/[0.08] hover:bg-white/[0.12] border border-white/[0.1] text-white rounded-2xl transition duration-150 cursor-pointer active:scale-95"
+                  className="figma-soft-button is-primary min-h-11 px-5 text-xs font-semibold text-white transition active:scale-95"
                 >
                   {editingExpense ? "Save" : "Add"}
                 </button>

@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
-import { ArrowLeft, Check, RotateCcw, Trash2 } from "lucide-react";
+import { ArrowLeft, Check, RotateCcw } from "lucide-react";
 import { ExpenseTemplate, ExpenseTemplateOverride } from "../types";
+import { FigmaIcon } from "./FigmaIcon";
 
 const EXPENSE_CATEGORIES = ["Housing", "Living", "Entertainment", "Subscriptions", "Transport", "Debt", "Other"];
 
@@ -30,6 +31,7 @@ const TemplateEditor: React.FC<TemplateEditorProps> = ({ template, hasOverride, 
   const [category, setCategory] = useState(template.category);
   const [amount, setAmount] = useState(template.amount?.toString() ?? "");
   const [saved, setSaved] = useState(false);
+  const isDebtTemplate = template.source === "debt";
 
   useEffect(() => {
     setTitle(template.title);
@@ -57,46 +59,42 @@ const TemplateEditor: React.FC<TemplateEditorProps> = ({ template, hasOverride, 
   };
 
   return (
-    <form onSubmit={handleSave} className="figma-surface rounded-[30px] p-3.5 md:p-4">
-      <div className="mb-3 flex items-center gap-3">
-        <span className={`min-w-0 flex-1 truncate text-[9px] font-black uppercase tracking-[0.16em] ${template.source === "debt" ? "text-rose-300/70" : "text-emerald-300/70"}`}>
-          {template.source === "debt" ? "Debt template" : "Recurring template"}
-        </span>
+    <form onSubmit={handleSave} className={`figma-surface template-editor rounded-[30px] p-3.5 md:p-4 ${isDebtTemplate ? "is-debt" : ""}`}>
+      <div className="mb-2.5 flex items-center gap-3">
+        <h3 className="min-w-0 flex-1 truncate text-base font-semibold leading-5 text-white">{template.title}</h3>
         <button
           type="button"
           onClick={() => triggerConfirm("Delete template", `Remove “${template.title}” from your templates?`, () => onDelete(template.id))}
           aria-label={`Delete ${template.title}`}
           className="figma-icon-button shrink-0 text-[#ff5050]"
         >
-          <Trash2 size={16} />
+          <FigmaIcon name="trash" size={16} />
         </button>
       </div>
 
-      <div className="grid grid-cols-2 gap-2.5 md:grid-cols-3">
-        <label className="col-span-2 space-y-1 md:col-span-1">
-          <span className="pl-3 text-[9px] font-bold uppercase tracking-widest text-white/35">Title</span>
+      <div className={`grid gap-2.5 ${isDebtTemplate ? "grid-cols-1" : "grid-cols-2 md:grid-cols-3"}`}>
+        {!isDebtTemplate && <label className="col-span-2 space-y-1.5 md:col-span-1">
+          <span className="pl-3 text-[10px] text-white/40">Title</span>
           <input
             value={title}
             onChange={event => setTitle(event.target.value)}
-            disabled={template.source === "debt"}
-            className="figma-input min-h-11 w-full rounded-full px-3.5 text-xs font-semibold text-white outline-none disabled:cursor-not-allowed disabled:opacity-50"
+            className="figma-input min-h-11 w-full rounded-full px-3.5 text-xs font-semibold text-white outline-none"
           />
-        </label>
+        </label>}
 
-        <label className="space-y-1">
-          <span className="pl-3 text-[9px] font-bold uppercase tracking-widest text-white/35">Category</span>
+        {!isDebtTemplate && <label className="space-y-1.5">
+          <span className="pl-3 text-[10px] text-white/40">Category</span>
           <select
             value={category}
             onChange={event => setCategory(event.target.value)}
-            disabled={template.source === "debt"}
-            className="figma-input min-h-11 w-full rounded-full px-3.5 text-xs font-semibold text-white outline-none disabled:cursor-not-allowed disabled:opacity-50"
+            className="figma-input min-h-11 w-full rounded-full px-3.5 text-xs font-semibold text-white outline-none"
           >
             {[...new Set([...EXPENSE_CATEGORIES, category])].map(option => <option key={option} value={option}>{option}</option>)}
           </select>
-        </label>
+        </label>}
 
-        <label className="space-y-1">
-          <span className="pl-3 text-[9px] font-bold uppercase tracking-widest text-white/35">Amount ($)</span>
+        <label className="space-y-1.5">
+          <span className="pl-3 text-[10px] text-white/40">Amount, USD</span>
           <input
             type="number"
             min="0.01"
@@ -110,13 +108,13 @@ const TemplateEditor: React.FC<TemplateEditorProps> = ({ template, hasOverride, 
         </label>
       </div>
 
-      <div className="mt-3 flex items-center justify-end gap-2">
+      <div className="mt-2.5 flex items-center justify-end gap-2.5">
         {hasOverride && (
-          <button type="button" onClick={() => onReset(template.id)} className="figma-soft-button flex min-h-10 items-center gap-1.5 rounded-full px-3.5 text-[10px] font-bold text-white/55 transition hover:text-white">
+          <button type="button" onClick={() => onReset(template.id)} className="figma-soft-button flex min-h-11 items-center gap-1.5 rounded-full px-3.5 text-[11px] font-semibold text-white/55 transition hover:text-white">
             <RotateCcw size={13} /> Reset
           </button>
         )}
-        <button type="submit" className="figma-soft-button flex min-h-10 min-w-20 items-center justify-center gap-2 rounded-full px-4 text-[11px] font-semibold text-white transition">
+        <button type="submit" className="figma-soft-button is-primary flex min-h-11 min-w-20 items-center justify-center gap-2 rounded-full px-4 text-[11px] font-semibold text-white transition">
           {saved && <Check size={14} />} {saved ? "Saved" : "Save"}
         </button>
       </div>

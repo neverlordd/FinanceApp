@@ -149,29 +149,26 @@ export const DebtView: React.FC<DebtViewProps> = ({
             if (event.target === event.currentTarget) setIsFormOpen(false);
           }}
         >
-          <form onSubmit={handleSubmit} className="liquid-glass-strong w-full max-w-sm rounded-[2rem] border border-white/[0.09] p-5 shadow-2xl">
-            <div className="mb-5 flex items-start justify-between gap-4">
-              <div>
-                <p className="text-[9px] font-bold uppercase tracking-[0.18em] text-rose-300/70">Debt tracker</p>
-                <h3 className="mt-1 text-lg font-black text-white">Add a debt</h3>
-              </div>
-              <button type="button" onClick={() => setIsFormOpen(false)} className="flex h-10 w-10 items-center justify-center rounded-2xl border border-white/[0.07] bg-white/[0.04] text-white/50" aria-label="Close">
+          <form onSubmit={handleSubmit} className="debt-modal liquid-glass-strong w-full max-w-sm p-5 shadow-2xl">
+            <div className="mb-5 flex items-center justify-between gap-4">
+              <h3 className="text-base font-semibold text-white">Add debt</h3>
+              <button type="button" onClick={() => setIsFormOpen(false)} className="figma-icon-button text-white/50" aria-label="Close">
                 <X size={16} />
               </button>
             </div>
 
-            <div className="space-y-4">
-              <div className="space-y-1.5">
-                <label className="text-[10px] font-bold uppercase tracking-widest text-white/40">Debt title</label>
-                <input value={name} onChange={event => setName(event.target.value)} className="w-full rounded-2xl border border-white/[0.08] bg-black/40 px-4 py-3 text-sm text-white outline-none focus:border-rose-500/40" autoFocus />
+            <div className="space-y-3.5">
+              <div className="space-y-2.5">
+                <label className="text-[11px] text-white/45">Title</label>
+                <input value={name} onChange={event => setName(event.target.value)} className="figma-input h-11 w-full px-4 text-sm text-white outline-none" autoFocus />
               </div>
-              <div className="space-y-1.5">
-                <label className="text-[10px] font-bold uppercase tracking-widest text-white/40">Total debt, USD</label>
-                <input type="number" min="0.01" step="0.01" value={amount} onChange={event => setAmount(event.target.value)} className="w-full rounded-2xl border border-white/[0.08] bg-black/40 px-4 py-3 text-lg font-bold text-white outline-none focus:border-emerald-500/40" />
+              <div className="space-y-2.5">
+                <label className="text-[11px] text-white/45">Amount, USD</label>
+                <input type="number" min="0.01" step="0.01" value={amount} onChange={event => setAmount(event.target.value)} className="figma-input h-11 w-full px-4 text-sm font-semibold text-white outline-none" />
               </div>
             </div>
 
-            <button type="submit" className="mt-5 min-h-12 w-full rounded-2xl border border-emerald-400/20 bg-emerald-500 font-bold text-slate-950 transition hover:bg-emerald-400 active:scale-[0.98]">
+            <button type="submit" className="figma-soft-button is-primary mt-5 min-h-11 w-full text-[13px] font-semibold text-white transition active:scale-[0.98]">
               Save debt
             </button>
           </form>

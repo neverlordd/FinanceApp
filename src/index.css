@@ -14,7 +14,7 @@
 
 html {
   min-width: 320px;
-  background: #05070c;
+  background: #0a0a0e;
 }
 
 body {
@@ -78,6 +78,54 @@ body {
   background: rgba(255, 255, 255, 0.2);
 }
 
+.figma-soft-button.is-primary {
+  border-color: rgba(255, 255, 255, 0.22);
+  background: rgba(255, 255, 255, 0.16);
+}
+
+.transaction-modal,
+.debt-modal,
+.confirm-modal {
+  border-radius: 1.875rem;
+}
+
+.transaction-status-checkbox {
+  position: relative;
+  width: 2.375rem;
+  height: 2.375rem;
+  min-width: 2.375rem;
+  min-height: 2.375rem;
+  flex: 0 0 2.375rem;
+  appearance: none !important;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 9999px !important;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.transaction-status-checkbox::after {
+  content: "";
+  position: absolute;
+  left: 0.84rem;
+  top: 0.58rem;
+  width: 0.48rem;
+  height: 0.85rem;
+  border-right: 2px solid #fff;
+  border-bottom: 2px solid #fff;
+  opacity: 0;
+  transform: rotate(45deg) scale(0.7);
+  transition: opacity 150ms ease, transform 150ms ease;
+}
+
+.transaction-status-checkbox:checked {
+  border-color: rgba(41, 255, 94, 0.35);
+  background: rgba(41, 255, 94, 0.16);
+}
+
+.transaction-status-checkbox:checked::after {
+  opacity: 1;
+  transform: rotate(45deg) scale(1);
+}
+
 .figma-danger-button {
   background: radial-gradient(circle at 50% 140%, rgba(255, 80, 80, 0.2), transparent 58%), rgba(255, 255, 255, 0.05);
 }
@@ -92,11 +140,7 @@ body {
   padding-right: max(env(safe-area-inset-right), var(--tg-safe-area-inset-right, 0px));
   isolation: isolate;
   scroll-padding-bottom: 6rem;
-  background:
-    radial-gradient(circle at 8% 3%, rgba(64, 145, 255, 0.18), transparent 29rem),
-    radial-gradient(circle at 92% 18%, rgba(126, 87, 255, 0.14), transparent 31rem),
-    radial-gradient(circle at 45% 92%, rgba(16, 185, 129, 0.13), transparent 34rem),
-    linear-gradient(145deg, #05070d 0%, #080b13 42%, #05070b 100%);
+  background: #0a0a0e;
 }
 
 .telegram-app-shell::before {
@@ -105,7 +149,7 @@ body {
   inset: 0;
   z-index: -1;
   pointer-events: none;
-  opacity: 0.28;
+  opacity: 0.16;
   background-image:
     linear-gradient(rgba(255, 255, 255, 0.018) 1px, transparent 1px),
     linear-gradient(90deg, rgba(255, 255, 255, 0.018) 1px, transparent 1px);
@@ -118,7 +162,7 @@ body {
   border-radius: 999px;
   pointer-events: none;
   filter: blur(90px);
-  opacity: 0.55;
+  opacity: 0.16;
   animation: ambient-drift 16s ease-in-out infinite alternate;
 }
 
@@ -126,9 +170,7 @@ body {
 .liquid-glass-strong {
   position: relative;
   border-radius: 2rem;
-  background:
-    linear-gradient(145deg, rgba(255, 255, 255, 0.095), rgba(255, 255, 255, 0.025) 45%, rgba(255, 255, 255, 0.045)),
-    rgba(7, 11, 19, 0.52);
+  background: rgba(255, 255, 255, 0.035);
   border: 1px solid rgba(255, 255, 255, 0.13);
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.16),
@@ -140,9 +182,7 @@ body {
 
 .liquid-glass-strong {
   border-radius: 2.25rem;
-  background:
-    linear-gradient(145deg, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0.035) 46%, rgba(255, 255, 255, 0.055)),
-    rgba(6, 9, 16, 0.7);
+  background: #151519;
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.19),
     0 28px 70px rgba(0, 0, 0, 0.42);
@@ -160,7 +200,7 @@ body {
 }
 
 .liquid-header {
-  background: rgba(5, 8, 14, 0.55);
+  background: rgba(10, 10, 14, 0.82);
   border-bottom: 1px solid rgba(255, 255, 255, 0.09);
   box-shadow: 0 10px 32px rgba(0, 0, 0, 0.18), inset 0 -1px 0 rgba(255, 255, 255, 0.025);
   -webkit-backdrop-filter: blur(30px) saturate(170%);
@@ -567,6 +607,22 @@ select:focus-visible {
     background: rgba(255, 255, 255, 0.05) !important;
   }
 
+  .app-modal-overlay .figma-input {
+    min-height: 2.75rem !important;
+  }
+
+  .app-modal-overlay .transaction-status-checkbox {
+    width: 2.375rem;
+    height: 2.375rem;
+    min-width: 2.375rem;
+    min-height: 2.375rem !important;
+    background: rgba(255, 255, 255, 0.05) !important;
+  }
+
+  .app-modal-overlay .transaction-status-checkbox:checked {
+    background: rgba(41, 255, 94, 0.16) !important;
+  }
+
   .app-modal-overlay button {
     border-radius: 9999px !important;
   }
@@ -790,7 +846,7 @@ select:focus-visible {
   }
 
   .figma-budget .budget-templates-toggle {
-    min-height: 1.25rem !important;
+    min-height: 2.75rem !important;
     padding: 0;
     border: 0;
     background: transparent;
@@ -811,7 +867,7 @@ select:focus-visible {
 
   .figma-budget .budget-template-chip {
     min-width: 0;
-    min-height: 2.375rem;
+    min-height: 2.75rem;
     padding: 0 0.875rem;
     border-radius: 1.875rem;
     border-color: rgba(255, 255, 255, 0.16);

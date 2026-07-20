@@ -46,7 +46,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
   };
 
   return (
-    <div className="figma-settings mx-auto max-w-2xl space-y-3.5">
+    <div className="figma-settings mx-auto max-w-3xl space-y-3.5">
       <div className="flex items-center justify-between gap-4">
         <h2 className="text-base font-semibold text-white">Debts</h2>
         <button onClick={onOpenDebts} className="figma-soft-button flex h-[38px] items-center gap-1.5 rounded-full px-3.5 text-[13px] text-white">

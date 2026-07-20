@@ -671,7 +671,7 @@ export default function App() {
 
             <button
               onClick={() => fetchData(false)}
-              className="liquid-glass p-2 rounded-xl text-white/60 hover:text-white transition duration-200 cursor-pointer"
+              className="liquid-glass rounded-full p-2 text-white/60 transition duration-200 hover:text-white"
               aria-label="Refresh data"
             >
               <span className="hidden md:block"><RefreshCw size={12} className={syncStatus === 'syncing' ? 'animate-spin' : ''} /></span>
@@ -688,7 +688,7 @@ export default function App() {
         <aside className="liquid-sidebar liquid-glass hidden md:block w-52 shrink-0 space-y-1">
           <button
             onClick={() => setActiveTab("budget")}
-            className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-semibold tracking-wide transition duration-150 cursor-pointer ${
+            className={`w-full flex items-center gap-3 px-4 py-3 rounded-full text-xs font-semibold tracking-wide transition duration-150 cursor-pointer ${
               activeTab === "budget"
                 ? "bg-white/[0.06] border border-white/[0.1] text-white shadow-[0_4px_12px_rgba(255,255,255,0.02)]"
                 : "text-white/50 hover:text-white hover:bg-white/[0.03] border border-transparent"
@@ -700,7 +700,7 @@ export default function App() {
 
           <button
             onClick={() => setActiveTab("projections")}
-            className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-semibold tracking-wide transition duration-150 cursor-pointer ${
+            className={`w-full flex items-center gap-3 px-4 py-3 rounded-full text-xs font-semibold tracking-wide transition duration-150 cursor-pointer ${
               activeTab === "projections"
                 ? "bg-white/[0.06] border border-white/[0.1] text-white shadow-[0_4px_12px_rgba(255,255,255,0.02)]"
                 : "text-white/50 hover:text-white hover:bg-white/[0.03] border border-transparent"
@@ -712,7 +712,7 @@ export default function App() {
 
           <button
             onClick={() => setActiveTab("debts")}
-            className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-semibold tracking-wide transition duration-150 cursor-pointer ${
+            className={`w-full flex items-center gap-3 px-4 py-3 rounded-full text-xs font-semibold tracking-wide transition duration-150 cursor-pointer ${
               activeTab === "debts"
                 ? "bg-white/[0.06] border border-white/[0.1] text-white shadow-[0_4px_12px_rgba(255,255,255,0.02)]"
                 : "text-white/50 hover:text-white hover:bg-white/[0.03] border border-transparent"
@@ -724,7 +724,7 @@ export default function App() {
 
           <button
             onClick={() => setActiveTab("settings")}
-            className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-semibold tracking-wide transition duration-150 cursor-pointer ${
+            className={`w-full flex items-center gap-3 px-4 py-3 rounded-full text-xs font-semibold tracking-wide transition duration-150 cursor-pointer ${
               activeTab === "settings" || activeTab === "template-settings"
                 ? "bg-white/[0.06] border border-white/[0.1] text-white shadow-[0_4px_12px_rgba(255,255,255,0.02)]"
                 : "text-white/50 hover:text-white hover:bg-white/[0.03] border border-transparent"
