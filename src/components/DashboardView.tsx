@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { CalculatedMonth } from "../utils/calculations";
 import { ExpenseItem, ExpenseTemplate } from "../types";
+import { FigmaIcon } from "./FigmaIcon";
 import {
   Wallet,
   ChevronLeft,
@@ -10,19 +11,13 @@ import {
   Edit3,
   Trash2,
   Check,
-  Coins,
-  ArrowUpRight,
   ArrowDownRight,
-  TrendingUp,
-  TrendingDown,
   Sparkles,
-  CheckCircle2,
   HelpCircle,
   DollarSign,
   Briefcase,
   AlertCircle,
-  Calendar,
-  ChevronDown
+  Calendar
 } from "lucide-react";
 
 interface DashboardViewProps {
@@ -396,7 +391,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                           : "bg-white/[0.02] text-white/50 hover:text-white hover:bg-white/[0.05] border-white/[0.04] hover:border-white/[0.1]"
                       }`}
                     >
-                      <span>{m.monthName} '{m.monthYear.slice(2)}</span>
+                      <span>{m.monthName[0]}{m.monthName.slice(1).toLowerCase()} ‘{m.monthYear.slice(2)}</span>
                     </button>
                   );
                 })}
@@ -424,7 +419,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
               <div className="flex items-center justify-between mb-2">
                 <span className="text-[9px] font-bold text-white/40 tracking-wider uppercase">Income</span>
                 <div className="budget-kpi-icon p-1.5 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 rounded-lg">
-                  <ArrowUpRight size={12} strokeWidth={2.5} />
+                  <FigmaIcon name="arrow-right-green" size={16} />
                 </div>
               </div>
 
@@ -484,7 +479,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
               <div className="flex items-center justify-between mb-2">
                 <span className="text-[9px] font-bold text-white/40 tracking-wider uppercase">Planned Spend</span>
                 <div className="budget-kpi-icon p-1.5 bg-rose-500/10 border border-rose-500/20 text-rose-400 rounded-lg">
-                  <Coins size={12} strokeWidth={2.2} />
+                  <FigmaIcon name="arrow-right-red" size={16} />
                 </div>
               </div>
 
@@ -502,7 +497,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
               <div className="flex items-center justify-between mb-2">
                 <span className="text-[9px] font-bold text-white/40 tracking-wider uppercase">Paid</span>
                 <div className="budget-kpi-icon p-1.5 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 rounded-lg">
-                  <CheckCircle2 size={12} strokeWidth={2.2} />
+                  <FigmaIcon name="money-send-small" size={16} />
                 </div>
               </div>
 
@@ -533,7 +528,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
               <div className="flex items-center justify-between mb-2">
                 <span className="text-[9px] font-bold text-white/40 tracking-wider uppercase">Leftover</span>
                 <div className={`budget-kpi-icon p-1.5 rounded-lg border ${currentMonth.net >= 0 ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-400" : "bg-rose-500/10 border-rose-500/20 text-rose-400"}`}>
-                  {currentMonth.net >= 0 ? <TrendingUp size={12} strokeWidth={2.2} /> : <TrendingDown size={12} strokeWidth={2.2} />}
+                  <FigmaIcon name="coin" size={16} />
                 </div>
               </div>
 
@@ -601,7 +596,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                   onClick={() => handleOpenAddForm("expense")}
                   className="mobile-primary-action flex min-w-0 items-center justify-center gap-2 px-3 py-3 bg-rose-500/10 hover:bg-rose-500/15 border border-rose-500/20 hover:border-rose-500/30 text-rose-300 hover:text-rose-200 text-xs font-bold tracking-wide transition-all duration-200 cursor-pointer active:scale-95"
                 >
-                  <Plus size={16} strokeWidth={2.5} />
+                  <FigmaIcon name="add-red" size={14} />
                   <span className="truncate">Expence</span>
                 </button>
 
@@ -609,7 +604,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                   onClick={() => handleOpenAddForm("income")}
                   className="mobile-primary-action flex min-w-0 items-center justify-center gap-2 px-3 py-3 bg-emerald-500/10 hover:bg-emerald-500/15 border border-emerald-500/20 hover:border-emerald-500/30 text-emerald-300 hover:text-emerald-200 text-xs font-bold tracking-wide transition-all duration-200 cursor-pointer active:scale-95"
                 >
-                  <Plus size={16} strokeWidth={2.5} />
+                  <FigmaIcon name="add-green" size={14} />
                   <span className="truncate">Income</span>
                 </button>
               </div>
@@ -626,7 +621,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                   <span className="text-[10px] font-black uppercase tracking-widest text-white/55">Templates</span>
                   <span className="flex items-center gap-2 text-[9px] font-bold text-white/30">
                     {expenseTemplates.length}
-                    <ChevronDown size={14} className={`transition-transform duration-200 ${templatesExpanded ? "rotate-180" : ""}`} />
+                    <FigmaIcon name="arrow-down" size={16} className={`transition-transform duration-200 ${templatesExpanded ? "rotate-180" : ""}`} />
                   </span>
                 </button>
                 {templatesExpanded && <div className="budget-template-list scrollbar-none flex gap-2 overflow-x-auto pb-1">
@@ -738,7 +733,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                                   )}
                                 </div>
 
-                                <div className="flex items-center gap-1 opacity-100 sm:opacity-0 group-hover:opacity-100 transition-opacity duration-150">
+                                <div className="flex items-center gap-2.5 opacity-100 sm:opacity-0 group-hover:opacity-100 transition-opacity duration-150">
                                   <button
                                     onClick={(e) => {
                                       e.stopPropagation();
@@ -747,7 +742,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                                     className="transaction-row-action p-1 bg-white/[0.03] hover:bg-white/[0.08] border border-white/[0.06] hover:border-white/[0.12] text-white/40 hover:text-white rounded-md transition-all cursor-pointer"
                                     aria-label="Edit"
                                   >
-                                    <Edit3 size={11} />
+                                    <FigmaIcon name="edit-2" size={16} />
                                   </button>
                                   <button
                                     onClick={(e) => {
@@ -761,7 +756,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                                     className="transaction-row-action p-1 bg-rose-500/5 hover:bg-rose-500/20 border border-rose-500/10 text-rose-400 hover:text-rose-300 rounded-md transition-all cursor-pointer"
                                     aria-label="Delete"
                                   >
-                                    <Trash2 size={11} />
+                                    <FigmaIcon name="trash" size={16} />
                                   </button>
                                 </div>
                               </div>
@@ -832,7 +827,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                                     )}
                                   </div>
 
-                                  <div className="flex items-center gap-1 opacity-100 sm:opacity-0 group-hover:opacity-100 transition-opacity duration-150">
+                                  <div className="flex items-center gap-2.5 opacity-100 sm:opacity-0 group-hover:opacity-100 transition-opacity duration-150">
                                     <button
                                       onClick={(e) => {
                                         e.stopPropagation();
@@ -841,7 +836,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                                       className="transaction-row-action p-1 bg-white/[0.03] hover:bg-white/[0.08] border border-white/[0.06] hover:border-white/[0.12] text-white/40 hover:text-white rounded-md transition-all cursor-pointer"
                                       aria-label="Edit"
                                     >
-                                      <Edit3 size={11} />
+                                      <FigmaIcon name="edit-2" size={16} />
                                     </button>
                                     <button
                                       onClick={(e) => {
@@ -855,7 +850,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                                       className="transaction-row-action p-1 bg-rose-500/5 hover:bg-rose-500/20 border border-rose-500/10 text-rose-400 hover:text-rose-300 rounded-md transition-all cursor-pointer"
                                       aria-label="Delete"
                                     >
-                                      <Trash2 size={11} />
+                                      <FigmaIcon name="trash" size={16} />
                                     </button>
                                   </div>
                                 </div>
@@ -890,7 +885,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                                     <div
                                       className="w-5 h-5 rounded-md border flex items-center justify-center transition-all duration-200 bg-emerald-500/20 border-emerald-500/50 text-emerald-400 shadow-[0_0_8px_rgba(16,185,129,0.2)]"
                                     >
-                                      <Check size={11} className="scale-100 opacity-100" strokeWidth={3} />
+                                      <FigmaIcon name="tick-circle" size={24} />
                                     </div>
                                   </button>
 
@@ -926,7 +921,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                                     )}
                                   </div>
 
-                                  <div className="flex items-center gap-1 opacity-100 sm:opacity-0 group-hover:opacity-100 transition-opacity duration-150">
+                                  <div className="flex items-center gap-2.5 opacity-100 sm:opacity-0 group-hover:opacity-100 transition-opacity duration-150">
                                     <button
                                       onClick={(e) => {
                                         e.stopPropagation();
@@ -935,7 +930,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                                       className="transaction-row-action p-1 bg-white/[0.03] hover:bg-white/[0.08] border border-white/[0.06] hover:border-white/[0.12] text-white/40 hover:text-white rounded-md transition-all cursor-pointer"
                                       aria-label="Edit"
                                     >
-                                      <Edit3 size={11} />
+                                      <FigmaIcon name="edit-2" size={16} />
                                     </button>
                                     <button
                                       onClick={(e) => {
@@ -949,7 +944,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                                       className="transaction-row-action p-1 bg-rose-500/5 hover:bg-rose-500/20 border border-rose-500/10 text-rose-400 hover:text-rose-300 rounded-md transition-all cursor-pointer"
                                       aria-label="Delete"
                                     >
-                                      <Trash2 size={11} />
+                                      <FigmaIcon name="trash" size={16} />
                                     </button>
                                   </div>
                                 </div>

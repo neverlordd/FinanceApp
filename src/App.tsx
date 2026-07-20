@@ -8,6 +8,7 @@ import { SettingsView } from "./components/SettingsView";
 import { TemplateSettingsView } from "./components/TemplateSettingsView";
 import { DebtView } from "./components/DebtView";
 import { ConfirmModal } from "./components/ConfirmModal";
+import { FigmaIcon } from "./components/FigmaIcon";
 import { apiFetch } from "./api";
 import {
   Wallet,
@@ -19,9 +20,6 @@ import {
   Database,
   HandCoins,
   PartyPopper,
-  CalendarCog,
-  CircleDollarSign,
-  Ellipsis
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 
@@ -676,7 +674,8 @@ export default function App() {
               className="liquid-glass p-2 rounded-xl text-white/60 hover:text-white transition duration-200 cursor-pointer"
               aria-label="Refresh data"
             >
-              <RefreshCw size={12} className={syncStatus === 'syncing' ? 'animate-spin' : ''} />
+              <span className="hidden md:block"><RefreshCw size={12} className={syncStatus === 'syncing' ? 'animate-spin' : ''} /></span>
+              <span className={`hidden figma-mobile-icon ${syncStatus === 'syncing' ? 'animate-spin' : ''}`}><FigmaIcon name="refresh-2" size={14} /></span>
             </button>
           </div>
         </div>
@@ -824,7 +823,7 @@ export default function App() {
             activeTab === "budget" ? "text-emerald-400" : "text-slate-400 hover:text-slate-200"
           }`}
         >
-          <Wallet size={24} strokeWidth={activeTab === "budget" ? 2.6 : 1.6} />
+          <FigmaIcon name="wallet-money" size={24} />
           <span className="app-nav-label text-[10px] font-semibold mt-1">Budget</span>
         </button>
 
@@ -835,7 +834,7 @@ export default function App() {
             activeTab === "projections" ? "text-emerald-400" : "text-slate-400 hover:text-slate-200"
           }`}
         >
-          <CalendarCog size={24} strokeWidth={activeTab === "projections" ? 2.6 : 1.6} />
+          <FigmaIcon name="calendar-edit" size={24} />
           <span className="app-nav-label text-[10px] font-semibold mt-1">Plans</span>
         </button>
 
@@ -846,7 +845,7 @@ export default function App() {
             activeTab === "debts" ? "text-emerald-400" : "text-slate-400 hover:text-slate-200"
           }`}
         >
-          <CircleDollarSign size={24} strokeWidth={activeTab === "debts" ? 2.6 : 1.6} />
+          <FigmaIcon name="money-send" size={24} />
           <span className="app-nav-label text-[10px] font-semibold mt-1">Debts</span>
         </button>
 
@@ -857,7 +856,7 @@ export default function App() {
             activeTab === "settings" || activeTab === "template-settings" ? "text-emerald-400" : "text-slate-400 hover:text-slate-200"
           }`}
         >
-          <Ellipsis size={24} strokeWidth={activeTab === "settings" || activeTab === "template-settings" ? 2.8 : 1.8} />
+          <FigmaIcon name="more" size={24} />
           <span className="app-nav-label text-[10px] font-semibold mt-1">Settings</span>
         </button>
       </nav>
