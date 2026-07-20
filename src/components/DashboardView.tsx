@@ -107,7 +107,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
   // Income inline edit state
   const [isEditingIncome, setIsEditingIncome] = useState(false);
   const [incomeInput, setIncomeInput] = useState("");
-  const [templatesExpanded, setTemplatesExpanded] = useState(false);
+  const [templatesExpanded, setTemplatesExpanded] = useState(true);
 
   // Table filter state
   const [filterType, setFilterType] = useState<"all" | "expense" | "income">("all");
@@ -357,17 +357,17 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
     : 0;
 
   return (
-    <div className="space-y-6">
+    <div className="figma-budget space-y-6">
 
       {/* TWO BLOCK LAYOUT: 1. Left (Selector + Compact KPIs) | 2. Right (Transactions Table) */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
 
         {/* Left Column (Selector + KPIs) - Spans 4 columns on large screens */}
-        <div className="lg:col-span-5 xl:col-span-4 space-y-6">
+        <div className="budget-overview lg:col-span-5 xl:col-span-4 space-y-6">
 
           {/* 1. COMPACT HORIZONTAL MONTH PILLS */}
-          <div className="liquid-glass p-4 rounded-3xl space-y-3">
-            <div className="flex items-center justify-between">
+          <div className="budget-months liquid-glass p-4 rounded-3xl space-y-3">
+            <div className="budget-months-meta flex items-center justify-between">
               <span className="text-[9px] font-bold text-white/40 tracking-wider uppercase font-mono flex items-center gap-1.5">
                 <Calendar size={11} className="text-emerald-400" /> Period
               </span>
@@ -383,14 +383,14 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
             </div>
 
             <div className="flex items-stretch gap-2">
-              <div className="min-w-0 flex-1 overflow-x-auto scrollbar-none flex gap-1.5 pb-1 scroll-smooth snap-x">
+              <div className="budget-months-scroll min-w-0 flex-1 overflow-x-auto scrollbar-none flex gap-1.5 pb-1 scroll-smooth snap-x">
                 {calculatedMonths.map((m) => {
                   const isActive = m.monthStr === selectedMonthStr;
                   return (
                     <button
                       key={m.monthStr}
                       onClick={() => onSetSelectedMonthStr(m.monthStr)}
-                      className={`snap-start shrink-0 px-3.5 py-2 rounded-2xl text-[11px] font-bold transition-all duration-300 cursor-pointer border flex items-center gap-1.5 ${
+                      className={`budget-month-pill snap-start shrink-0 px-3.5 py-2 rounded-2xl text-[11px] font-bold transition-all duration-300 cursor-pointer border flex items-center gap-1.5 ${
                         isActive
                           ? "bg-emerald-500 text-slate-950 border-emerald-400/30 shadow-[0_4px_12px_rgba(16,185,129,0.25)] scale-[1.01]"
                           : "bg-white/[0.02] text-white/50 hover:text-white hover:bg-white/[0.05] border-white/[0.04] hover:border-white/[0.1]"
@@ -415,15 +415,15 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
           </div>
 
           {/* 2. DYNAMIC BUDGET KPIS (Income, Planned Spend, Spent with progress bar, Leftover) */}
-          <div className="grid grid-cols-2 gap-4">
+          <div className="budget-kpi-grid grid grid-cols-2 gap-4">
 
             {/* KPI 1: Income */}
-            <div className="liquid-glass rounded-3xl p-4 relative overflow-hidden flex flex-col justify-between group hover:border-emerald-500/30 transition-all duration-300 col-span-1">
+            <div className="budget-kpi budget-kpi-income liquid-glass rounded-3xl p-4 relative overflow-hidden flex flex-col justify-between group hover:border-emerald-500/30 transition-all duration-300 col-span-1">
               <div className="absolute right-0 top-0 translate-x-4 -translate-y-4 w-16 h-16 bg-emerald-500/5 rounded-full blur-xl pointer-events-none group-hover:bg-emerald-500/10 transition-all duration-300" />
 
               <div className="flex items-center justify-between mb-2">
                 <span className="text-[9px] font-bold text-white/40 tracking-wider uppercase">Income</span>
-                <div className="p-1.5 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 rounded-lg">
+                <div className="budget-kpi-icon p-1.5 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 rounded-lg">
                   <ArrowUpRight size={12} strokeWidth={2.5} />
                 </div>
               </div>
@@ -478,12 +478,12 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
             </div>
 
             {/* KPI 2: Planned Spend */}
-            <div className="liquid-glass rounded-3xl p-4 relative overflow-hidden flex flex-col justify-between group hover:border-rose-500/30 transition-all duration-300 col-span-1">
+            <div className="budget-kpi budget-kpi-planned liquid-glass rounded-3xl p-4 relative overflow-hidden flex flex-col justify-between group hover:border-rose-500/30 transition-all duration-300 col-span-1">
               <div className="absolute right-0 top-0 translate-x-4 -translate-y-4 w-16 h-16 bg-rose-500/5 rounded-full blur-xl pointer-events-none group-hover:bg-rose-500/10 transition-all duration-300" />
 
               <div className="flex items-center justify-between mb-2">
                 <span className="text-[9px] font-bold text-white/40 tracking-wider uppercase">Planned Spend</span>
-                <div className="p-1.5 bg-rose-500/10 border border-rose-500/20 text-rose-400 rounded-lg">
+                <div className="budget-kpi-icon p-1.5 bg-rose-500/10 border border-rose-500/20 text-rose-400 rounded-lg">
                   <Coins size={12} strokeWidth={2.2} />
                 </div>
               </div>
@@ -496,18 +496,18 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
             </div>
 
             {/* KPI 3: Spent */}
-            <div className="liquid-glass rounded-3xl p-4 relative overflow-hidden flex flex-col justify-between group hover:border-emerald-500/30 transition-all duration-300 col-span-1">
+            <div className="budget-kpi budget-kpi-paid liquid-glass rounded-3xl p-4 relative overflow-hidden flex flex-col justify-between group hover:border-emerald-500/30 transition-all duration-300 col-span-1">
               <div className="absolute right-0 top-0 translate-x-4 -translate-y-4 w-16 h-16 bg-emerald-500/5 rounded-full blur-xl pointer-events-none group-hover:bg-emerald-500/10 transition-all duration-300" />
 
               <div className="flex items-center justify-between mb-2">
                 <span className="text-[9px] font-bold text-white/40 tracking-wider uppercase">Paid</span>
-                <div className="p-1.5 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 rounded-lg">
+                <div className="budget-kpi-icon p-1.5 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 rounded-lg">
                   <CheckCircle2 size={12} strokeWidth={2.2} />
                 </div>
               </div>
 
               <div className="space-y-2 mt-1">
-                <h3 className="text-lg font-black text-emerald-400 tracking-tight font-sans">
+                <h3 className="text-lg font-black text-white tracking-tight font-sans">
                   {formatCurrency(currentMonth.completedExpenses)}
                 </h3>
 
@@ -527,12 +527,12 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
             </div>
 
             {/* KPI 4: Leftover */}
-            <div className="liquid-glass rounded-3xl p-4 relative overflow-hidden flex flex-col justify-between group hover:border-emerald-500/30 transition-all duration-300 col-span-1">
+            <div className="budget-kpi budget-kpi-leftover liquid-glass rounded-3xl p-4 relative overflow-hidden flex flex-col justify-between group hover:border-emerald-500/30 transition-all duration-300 col-span-1">
               <div className="absolute right-0 top-0 translate-x-4 -translate-y-4 w-16 h-16 bg-emerald-500/5 rounded-full blur-xl pointer-events-none group-hover:bg-emerald-500/10 transition-all duration-300" />
 
               <div className="flex items-center justify-between mb-2">
                 <span className="text-[9px] font-bold text-white/40 tracking-wider uppercase">Leftover</span>
-                <div className={`p-1.5 rounded-lg border ${currentMonth.net >= 0 ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-400" : "bg-rose-500/10 border-rose-500/20 text-rose-400"}`}>
+                <div className={`budget-kpi-icon p-1.5 rounded-lg border ${currentMonth.net >= 0 ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-400" : "bg-rose-500/10 border-rose-500/20 text-rose-400"}`}>
                   {currentMonth.net >= 0 ? <TrendingUp size={12} strokeWidth={2.2} /> : <TrendingDown size={12} strokeWidth={2.2} />}
                 </div>
               </div>
@@ -548,15 +548,15 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
         </div>
 
         {/* Right Column (Transactions) - Spans 8 columns on large screens */}
-        <div className="lg:col-span-7 xl:col-span-8">
+        <div className="budget-transactions lg:col-span-7 xl:col-span-8">
 
           <div className="space-y-5">
 
             {/* Filter controls */}
-            <div className="liquid-glass rounded-[2rem] p-3.5 space-y-3">
+            <div className="budget-actions liquid-glass rounded-[2rem] p-3.5 space-y-3">
 
               {/* Segmented Filter Tab */}
-              <div className="transaction-tabs flex bg-slate-950/80 p-1 border border-white/[0.06] w-full" role="tablist" aria-label="Transaction filter">
+              <div className="budget-filter-tabs transaction-tabs flex bg-slate-950/80 p-1 border border-white/[0.06] w-full" role="tablist" aria-label="Transaction filter">
                 <button
                   onClick={() => setFilterType("all")}
                   aria-pressed={filterType === "all"}
@@ -616,12 +616,12 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
             </div>
 
             {expenseTemplates.length > 0 && (
-              <section className="space-y-2" aria-label="Expense templates">
+              <section className="budget-templates space-y-2" aria-label="Expense templates">
                 <button
                   type="button"
                   onClick={() => setTemplatesExpanded(value => !value)}
                   aria-expanded={templatesExpanded}
-                  className="flex min-h-11 w-full items-center justify-between rounded-full border border-white/[0.08] bg-white/[0.025] px-4 text-left transition hover:bg-white/[0.05]"
+                  className="budget-templates-toggle flex min-h-11 w-full items-center justify-between rounded-full border border-white/[0.08] bg-white/[0.025] px-4 text-left transition hover:bg-white/[0.05]"
                 >
                   <span className="text-[10px] font-black uppercase tracking-widest text-white/55">Templates</span>
                   <span className="flex items-center gap-2 text-[9px] font-bold text-white/30">
@@ -629,7 +629,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                     <ChevronDown size={14} className={`transition-transform duration-200 ${templatesExpanded ? "rotate-180" : ""}`} />
                   </span>
                 </button>
-                {templatesExpanded && <div className="scrollbar-none flex gap-2 overflow-x-auto pb-1">
+                {templatesExpanded && <div className="budget-template-list scrollbar-none flex gap-2 overflow-x-auto pb-1">
                   {expenseTemplates.map(template => {
                     const alreadyAdded = template.source === "recurring" && currentMonth.expenses.some(item =>
                       item.type !== "income" && normalizeTemplateTitle(item.description) === normalizeTemplateTitle(template.title)
@@ -640,7 +640,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                         key={template.id}
                         onClick={() => handleOpenTemplate(template)}
                         disabled={alreadyAdded}
-                        className={`liquid-glass flex min-h-14 min-w-[9.5rem] shrink-0 items-center justify-between gap-3 px-4 py-2.5 text-left transition-all ${
+                        className={`budget-template-chip liquid-glass flex min-h-14 min-w-[9.5rem] shrink-0 items-center justify-between gap-3 px-4 py-2.5 text-left transition-all ${
                           alreadyAdded
                             ? "cursor-default opacity-45"
                             : template.source === "debt"
@@ -648,12 +648,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                               : "border-cyan-400/15 bg-cyan-500/[0.04] hover:border-cyan-300/30"
                         }`}
                       >
-                        <span className="min-w-0">
-                          <span className="block max-w-32 truncate text-[11px] font-bold text-white/90">{template.title}</span>
-                          <span className={`mt-0.5 block text-[8px] font-bold uppercase tracking-wider ${template.source === "debt" ? "text-rose-300/65" : "text-cyan-300/60"}`}>
-                            {alreadyAdded ? "Added" : template.source === "debt" ? "Debt" : template.category}
-                          </span>
-                        </span>
+                        <span className="block max-w-32 truncate text-[11px] font-medium text-white/90">{template.title}</span>
                         {alreadyAdded ? (
                           <Check size={14} className="shrink-0 text-emerald-400" />
                         ) : template.amount !== undefined ? (
@@ -682,7 +677,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                   {/* 1. INCOME GROUP */}
                   {incomeItems.length > 0 && (
                     <div className="space-y-2">
-                      <div className="px-1 flex items-center justify-between">
+                      <div className="budget-group-heading px-1 flex items-center justify-between">
                         <span className="text-[9px] uppercase font-black tracking-widest text-emerald-400 font-mono">Income Received</span>
                         <span className="text-[9px] font-mono font-bold text-white/30">+{formatCurrency(incomeItems.reduce((sum, item) => sum + item.amount, 0))}</span>
                       </div>
@@ -691,7 +686,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                           return (
                             <div
                               key={item.id}
-                              className={`liquid-glass flex items-center justify-between rounded-[1.65rem] p-3.5 sm:p-4 transition-all duration-150 group hover:border-emerald-500/15 ${item.completed ? "opacity-60" : ""}`}
+                              className="budget-row budget-row-income liquid-glass flex items-center justify-between rounded-[1.65rem] p-3.5 sm:p-4 transition-all duration-150 group hover:border-emerald-500/15"
                             >
                               <div className="flex items-center gap-3 min-w-0 flex-1">
                                 {/* Checkbox with custom padding for easy click */}
@@ -716,11 +711,11 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                                   className="min-w-0 flex-1 cursor-pointer"
                                   onClick={() => handleOpenEditForm(item)}
                                 >
-                                  <p className={`text-[13px] font-bold text-white/90 truncate ${item.completed ? "line-through text-white/40" : ""}`}>
+                                  <p className="text-[13px] font-bold text-white/90 truncate">
                                     {item.description || item.category}
                                   </p>
                                   {item.description && (
-                                    <span className={`inline-flex max-w-[160px] sm:max-w-xs truncate mt-1 rounded-lg border border-emerald-500/15 bg-emerald-500/[0.08] px-2 py-0.5 text-[9px] font-semibold text-emerald-300/70 ${item.completed ? "line-through opacity-60" : ""}`}>
+                                    <span className="budget-row-category inline-flex max-w-[160px] sm:max-w-xs truncate mt-1 rounded-lg border border-emerald-500/15 bg-emerald-500/[0.08] px-2 py-0.5 text-[9px] font-semibold text-emerald-300/70">
                                       {item.category}
                                     </span>
                                   )}
@@ -780,7 +775,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                   {/* 2. TO SPEND GROUP */}
                   {filterType !== "income" && toSpendItems.length > 0 && (
                     <div className="space-y-2">
-                      <div className="px-1 flex items-center justify-between">
+                      <div className="budget-group-heading px-1 flex items-center justify-between">
                         <span className="text-[9px] uppercase font-black tracking-widest text-rose-400 font-mono">To Pay</span>
                         <span className="text-[9px] font-mono font-bold text-white/30">-{formatCurrency(toSpendItems.reduce((sum, item) => sum + item.amount, 0))}</span>
                       </div>
@@ -789,7 +784,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                             return (
                               <div
                                 key={item.id}
-                                className="liquid-glass flex items-center justify-between rounded-[1.65rem] p-3.5 sm:p-4 transition-all duration-150 group hover:border-rose-500/15"
+                                className="budget-row budget-row-expense liquid-glass flex items-center justify-between rounded-[1.65rem] p-3.5 sm:p-4 transition-all duration-150 group hover:border-rose-500/15"
                               >
                                 <div className="flex items-center gap-3 min-w-0 flex-1">
                                   {/* Checkbox */}
@@ -814,7 +809,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                                       {item.description || item.category}
                                     </p>
                                     {item.description && (
-                                      <span className="inline-flex max-w-[160px] sm:max-w-xs truncate mt-1 rounded-lg border border-rose-500/15 bg-rose-500/[0.08] px-2 py-0.5 text-[9px] font-semibold text-rose-300/70">
+                                      <span className="budget-row-category inline-flex max-w-[160px] sm:max-w-xs truncate mt-1 rounded-lg border border-rose-500/15 bg-rose-500/[0.08] px-2 py-0.5 text-[9px] font-semibold text-rose-300/70">
                                         {item.category}
                                       </span>
                                     )}
@@ -828,7 +823,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                                     onClick={() => handleOpenEditForm(item)}
                                   >
                                     <p className="text-[12px] font-bold font-mono tracking-tight text-white/90">
-                                      -{formatCurrency(item.amount)}
+                                      {formatCurrency(item.amount)}
                                     </p>
                                     {item.originalCurrency && item.originalCurrency !== "USD" && item.originalAmount && (
                                       <p className="text-[8px] text-white/20 font-sans mt-0.5 font-medium">
@@ -874,7 +869,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                   {/* 3. SPENT GROUP */}
                   {filterType !== "income" && spentItems.length > 0 && (
                     <div className="space-y-2">
-                      <div className="px-1 flex items-center justify-between">
+                      <div className="budget-group-heading px-1 flex items-center justify-between">
                         <span className="text-[9px] uppercase font-black tracking-widest text-emerald-400 font-mono">Paid</span>
                         <span className="text-[9px] font-mono font-bold text-white/30">-{formatCurrency(spentItems.reduce((sum, item) => sum + item.amount, 0))}</span>
                       </div>
@@ -883,7 +878,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                             return (
                               <div
                                 key={item.id}
-                                className="liquid-glass flex items-center justify-between rounded-[1.65rem] p-3.5 sm:p-4 transition-all duration-150 group opacity-60 hover:border-emerald-500/15"
+                                className="budget-row budget-row-completed liquid-glass flex items-center justify-between rounded-[1.65rem] p-3.5 sm:p-4 transition-all duration-150 group opacity-60 hover:border-emerald-500/15"
                               >
                                 <div className="flex items-center gap-3 min-w-0 flex-1">
                                   {/* Checkbox */}
@@ -908,7 +903,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                                       {item.description || item.category}
                                     </p>
                                     {item.description && (
-                                      <span className="inline-flex max-w-[160px] sm:max-w-xs truncate mt-1 rounded-lg border border-rose-500/10 bg-rose-500/[0.06] px-2 py-0.5 text-[9px] font-semibold text-rose-300/40 line-through">
+                                      <span className="budget-row-category inline-flex max-w-[160px] sm:max-w-xs truncate mt-1 rounded-lg border border-rose-500/10 bg-rose-500/[0.06] px-2 py-0.5 text-[9px] font-semibold text-rose-300/40 line-through">
                                         {item.category}
                                       </span>
                                     )}
@@ -922,7 +917,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                                     onClick={() => handleOpenEditForm(item)}
                                   >
                                     <p className="text-[12px] font-normal font-mono text-white/40 line-through">
-                                      -{formatCurrency(item.amount)}
+                                      {formatCurrency(item.amount)}
                                     </p>
                                     {item.originalCurrency && item.originalCurrency !== "USD" && item.originalAmount && (
                                       <p className="text-[8px] text-white/10 font-sans mt-0.5 font-medium">

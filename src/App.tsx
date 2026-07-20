@@ -589,7 +589,7 @@ export default function App() {
   };
 
   return (
-    <div className="telegram-app-shell min-h-screen text-slate-100 font-sans flex flex-col pb-20 md:pb-0 relative overflow-hidden">
+    <div className={`telegram-app-shell min-h-screen text-slate-100 font-sans flex flex-col pb-20 md:pb-0 relative overflow-hidden ${activeTab === "budget" ? "budget-screen" : ""}`}>
 
       {/* iOS Liquid Glass Background Glowing Orbs */}
       <div className="ambient-orb top-[-12%] left-[-14%] w-[52%] h-[48%] bg-blue-500/20" />
@@ -617,17 +617,33 @@ export default function App() {
 
           {/* Logo */}
           <div className="flex items-center gap-2.5">
-            <img src={`${import.meta.env.BASE_URL}logo.png`} className="w-9 h-9 object-contain rounded-xl ring-1 ring-white/15 shadow-[0_8px_24px_rgba(16,185,129,0.18)]" alt="Logo" referrerPolicy="no-referrer" />
+            <img src={`${import.meta.env.BASE_URL}logo.png`} className="app-logo-image w-9 h-9 object-contain rounded-xl ring-1 ring-white/15 shadow-[0_8px_24px_rgba(16,185,129,0.18)]" alt="Logo" referrerPolicy="no-referrer" />
+            <span
+              className="app-figma-logo hidden h-[38px] w-[38px] p-1"
+              style={{
+                WebkitMaskImage: `url(${import.meta.env.BASE_URL}figma-logo-mask.svg)`,
+                maskImage: `url(${import.meta.env.BASE_URL}figma-logo-mask.svg)`,
+                WebkitMaskRepeat: "no-repeat",
+                maskRepeat: "no-repeat",
+                WebkitMaskPosition: "center",
+                maskPosition: "center",
+                WebkitMaskSize: "30px 30px",
+                maskSize: "30px 30px",
+              }}
+              aria-hidden="true"
+            >
+              <img src={`${import.meta.env.BASE_URL}figma-logo-gradient.svg`} className="h-full w-full" alt="" />
+            </span>
             <span className="app-brand-name text-xs font-black tracking-widest text-white/95 uppercase font-sans">Finance Tracker</span>
           </div>
 
           {/* Sync status & Manual refresh button */}
           <div className="flex items-center gap-3">
-            <div className="liquid-glass flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[10px]">
+            <div className="app-sync-status liquid-glass flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[10px]">
               {syncStatus === 'synced' && (
                 <>
                   <span className="w-1.5 h-1.5 bg-emerald-400 rounded-full shadow-[0_0_8px_#34d399]" />
-                  <span className="text-white/60 font-medium">
+                  <span className="app-sync-label text-white/60 font-medium">
                     {storagePersistent === false
                       ? "Saved temporarily"
                       : storageProvider === "telegram-cloud"
@@ -641,13 +657,13 @@ export default function App() {
               {syncStatus === 'syncing' && (
                 <>
                   <RefreshCw size={10} className="text-emerald-400 animate-spin" />
-                  <span className="text-emerald-400 font-medium">Saving...</span>
+                  <span className="app-sync-label text-emerald-400 font-medium">Saving...</span>
                 </>
               )}
               {syncStatus === 'offline' && (
                 <>
                   <span className="w-1.5 h-1.5 bg-rose-500 rounded-full" />
-                  <span className="text-rose-400 font-medium">Offline</span>
+                  <span className="app-sync-label text-rose-400 font-medium">Offline</span>
                 </>
               )}
             </div>
@@ -805,7 +821,7 @@ export default function App() {
           }`}
         >
           <Wallet size={19} />
-          <span className="text-[10px] font-semibold mt-1">Budget</span>
+          <span className="app-nav-label text-[10px] font-semibold mt-1">Budget</span>
         </button>
 
         <button
@@ -816,7 +832,7 @@ export default function App() {
           }`}
         >
           <Calendar size={19} />
-          <span className="text-[10px] font-semibold mt-1">Plans</span>
+          <span className="app-nav-label text-[10px] font-semibold mt-1">Plans</span>
         </button>
 
         <button
@@ -827,7 +843,7 @@ export default function App() {
           }`}
         >
           <HandCoins size={19} />
-          <span className="text-[10px] font-semibold mt-1">Debts</span>
+          <span className="app-nav-label text-[10px] font-semibold mt-1">Debts</span>
         </button>
 
         <button
@@ -838,7 +854,7 @@ export default function App() {
           }`}
         >
           <Settings size={19} />
-          <span className="text-[10px] font-semibold mt-1">Settings</span>
+          <span className="app-nav-label text-[10px] font-semibold mt-1">Settings</span>
         </button>
       </nav>
 
