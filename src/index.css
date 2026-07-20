@@ -7,7 +7,7 @@
 
 :root {
   color-scheme: dark;
-  background: #05070c;
+  background: #0a0a0e;
   font-synthesis: none;
   text-rendering: optimizeLegibility;
 }
@@ -21,9 +21,65 @@ body {
   min-width: 320px;
   min-height: 100vh;
   margin: 0;
-  background: #05070c;
+  background: #0a0a0e;
   -webkit-font-smoothing: antialiased;
   font-family: "Manrope Variable", Manrope, ui-sans-serif, system-ui, sans-serif;
+}
+
+.figma-surface,
+.figma-month-card,
+.figma-debt-card {
+  position: relative;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  background: rgba(255, 255, 255, 0.01);
+  box-shadow: 0 16px 24px rgba(0, 0, 0, 0.16);
+}
+
+.figma-month-card {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.figma-month-card.is-expanded {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.figma-soft-button,
+.figma-settings-link,
+.figma-danger-button,
+.figma-input,
+.figma-icon-button {
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  background: rgba(255, 255, 255, 0.05);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.035);
+}
+
+.figma-settings-link {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.figma-input {
+  background: rgba(255, 255, 255, 0.05) !important;
+}
+
+.figma-icon-button {
+  display: inline-flex;
+  width: 2.375rem;
+  height: 2.375rem;
+  min-width: 2.375rem;
+  min-height: 2.375rem;
+  flex: 0 0 2.375rem;
+  align-items: center;
+  justify-content: center;
+  border-radius: 9999px;
+}
+
+.figma-icon-button.is-primary {
+  border-color: rgba(255, 255, 255, 0.22);
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.figma-danger-button {
+  background: radial-gradient(circle at 50% 140%, rgba(255, 80, 80, 0.2), transparent 58%), rgba(255, 255, 255, 0.05);
 }
 
 #root {
@@ -386,6 +442,12 @@ select:focus-visible {
 @media (max-width: 767px) {
   .telegram-app-shell {
     padding-bottom: calc(5rem + max(env(safe-area-inset-bottom), var(--tg-content-safe-area-inset-bottom, 0px)));
+    background: #0a0a0e;
+  }
+
+  .telegram-app-shell::before,
+  .telegram-app-shell > .ambient-orb {
+    display: none;
   }
 
   .liquid-glass,
@@ -433,6 +495,65 @@ select:focus-visible {
   .mobile-primary-action {
     min-height: 2.85rem !important;
     font-size: 0.75rem;
+  }
+
+  .app-content .figma-icon-button {
+    width: 2.375rem;
+    height: 2.375rem;
+    min-width: 2.375rem;
+    min-height: 2.375rem !important;
+    flex-basis: 2.375rem;
+  }
+
+  .app-content .figma-soft-button {
+    min-height: 2.375rem !important;
+  }
+
+  .figma-plans .figma-input {
+    min-height: 2.375rem !important;
+  }
+
+  .figma-plans-summary {
+    min-height: 6.75rem;
+  }
+
+  .figma-month-card,
+  .figma-debt-card,
+  .figma-settings .figma-surface,
+  .figma-template-settings .figma-surface {
+    box-shadow: 0 14px 22px rgba(0, 0, 0, 0.18);
+  }
+
+  .figma-debt-card {
+    min-height: 9.5rem;
+  }
+
+  .figma-settings-link,
+  .figma-settings .figma-surface,
+  .figma-debts .figma-debt-card,
+  .figma-plans .figma-month-card,
+  .figma-plans-summary {
+    border-radius: 1.875rem;
+  }
+
+  .app-modal-overlay .liquid-glass-strong {
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    border-radius: 1.875rem;
+    background: #151519;
+    box-shadow: 0 24px 80px rgba(0, 0, 0, 0.55);
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+
+  .app-modal-overlay input,
+  .app-modal-overlay select {
+    border-color: rgba(255, 255, 255, 0.16) !important;
+    border-radius: 9999px !important;
+    background: rgba(255, 255, 255, 0.05) !important;
+  }
+
+  .app-modal-overlay button {
+    border-radius: 9999px !important;
   }
 
   /* Figma Budget screen */

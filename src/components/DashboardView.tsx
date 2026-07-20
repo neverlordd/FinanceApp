@@ -602,7 +602,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                   className="mobile-primary-action flex min-w-0 items-center justify-center gap-2 px-3 py-3 bg-rose-500/10 hover:bg-rose-500/15 border border-rose-500/20 hover:border-rose-500/30 text-rose-300 hover:text-rose-200 text-xs font-bold tracking-wide transition-all duration-200 cursor-pointer active:scale-95"
                 >
                   <Plus size={16} strokeWidth={2.5} />
-                  <span className="truncate">Add Expense</span>
+                  <span className="truncate">Expence</span>
                 </button>
 
                 <button
@@ -610,7 +610,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                   className="mobile-primary-action flex min-w-0 items-center justify-center gap-2 px-3 py-3 bg-emerald-500/10 hover:bg-emerald-500/15 border border-emerald-500/20 hover:border-emerald-500/30 text-emerald-300 hover:text-emerald-200 text-xs font-bold tracking-wide transition-all duration-200 cursor-pointer active:scale-95"
                 >
                   <Plus size={16} strokeWidth={2.5} />
-                  <span className="truncate">Add Income</span>
+                  <span className="truncate">Income</span>
                 </button>
               </div>
             </div>

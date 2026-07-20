@@ -1,15 +1,6 @@
 import React from "react";
+import { ArrowRight, Check, ChevronDown, Coins, Plus, Trash2, X } from "lucide-react";
 import { CalculatedMonth } from "../utils/calculations";
-import {
-  Calendar,
-  Wallet,
-  ArrowRight,
-  Plus,
-  Trash2,
-  ChevronDown,
-  Check,
-  X
-} from "lucide-react";
 
 interface FutureViewProps {
   calculatedMonths: CalculatedMonth[];
@@ -20,18 +11,25 @@ interface FutureViewProps {
   onDeleteMonth?: (monthStr: string) => void;
 }
 
+const formatCurrency = (value: number) => new Intl.NumberFormat("en-US", {
+  style: "currency",
+  currency: "USD",
+  minimumFractionDigits: 2,
+  maximumFractionDigits: 2,
+}).format(value);
+
 export const FutureView: React.FC<FutureViewProps> = ({
   calculatedMonths,
   onSelectMonth,
   onUpdateActualBalance,
   onNavigateToEditor,
   onAddMonth,
-  onDeleteMonth
+  onDeleteMonth,
 }) => {
   const [expandedMonthStr, setExpandedMonthStr] = React.useState<string | null>(null);
   const [actualBalanceInput, setActualBalanceInput] = React.useState("");
-  const currentMonthObj = calculatedMonths.find(month => month.isCurrent) ?? calculatedMonths[0];
-  const summaryMonthObj = calculatedMonths.find(month => month.monthStr === expandedMonthStr) ?? currentMonthObj;
+  const currentMonth = calculatedMonths.find(month => month.isCurrent) ?? calculatedMonths[0];
+  const summaryMonth = calculatedMonths.find(month => month.monthStr === expandedMonthStr) ?? currentMonth;
 
   React.useEffect(() => {
     if (expandedMonthStr && !calculatedMonths.some(month => month.monthStr === expandedMonthStr)) {
@@ -40,10 +38,8 @@ export const FutureView: React.FC<FutureViewProps> = ({
   }, [calculatedMonths, expandedMonthStr]);
 
   React.useEffect(() => {
-    const expandedMonth = calculatedMonths.find(month => month.monthStr === expandedMonthStr);
-    if (expandedMonth) {
-      setActualBalanceInput((expandedMonth.actualEndingBalance ?? expandedMonth.endingSavings).toString());
-    }
+    const expanded = calculatedMonths.find(month => month.monthStr === expandedMonthStr);
+    if (expanded) setActualBalanceInput((expanded.actualEndingBalance ?? expanded.endingSavings).toString());
   }, [calculatedMonths, expandedMonthStr]);
 
   const toggleMonth = (monthStr: string) => {
@@ -53,281 +49,124 @@ export const FutureView: React.FC<FutureViewProps> = ({
   };
 
   const saveActualBalance = (monthStr: string) => {
-    const value = parseFloat(actualBalanceInput);
-    if (!Number.isFinite(value)) return;
-    onUpdateActualBalance(monthStr, value);
-  };
-
-  const formatCurrency = (val: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-      maximumFractionDigits: 2
-    }).format(val);
+    const value = Number.parseFloat(actualBalanceInput);
+    if (Number.isFinite(value)) onUpdateActualBalance(monthStr, value);
   };
 
   return (
-    <div className="space-y-6">
-      {/* HEADER */}
-      <div>
-        <h2 className="text-xl font-black text-white tracking-tight uppercase">Savings & Statistics</h2>
-      </div>
-
-      {/* EXECUTIVE SUMMARY AT THE TOP: Cumulative Savings card (full-width, clean, no description) */}
-      <div className="grid grid-cols-1 gap-5">
-
-        {/* KPI: Cumulative Savings (Moved from Dashboard, positioned at the top) */}
-        <div className="liquid-glass-strong rounded-3xl p-6 relative overflow-hidden flex flex-col justify-between group hover:border-emerald-500/30 transition-all duration-300">
-          <div className="absolute right-0 top-0 translate-x-4 -translate-y-4 w-32 h-32 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none group-hover:bg-emerald-500/15 transition-all duration-300" />
-
-          <div>
-            <div className="flex items-center justify-between mb-4">
-              <span className="text-[10px] font-bold text-white/40 tracking-wider uppercase">
-                {summaryMonthObj?.actualEndingBalance !== undefined ? "Actual End Balance" : "End-of-Month Savings"}
-                {summaryMonthObj ? ` · ${summaryMonthObj.monthName} '${summaryMonthObj.monthYear.slice(2)}` : ""}
-              </span>
-              <div className="p-2.5 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 rounded-xl">
-                <Wallet size={18} strokeWidth={2.2} />
-              </div>
-            </div>
-
-            <div className="space-y-1">
-              <h3 className="text-3xl font-black text-white tracking-tight font-sans">
-                {formatCurrency(summaryMonthObj?.endingSavings ?? 0)}
-              </h3>
-            </div>
-          </div>
+    <div className="figma-plans mx-auto max-w-3xl space-y-5">
+      <section className="figma-surface figma-plans-summary rounded-[30px] p-3.5">
+        <div className="flex items-center justify-between text-[13px] text-white/60">
+          <span>{summaryMonth?.actualEndingBalance !== undefined ? "Actual end balance" : "End-of-month saving"}</span>
+          <Coins size={20} strokeWidth={1.5} />
         </div>
-      </div>
+        <p className="mt-5 text-[30px] font-extrabold leading-none text-white">{formatCurrency(summaryMonth?.endingSavings ?? 0)}</p>
+      </section>
 
-      {/* MONTHLY BREAKDOWN BENTO BLOCKS */}
-      <div className="space-y-4">
-        {onAddMonth && (
-          <div className="flex justify-end">
-            <button
-              onClick={onAddMonth}
-              className="mobile-primary-action flex min-h-11 items-center justify-center gap-2 border border-emerald-400/20 bg-gradient-to-r from-emerald-500/15 to-cyan-500/10 px-4 text-xs font-bold text-emerald-300 shadow-[0_10px_28px_rgba(16,185,129,0.08)] transition-all duration-300 hover:border-emerald-400/35 hover:from-emerald-500/25 hover:to-cyan-500/15 active:scale-95"
-            >
-              <Plus size={16} strokeWidth={3} />
-              <span>Add Month</span>
+      <section className="space-y-5">
+        <div className="flex items-center justify-between gap-4">
+          <h2 className="text-base font-semibold text-white">Cash flow</h2>
+          {onAddMonth && (
+            <button onClick={onAddMonth} className="figma-soft-button flex h-[38px] items-center gap-1.5 rounded-full px-3.5 text-[13px] text-white">
+              <Plus size={15} strokeWidth={1.6} /> Add Month
             </button>
-          </div>
-        )}
-
-        <div className="flex items-center justify-between">
-          <h3 className="text-xs font-bold text-white/50 uppercase tracking-wider flex items-center gap-1.5">
-            <Calendar size={13} className="text-emerald-400" />
-            Cash Flow & Forecast
-          </h3>
+          )}
         </div>
 
-        {/* Dynamic Bento Block Display */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-start">
-          {calculatedMonths.map((month) => {
+        <div className="grid grid-cols-1 items-start gap-2.5 md:grid-cols-2">
+          {calculatedMonths.map(month => {
             const isExpanded = month.monthStr === expandedMonthStr;
-            const netPositive = month.net >= 0;
+            const positive = month.net >= 0;
+            const savingsPositive = month.endingSavings >= 0;
+
             return (
-              <div
+              <article
                 key={month.monthStr}
-                onClick={() => toggleMonth(month.monthStr)}
-                onKeyDown={(event) => {
-                  if (event.target !== event.currentTarget) return;
-                  if (event.key === "Enter" || event.key === " ") {
-                    event.preventDefault();
-                    toggleMonth(month.monthStr);
-                  }
-                }}
-                role="button"
-                tabIndex={0}
-                aria-expanded={isExpanded}
-                className={`group transition-all duration-300 relative overflow-hidden flex flex-col justify-between ${
-                  isExpanded
-                    ? "liquid-glass-strong p-5 rounded-3xl border-emerald-500/40 shadow-[0_16px_36px_rgba(16,185,129,0.12)] scale-[1.01]"
-                    : month.isCurrent
-                      ? "liquid-glass p-3.5 rounded-2xl border-emerald-500/30 bg-emerald-500/[0.04] shadow-[0_10px_28px_rgba(16,185,129,0.08)] hover:border-emerald-400/40 cursor-pointer"
-                      : "liquid-glass p-3.5 rounded-2xl hover:border-white/[0.2] cursor-pointer"
-                }`}
+                className={`figma-month-card rounded-[30px] p-3.5 ${isExpanded ? "is-expanded" : ""}`}
               >
-                {/* Visual Accent Glow on selection */}
-                {isExpanded && (
-                  <div className="absolute top-0 right-0 w-24 h-24 bg-emerald-500/10 rounded-full blur-2xl pointer-events-none" />
-                )}
-
-                {!isExpanded ? (
-                  /* Collapsed Card Layout for inactive months */
-                  <div className="flex items-center justify-between w-full gap-3">
-                    <div className="flex items-center gap-2 min-w-0">
-                      {month.isCurrent && (
-                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse shrink-0 shadow-[0_0_8px_#10b981]" />
-                      )}
-                      <h4 className="text-xs font-black tracking-tight text-white/90 truncate">
-                        {month.monthName} <span className="text-[9px] text-white/30 font-mono font-medium">'{month.monthYear.slice(2)}</span>
-                      </h4>
-                    </div>
-
-                    <div className="flex items-center gap-3 shrink-0">
-                      {/* Savings */}
-                      <div className="text-right">
-                        <span className="text-[7px] uppercase tracking-wider font-bold text-white/30 block leading-none mb-0.5">Savings</span>
-                        <span className={`text-[11px] font-bold font-mono tracking-tight ${month.endingSavings >= 0 ? "text-emerald-400" : "text-rose-400"}`}>
-                          {formatCurrency(month.endingSavings)}
-                        </span>
-                      </div>
-
-                      <ChevronDown size={14} className="text-white/30 transition-transform duration-300" />
-
-                      {/* Action buttons */}
-                      <div className="flex items-center gap-1">
-                        {calculatedMonths.length > 1 && onDeleteMonth && (
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              onDeleteMonth(month.monthStr);
-                            }}
-                            className="plan-icon-button bg-rose-500/5 hover:bg-rose-500/20 border border-rose-500/10 hover:border-rose-500/25 text-rose-400/80 hover:text-rose-400 transition-all cursor-pointer"
-                            aria-label="Delete month"
-                          >
-                            <Trash2 size={11} />
-                          </button>
-                        )}
+                <div className="flex min-h-[38px] w-full items-center gap-2.5">
+                  <button type="button" onClick={() => toggleMonth(month.monthStr)} aria-expanded={isExpanded} className="flex min-w-0 flex-1 items-center gap-3 text-left">
+                    <span className="min-w-0 flex-1">
+                      <span className={`text-[13px] font-bold ${month.isCurrent ? "text-[#29ff5e]" : "text-white"}`}>{month.monthName[0]}{month.monthName.slice(1).toLowerCase()}</span>
+                      <span className="ml-1 text-[11px] font-normal text-white/35">‘{month.monthYear.slice(2)}</span>
+                    </span>
+                    {!isExpanded && (
+                      <span className={`text-[13px] font-semibold ${savingsPositive ? "text-[#29ff5e]" : "text-[#ff5050]"}`}>{formatCurrency(month.endingSavings)}</span>
+                    )}
+                    <ChevronDown size={16} className={`shrink-0 text-white/40 transition-transform ${isExpanded ? "rotate-180" : ""}`} />
+                  </button>
+                  {!isExpanded && (
+                    <span className="flex shrink-0 gap-2.5">
+                      {calculatedMonths.length > 1 && onDeleteMonth && (
                         <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            onSelectMonth(month.monthStr);
-                            onNavigateToEditor();
-                          }}
-                          className="plan-icon-button border bg-white/[0.03] border-white/[0.05] hover:bg-white/[0.1] text-white/50 hover:text-white transition-all cursor-pointer"
-                          aria-label="Open monthly budget"
-                        >
-                          <ArrowRight size={11} strokeWidth={2.5} />
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                ) : (
-                  /* Expanded Card Layout for the active selected month */
-                  <>
-                    {/* Block Header */}
-                    <div className="flex items-center justify-between mb-4 pb-3 border-b border-white/[0.04]">
-                      <div className="flex items-center gap-2">
-                        {month.isCurrent && (
-                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_8px_#10b981]" />
-                        )}
-                        <h4 className="text-sm font-black tracking-tight text-emerald-400">
-                          {month.monthName} <span className="text-[10px] text-white/30 font-mono font-medium">'{month.monthYear.slice(2)}</span>
-                        </h4>
-                      </div>
+                          type="button"
+                          onClick={event => { event.stopPropagation(); onDeleteMonth(month.monthStr); }}
+                          className="figma-icon-button text-[#ff5050]"
+                          aria-label="Delete month"
+                        ><Trash2 size={16} /></button>
+                      )}
+                      <button
+                        type="button"
+                        onClick={event => { event.stopPropagation(); onSelectMonth(month.monthStr); onNavigateToEditor(); }}
+                        className="figma-icon-button text-white/70"
+                        aria-label="Open monthly budget"
+                      ><ArrowRight size={16} /></button>
+                    </span>
+                  )}
+                </div>
 
-                      <div className="flex items-center gap-2">
-                        <span className={`text-[8px] font-mono font-extrabold px-1.5 py-0.5 rounded ${netPositive ? "bg-emerald-500/10 text-emerald-400" : "bg-rose-500/10 text-rose-400"}`}>
-                          {netPositive ? "SURPLUS" : "DEFICIT"}
-                        </span>
-                        <ChevronDown size={15} className="rotate-180 text-white/35 transition-transform duration-300" />
-                      </div>
-                    </div>
-
-                    {/* Stats Breakdown */}
-                    <div className="space-y-2 text-xs font-mono">
-                      {/* Income row */}
-                      <div className="flex items-center justify-between text-white/50">
-                        <span className="text-[10px] uppercase font-bold tracking-wider">Income:</span>
-                        <span className="text-emerald-400 font-bold">+{formatCurrency(month.income)}</span>
-                      </div>
-
-                      {/* Expenses row */}
-                      <div className="flex items-center justify-between text-white/50">
-                        <span className="text-[10px] uppercase font-bold tracking-wider">Expenses:</span>
-                        <span className="text-rose-400/90 font-bold">-{formatCurrency(month.totalExpenses)}</span>
-                      </div>
-
-                      {/* Leftover row */}
-                      <div className="flex items-center justify-between pt-1 border-t border-white/[0.03]">
-                        <span className="text-[10px] uppercase font-bold tracking-wider text-white/40">Net:</span>
-                        <span className={`font-bold ${netPositive ? "text-emerald-400" : "text-rose-400"}`}>
-                          {netPositive ? "+" : ""}{formatCurrency(month.net)}
-                        </span>
-                      </div>
+                {isExpanded && (
+                  <div className="mt-2.5 space-y-3 border-t border-white/[0.09] pt-3">
+                    <div className="space-y-2 text-[11px]">
+                      <div className="flex justify-between"><span className="text-white/45">Income</span><strong className="text-[13px] font-semibold text-[#29ff5e]">+{formatCurrency(month.income)}</strong></div>
+                      <div className="flex justify-between"><span className="text-white/45">Expenses</span><strong className="text-[13px] font-semibold text-[#ff5050]">-{formatCurrency(month.totalExpenses)}</strong></div>
+                      <div className="flex justify-between"><span className="text-white/45">Net</span><strong className={`text-[13px] font-semibold ${positive ? "text-[#29ff5e]" : "text-[#ff5050]"}`}>{positive ? "+" : ""}{formatCurrency(month.net)}</strong></div>
                     </div>
 
                     <form
-                      onSubmit={event => {
-                        event.preventDefault();
-                        saveActualBalance(month.monthStr);
-                      }}
-                      onClick={event => event.stopPropagation()}
-                      className="mt-4 flex items-end gap-2 border-t border-white/[0.05] pt-3"
+                      onSubmit={event => { event.preventDefault(); saveActualBalance(month.monthStr); }}
+                      className="space-y-2.5 border-t border-white/[0.09] pt-3"
                     >
-                      <label className="min-w-0 flex-1">
-                        <span className="mb-1 block text-[8px] font-bold uppercase tracking-wider text-white/30">Actual Balance</span>
+                      <label className="block text-[11px] text-white/45">Actual Balance</label>
+                      <div className="flex gap-2.5">
                         <input
                           type="number"
                           step="0.01"
                           value={actualBalanceInput}
                           onChange={event => setActualBalanceInput(event.target.value)}
-                          className="w-full rounded-full border border-white/[0.09] bg-black/30 px-3 py-2 text-xs font-bold text-white outline-none focus:border-cyan-400/40"
+                          className="figma-input h-[38px] min-w-0 flex-1 rounded-full px-3.5 text-[13px] font-semibold text-white outline-none"
                         />
-                      </label>
-                      {month.actualEndingBalance !== undefined && (
-                        <button
-                          type="button"
-                          onClick={() => {
-                            onUpdateActualBalance(month.monthStr, null);
-                            setActualBalanceInput(month.projectedEndingSavings.toString());
-                          }}
-                          className="flex h-10 w-10 shrink-0 items-center justify-center border border-white/[0.08] bg-white/[0.03] text-white/35"
-                          aria-label="Use calculated balance"
-                        >
-                          <X size={13} />
-                        </button>
-                      )}
-                      <button type="submit" className="flex h-10 w-10 shrink-0 items-center justify-center bg-cyan-400 text-slate-950" aria-label="Save actual balance">
-                        <Check size={13} strokeWidth={3} />
-                      </button>
+                        {month.actualEndingBalance !== undefined && (
+                          <button
+                            type="button"
+                            onClick={() => { onUpdateActualBalance(month.monthStr, null); setActualBalanceInput(month.projectedEndingSavings.toString()); }}
+                            className="figma-icon-button text-white/60"
+                            aria-label="Use calculated balance"
+                          ><X size={15} /></button>
+                        )}
+                        <button type="submit" className="figma-icon-button is-primary text-white" aria-label="Save actual balance"><Check size={19} /></button>
+                      </div>
                     </form>
 
-                    {/* Savings Goal Progress Summary */}
-                    <div className="mt-4 pt-3 border-t border-white/[0.04] flex items-end justify-between">
-                      <div className="space-y-0.5">
-                        <p className="text-[8px] uppercase tracking-wider font-bold text-white/30">{month.actualEndingBalance !== undefined ? "Actual Savings" : "Savings"}</p>
-                        <p className={`text-sm font-bold font-mono tracking-tight ${month.endingSavings >= 0 ? "text-white" : "text-rose-400"}`}>
-                          {formatCurrency(month.endingSavings)}
-                        </p>
+                    <div className="flex items-end justify-between border-t border-white/[0.09] pt-3">
+                      <div>
+                        <p className="text-[11px] text-white/45">Saving</p>
+                        <p className={`mt-1 text-base font-semibold ${savingsPositive ? "text-white" : "text-[#ff5050]"}`}>{formatCurrency(month.endingSavings)}</p>
                       </div>
-
-                      {/* View details and delete buttons */}
-                      <div className="flex items-center gap-1.5 shrink-0">
+                      <div className="flex gap-2.5">
                         {calculatedMonths.length > 1 && onDeleteMonth && (
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              onDeleteMonth(month.monthStr);
-                            }}
-                            className="plan-icon-button bg-rose-500/5 hover:bg-rose-500/20 border border-rose-500/10 hover:border-rose-500/20 text-rose-400 transition-all cursor-pointer"
-                            aria-label="Delete month"
-                          >
-                            <Trash2 size={12} />
-                          </button>
+                          <button onClick={() => onDeleteMonth(month.monthStr)} className="figma-icon-button text-[#ff5050]" aria-label="Delete month"><Trash2 size={16} /></button>
                         )}
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            onSelectMonth(month.monthStr);
-                            onNavigateToEditor();
-                          }}
-                          className="plan-icon-button border transition-all duration-150 cursor-pointer bg-emerald-500 text-slate-950 border-transparent hover:bg-emerald-400"
-                          aria-label="Open monthly budget"
-                        >
-                          <ArrowRight size={12} strokeWidth={2.5} />
-                        </button>
+                        <button onClick={() => { onSelectMonth(month.monthStr); onNavigateToEditor(); }} className="figma-icon-button text-white/70" aria-label="Open monthly budget"><ArrowRight size={16} /></button>
                       </div>
                     </div>
-                  </>
+                  </div>
                 )}
-              </div>
+              </article>
             );
           })}
         </div>
-      </div>
+      </section>
     </div>
   );
 };

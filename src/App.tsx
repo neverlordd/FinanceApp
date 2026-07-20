@@ -18,7 +18,10 @@ import {
   LineChart,
   Database,
   HandCoins,
-  PartyPopper
+  PartyPopper,
+  CalendarCog,
+  CircleDollarSign,
+  Ellipsis
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 
@@ -803,6 +806,7 @@ export default function App() {
                   triggerConfirm={triggerConfirm}
                   triggerAlert={triggerAlert}
                   onOpenTemplates={() => setActiveTab("template-settings")}
+                  onOpenDebts={() => setActiveTab("debts")}
                   templateCount={expenseTemplates.length}
                 />
               )}
@@ -820,7 +824,7 @@ export default function App() {
             activeTab === "budget" ? "text-emerald-400" : "text-slate-400 hover:text-slate-200"
           }`}
         >
-          <Wallet size={19} />
+          <Wallet size={24} strokeWidth={activeTab === "budget" ? 2.6 : 1.6} />
           <span className="app-nav-label text-[10px] font-semibold mt-1">Budget</span>
         </button>
 
@@ -831,7 +835,7 @@ export default function App() {
             activeTab === "projections" ? "text-emerald-400" : "text-slate-400 hover:text-slate-200"
           }`}
         >
-          <Calendar size={19} />
+          <CalendarCog size={24} strokeWidth={activeTab === "projections" ? 2.6 : 1.6} />
           <span className="app-nav-label text-[10px] font-semibold mt-1">Plans</span>
         </button>
 
@@ -842,7 +846,7 @@ export default function App() {
             activeTab === "debts" ? "text-emerald-400" : "text-slate-400 hover:text-slate-200"
           }`}
         >
-          <HandCoins size={19} />
+          <CircleDollarSign size={24} strokeWidth={activeTab === "debts" ? 2.6 : 1.6} />
           <span className="app-nav-label text-[10px] font-semibold mt-1">Debts</span>
         </button>
 
@@ -853,7 +857,7 @@ export default function App() {
             activeTab === "settings" || activeTab === "template-settings" ? "text-emerald-400" : "text-slate-400 hover:text-slate-200"
           }`}
         >
-          <Settings size={19} />
+          <Ellipsis size={24} strokeWidth={activeTab === "settings" || activeTab === "template-settings" ? 2.8 : 1.8} />
           <span className="app-nav-label text-[10px] font-semibold mt-1">Settings</span>
         </button>
       </nav>
