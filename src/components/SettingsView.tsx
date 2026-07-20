@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
-import { ChevronRight, Plus } from "lucide-react";
 import { FinanceData } from "../types";
+import { FigmaIcon } from "./FigmaIcon";
 
 interface SettingsViewProps {
   data: FinanceData;
@@ -50,27 +50,27 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
       <div className="flex items-center justify-between gap-4">
         <h2 className="text-base font-semibold text-white">Debts</h2>
         <button onClick={onOpenDebts} className="figma-soft-button flex h-[38px] items-center gap-1.5 rounded-full px-3.5 text-[13px] text-white">
-          <Plus size={15} strokeWidth={1.6} /> Add Debts
+          <FigmaIcon name="add" size={14} /> Add Debts
         </button>
       </div>
 
       <button type="button" onClick={onOpenTemplates} className="figma-settings-link flex min-h-[68px] w-full items-center rounded-[30px] p-3.5 text-left">
         <span className="min-w-0 flex-1">
-          <span className="block text-base font-semibold text-white">Templates</span>
-          <span className="mt-1 block text-[11px] text-white/40">{templateCount} active</span>
+          <span className="block text-base font-semibold leading-5 text-white">Templates</span>
+          <span className="mt-1 block text-[11px] leading-[15px] text-white/40">{templateCount} active</span>
         </span>
-        <ChevronRight size={16} className="text-white/40" />
+        <FigmaIcon name="arrow-right-muted" size={16} className="opacity-50" />
       </button>
 
-      <section className="figma-surface rounded-[30px] p-3.5">
-        <h3 className="border-b border-white/[0.09] pb-3.5 text-base font-semibold text-white">Baseline</h3>
+      <section className="figma-surface figma-settings-baseline rounded-[30px] p-3.5">
+        <h3 className="border-b border-white/[0.09] pb-3.5 text-base font-semibold leading-5 text-white">Baseline</h3>
         <form onSubmit={handleSave} className="mt-3.5 space-y-3.5">
           <label className="block space-y-2.5">
-            <span className="text-[11px] text-white/40">Monthly Income</span>
+            <span className="block text-[11px] leading-[15px] text-white/40">Monthly Income</span>
             <input type="number" required min="0" step="0.01" value={baselineIncome} onChange={event => setBaselineIncome(event.target.value)} className="figma-input h-11 w-full rounded-full px-3.5 text-[13px] font-semibold text-white outline-none" />
           </label>
           <label className="block space-y-2.5">
-            <span className="text-[11px] text-white/40">Starting Balance</span>
+            <span className="block text-[11px] leading-[15px] text-white/40">Starting Balance</span>
             <input type="number" required step="0.01" value={baselineBalance} onChange={event => setBaselineBalance(event.target.value)} className="figma-input h-11 w-full rounded-full px-3.5 text-[13px] font-semibold text-white outline-none" />
           </label>
           <button type="submit" className="figma-soft-button h-11 w-full rounded-full text-[13px] font-semibold text-white">{isSaved ? "Saved" : "Save"}</button>
@@ -78,7 +78,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
       </section>
 
       <section className="figma-surface rounded-[30px] p-3.5">
-        <h3 className="text-base font-semibold text-white">Reset Data</h3>
+        <h3 className="text-base font-semibold leading-5 text-white">Reset Data</h3>
         <button
           type="button"
           onClick={() => triggerConfirm("Clear data", "Delete all income, expenses, and baseline values? This action cannot be undone.", onClearAll)}

@@ -1,6 +1,7 @@
 import React from "react";
-import { ArrowRight, Check, ChevronDown, Coins, Plus, Trash2, X } from "lucide-react";
+import { X } from "lucide-react";
 import { CalculatedMonth } from "../utils/calculations";
+import { FigmaIcon } from "./FigmaIcon";
 
 interface FutureViewProps {
   calculatedMonths: CalculatedMonth[];
@@ -58,7 +59,7 @@ export const FutureView: React.FC<FutureViewProps> = ({
       <section className="figma-surface figma-plans-summary rounded-[30px] p-3.5">
         <div className="flex items-center justify-between text-[13px] text-white/60">
           <span>{summaryMonth?.actualEndingBalance !== undefined ? "Actual end balance" : "End-of-month saving"}</span>
-          <Coins size={20} strokeWidth={1.5} />
+          <FigmaIcon name="coin-large" size={20} className="opacity-60" />
         </div>
         <p className="mt-5 text-[30px] font-extrabold leading-none text-white">{formatCurrency(summaryMonth?.endingSavings ?? 0)}</p>
       </section>
@@ -68,7 +69,7 @@ export const FutureView: React.FC<FutureViewProps> = ({
           <h2 className="text-base font-semibold text-white">Cash flow</h2>
           {onAddMonth && (
             <button onClick={onAddMonth} className="figma-soft-button flex h-[38px] items-center gap-1.5 rounded-full px-3.5 text-[13px] text-white">
-              <Plus size={15} strokeWidth={1.6} /> Add Month
+              <FigmaIcon name="add" size={14} /> Add Month
             </button>
           )}
         </div>
@@ -87,13 +88,13 @@ export const FutureView: React.FC<FutureViewProps> = ({
                 <div className="flex min-h-[38px] w-full items-center gap-2.5">
                   <button type="button" onClick={() => toggleMonth(month.monthStr)} aria-expanded={isExpanded} className="flex min-w-0 flex-1 items-center gap-3 text-left">
                     <span className="min-w-0 flex-1">
-                      <span className={`text-[13px] font-bold ${month.isCurrent ? "text-[#29ff5e]" : "text-white"}`}>{month.monthName[0]}{month.monthName.slice(1).toLowerCase()}</span>
+                      <span className={`${isExpanded && month.isCurrent ? "text-base" : "text-[13px]"} font-bold ${month.isCurrent ? "text-[#29ff5e]" : "text-white"}`}>{month.monthName[0]}{month.monthName.slice(1).toLowerCase()}</span>
                       <span className="ml-1 text-[11px] font-normal text-white/35">‘{month.monthYear.slice(2)}</span>
                     </span>
                     {!isExpanded && (
                       <span className={`text-[13px] font-semibold ${savingsPositive ? "text-[#29ff5e]" : "text-[#ff5050]"}`}>{formatCurrency(month.endingSavings)}</span>
                     )}
-                    <ChevronDown size={16} className={`shrink-0 text-white/40 transition-transform ${isExpanded ? "rotate-180" : ""}`} />
+                    <FigmaIcon name="arrow-down" size={16} className={`opacity-50 transition-transform ${isExpanded ? "rotate-180" : ""}`} />
                   </button>
                   {!isExpanded && (
                     <span className="flex shrink-0 gap-2.5">
@@ -103,14 +104,14 @@ export const FutureView: React.FC<FutureViewProps> = ({
                           onClick={event => { event.stopPropagation(); onDeleteMonth(month.monthStr); }}
                           className="figma-icon-button text-[#ff5050]"
                           aria-label="Delete month"
-                        ><Trash2 size={16} /></button>
+                        ><FigmaIcon name="trash-plan" size={16} /></button>
                       )}
                       <button
                         type="button"
                         onClick={event => { event.stopPropagation(); onSelectMonth(month.monthStr); onNavigateToEditor(); }}
                         className="figma-icon-button text-white/70"
                         aria-label="Open monthly budget"
-                      ><ArrowRight size={16} /></button>
+                      ><FigmaIcon name="arrow-right" size={16} /></button>
                     </span>
                   )}
                 </div>
@@ -144,7 +145,7 @@ export const FutureView: React.FC<FutureViewProps> = ({
                             aria-label="Use calculated balance"
                           ><X size={15} /></button>
                         )}
-                        <button type="submit" className="figma-icon-button is-primary text-white" aria-label="Save actual balance"><Check size={19} /></button>
+                        <button type="submit" className="figma-icon-button is-primary text-white" aria-label="Save actual balance"><FigmaIcon name="tick-circle-white" size={24} /></button>
                       </div>
                     </form>
 
@@ -155,9 +156,9 @@ export const FutureView: React.FC<FutureViewProps> = ({
                       </div>
                       <div className="flex gap-2.5">
                         {calculatedMonths.length > 1 && onDeleteMonth && (
-                          <button onClick={() => onDeleteMonth(month.monthStr)} className="figma-icon-button text-[#ff5050]" aria-label="Delete month"><Trash2 size={16} /></button>
+                          <button onClick={() => onDeleteMonth(month.monthStr)} className="figma-icon-button text-[#ff5050]" aria-label="Delete month"><FigmaIcon name="trash-plan" size={16} /></button>
                         )}
-                        <button onClick={() => { onSelectMonth(month.monthStr); onNavigateToEditor(); }} className="figma-icon-button text-white/70" aria-label="Open monthly budget"><ArrowRight size={16} /></button>
+                        <button onClick={() => { onSelectMonth(month.monthStr); onNavigateToEditor(); }} className="figma-icon-button text-white/70" aria-label="Open monthly budget"><FigmaIcon name="arrow-right" size={16} /></button>
                       </div>
                     </div>
                   </div>

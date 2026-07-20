@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
-import { HandCoins, Plus, Trash2, X } from "lucide-react";
+import { HandCoins, X } from "lucide-react";
 import { DebtItem } from "../types";
+import { FigmaIcon } from "./FigmaIcon";
 
 interface DebtViewProps {
   debts: DebtItem[];
@@ -80,7 +81,7 @@ export const DebtView: React.FC<DebtViewProps> = ({
           onClick={openForm}
           className="figma-soft-button flex h-[38px] items-center gap-1.5 rounded-full px-3.5 text-[13px] text-white"
         >
-          <Plus size={15} strokeWidth={1.6} /> Add Debts
+          <FigmaIcon name="add" size={14} /> Add Debts
         </button>
       </div>
 
@@ -117,7 +118,7 @@ export const DebtView: React.FC<DebtViewProps> = ({
                       className="figma-icon-button shrink-0 text-white/45 transition hover:text-[#ff5050]"
                       aria-label="Delete debt"
                     >
-                      <Trash2 size={13} />
+                      <FigmaIcon name="trash-muted" size={16} className="opacity-50" />
                     </button>
                   </div>
 

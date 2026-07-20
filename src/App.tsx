@@ -823,7 +823,7 @@ export default function App() {
             activeTab === "budget" ? "text-emerald-400" : "text-slate-400 hover:text-slate-200"
           }`}
         >
-          <FigmaIcon name="wallet-money" size={24} />
+          <FigmaIcon name={activeTab === "budget" ? "wallet-money" : "wallet"} size={24} />
           <span className="app-nav-label text-[10px] font-semibold mt-1">Budget</span>
         </button>
 
@@ -834,7 +834,7 @@ export default function App() {
             activeTab === "projections" ? "text-emerald-400" : "text-slate-400 hover:text-slate-200"
           }`}
         >
-          <FigmaIcon name="calendar-edit" size={24} />
+          <FigmaIcon name={activeTab === "projections" ? "calendar-edit-bold" : "calendar-edit"} size={24} />
           <span className="app-nav-label text-[10px] font-semibold mt-1">Plans</span>
         </button>
 
@@ -845,7 +845,7 @@ export default function App() {
             activeTab === "debts" ? "text-emerald-400" : "text-slate-400 hover:text-slate-200"
           }`}
         >
-          <FigmaIcon name="money-send" size={24} />
+          <FigmaIcon name={activeTab === "debts" ? "money-send-bold" : "money-send"} size={24} />
           <span className="app-nav-label text-[10px] font-semibold mt-1">Debts</span>
         </button>
 
@@ -856,7 +856,7 @@ export default function App() {
             activeTab === "settings" || activeTab === "template-settings" ? "text-emerald-400" : "text-slate-400 hover:text-slate-200"
           }`}
         >
-          <FigmaIcon name="more" size={24} />
+          <FigmaIcon name={activeTab === "settings" || activeTab === "template-settings" ? "more-bold" : "more"} size={24} />
           <span className="app-nav-label text-[10px] font-semibold mt-1">Settings</span>
         </button>
       </nav>

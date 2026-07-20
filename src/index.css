@@ -516,6 +516,18 @@ select:focus-visible {
     min-height: 2.375rem !important;
   }
 
+  .figma-settings .figma-input {
+    min-height: 2.75rem !important;
+  }
+
+  .figma-month-card:not(.is-expanded) {
+    padding: 0.8125rem;
+  }
+
+  .figma-month-card > .flex > button {
+    min-height: 2.375rem !important;
+  }
+
   .figma-plans-summary {
     min-height: 6.75rem;
   }
