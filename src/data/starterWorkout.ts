@@ -184,18 +184,34 @@ export const buildStarterWorkoutWeek = (startDate = getCurrentWeekStart()): Work
   ],
 });
 
-export const cloneWorkoutWeek = (week: WorkoutWeek, startDate: string): WorkoutWeek => ({
-  ...week,
-  id: crypto.randomUUID(),
-  startDate,
-  title: formatWorkoutWeek(startDate),
-  days: week.days.map(day => ({
-    ...day,
+export const cloneWorkoutWeek = (week: WorkoutWeek, startDate: string): WorkoutWeek => {
+  const starterExercises = week.startDate < getCurrentWeekStart()
+    ? new Map(
+      buildStarterWorkoutWeek(startDate).days
+        .flatMap(day => day.exercises)
+        .map(exercise => [exercise.title.trim().toLocaleLowerCase(), exercise]),
+    )
+    : new Map();
+
+  return {
+    ...week,
     id: crypto.randomUUID(),
-    exercises: day.exercises.map(exercise => ({
-      ...exercise,
+    startDate,
+    title: formatWorkoutWeek(startDate),
+    days: week.days.map(day => ({
+      ...day,
       id: crypto.randomUUID(),
-      completed: false,
+      exercises: day.exercises.map(exercise => {
+        const starter = starterExercises.get(exercise.title.trim().toLocaleLowerCase());
+        return {
+          ...exercise,
+          id: crypto.randomUUID(),
+          setup: exercise.setup || starter?.setup || "",
+          technique: exercise.technique || starter?.technique || "",
+          important: exercise.important || starter?.important,
+          completed: false,
+        };
+      }),
     })),
-  })),
-});
+  };
+};

@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { FinanceData, ExpenseItem, DebtItem, ExpenseTemplateOverride } from "./types";
 import { calculateMonthlyStats, CalculatedMonth } from "./utils/calculations";
 import { buildExpenseTemplates } from "./utils/expenseTemplates";
@@ -12,13 +12,13 @@ import { ConfirmModal } from "./components/ConfirmModal";
 import { FigmaIcon } from "./components/FigmaIcon";
 import { apiFetch } from "./api";
 import { buildStarterWorkoutWeek } from "./data/starterWorkout";
+import { prunePastWorkoutDescriptions } from "./utils/workoutStorage";
 import {
   Wallet,
   Calendar,
   Settings,
   RefreshCw,
   WifiOff,
-  LineChart,
   Database,
   HandCoins,
   PartyPopper,
@@ -85,6 +85,7 @@ export default function App() {
   const [storageProvider, setStorageProvider] = useState<string | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const saveQueueRef = useRef<Promise<void>>(Promise.resolve());
+  const lastPersistedDataRef = useRef<string | null>(null);
   const previousClosedDebtIdsRef = useRef<Set<string> | null>(null);
   const celebrationTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [debtCelebration, setDebtCelebration] = useState<string | null>(null);
@@ -181,19 +182,31 @@ export default function App() {
         throw new Error(message);
       }
       const json = await res.json() as FinanceData;
+      const activeMonthSource = json.activeMonths?.length
+        ? json.activeMonths
+        : [getCurrentMonthStr(), ...json.monthlyBudgets.map(budget => budget.monthStr)];
+      const normalizedActiveMonths = [...new Set(activeMonthSource)].sort();
+      const needsActiveMonthRepair = JSON.stringify(json.activeMonths ?? []) !== JSON.stringify(normalizedActiveMonths);
+      const normalizedJson: FinanceData = needsActiveMonthRepair
+        ? { ...json, activeMonths: normalizedActiveMonths }
+        : json;
       const needsStarterWorkout = json.workoutWeeks === undefined;
       const needsCloudRepair = res.headers.get("X-Storage-Needs-Repair") === "true";
       const dataWithWorkouts: FinanceData = needsStarterWorkout
-        ? { ...json, workoutWeeks: [buildStarterWorkoutWeek()] }
-        : json;
+        ? { ...normalizedJson, workoutWeeks: [buildStarterWorkoutWeek()] }
+        : normalizedJson;
       const reconciledData = dataWithWorkouts.debts?.length
         ? { ...dataWithWorkouts, debts: syncDebtPayments(dataWithWorkouts.debts, dataWithWorkouts.monthlyBudgets) }
         : dataWithWorkouts;
+      const debtSyncChanged = Boolean(dataWithWorkouts.debts?.length) &&
+        JSON.stringify(dataWithWorkouts.debts) !== JSON.stringify(reconciledData.debts);
+      const optimized = prunePastWorkoutDescriptions(reconciledData);
       setStoragePersistent(res.headers.get("X-Storage-Persistent") !== "false");
       setStorageProvider(res.headers.get("X-Storage-Provider"));
-      setData(reconciledData);
+      setData(optimized.data);
       setErrorMsg(null);
-      if (needsStarterWorkout || needsCloudRepair) {
+      const optimizedSerialized = JSON.stringify(optimized.data);
+      if (needsStarterWorkout || needsCloudRepair || needsActiveMonthRepair || debtSyncChanged || optimized.changed) {
         setSyncStatus('syncing');
         saveQueueRef.current = saveQueueRef.current
           .catch(() => undefined)
@@ -201,11 +214,12 @@ export default function App() {
             const seedResponse = await apiFetch("/api/data/sync", {
               method: "POST",
               headers: { "Content-Type": "application/json" },
-              body: JSON.stringify(reconciledData),
+              body: optimizedSerialized,
             });
             if (!seedResponse.ok) throw new Error("Unable to finish initial cloud sync");
             setStoragePersistent(seedResponse.headers.get("X-Storage-Persistent") !== "false");
             setStorageProvider(seedResponse.headers.get("X-Storage-Provider"));
+            lastPersistedDataRef.current = optimizedSerialized;
             setSyncStatus('synced');
           })
           .catch(error => {
@@ -213,6 +227,7 @@ export default function App() {
             setSyncStatus('offline');
           });
       } else {
+        lastPersistedDataRef.current = optimizedSerialized;
         setSyncStatus('synced');
       }
     } catch (err: any) {
@@ -228,6 +243,16 @@ export default function App() {
   useEffect(() => {
     fetchData(true);
   }, []);
+
+  const currentMonth = getCurrentMonthStr();
+  const calculatedMonths = useMemo(
+    () => data ? calculateMonthlyStats(data, currentMonth) : [],
+    [data, currentMonth],
+  );
+  const expenseTemplates = useMemo(
+    () => data ? buildExpenseTemplates(data) : [],
+    [data],
+  );
 
   if (loading) {
     return (
@@ -263,34 +288,41 @@ export default function App() {
     );
   }
 
-  // Calculate forward projections and statistics cascading recursively
-  const currentMonth = getCurrentMonthStr();
-  const calculatedMonths = calculateMonthlyStats(data, currentMonth);
-  const expenseTemplates = buildExpenseTemplates(data);
-
   // Helper to save state back to DB via Sync API
   const saveStateToDB = (updated: FinanceData) => {
-    setData(updated);
+    const optimized = prunePastWorkoutDescriptions(updated).data;
+    const serialized = JSON.stringify(optimized);
+    setData(optimized);
+    if (serialized === lastPersistedDataRef.current) {
+      setSyncStatus('synced');
+      setErrorMsg(null);
+      return;
+    }
     setSyncStatus('syncing');
 
     saveQueueRef.current = saveQueueRef.current
       .catch(() => undefined)
       .then(async () => {
+        if (serialized === lastPersistedDataRef.current) return;
         const res = await apiFetch("/api/data/sync", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(updated)
+          body: serialized
         });
-        if (!res.ok) throw new Error("Unable to save changes");
+        if (!res.ok) {
+          const payload = await res.json().catch(() => null) as { error?: string } | null;
+          throw new Error(payload?.error || "Unable to save changes");
+        }
         setStoragePersistent(res.headers.get("X-Storage-Persistent") !== "false");
         setStorageProvider(res.headers.get("X-Storage-Provider"));
+        lastPersistedDataRef.current = serialized;
         setSyncStatus('synced');
         setErrorMsg(null);
       })
       .catch((err) => {
         console.error("Save error:", err);
         setSyncStatus('offline');
-        setErrorMsg("Changes were not saved. Check your connection and try again.");
+        setErrorMsg(err instanceof Error ? err.message : "Unable to save changes. Check your connection.");
       });
   };
 
@@ -448,97 +480,13 @@ export default function App() {
     saveStateToDB({ ...data, expenseTemplateOverrides });
   };
 
-  // Reset to screenshot Demo Data
-  const handleResetToDemo = async () => {
-    setLoading(true);
-    try {
-      const demoData: FinanceData = {
-        baselineMonthlyIncome: 3000,
-        baselineBalance: 1500,
-        workoutWeeks: data.workoutWeeks,
-        monthlyBudgets: [
-          {
-            monthStr: "2026-08",
-            income: 3000,
-            expenses: [
-              {
-                id: "aug-1",
-                category: "Work",
-                description: "Salary advance deduction (part 2)",
-                amount: 675,
-                completed: true
-              },
-              {
-                id: "aug-2",
-                category: "Debt",
-                description: "Debt to spouse",
-                amount: 150,
-                completed: true
-              },
-              {
-                id: "aug-3",
-                category: "Debt",
-                description: "Debt to Amal (remaining)",
-                amount: 175,
-                completed: true
-              },
-              {
-                id: "aug-4",
-                category: "Debt",
-                description: "Debt to Andrey",
-                amount: 250,
-                completed: true
-              },
-              {
-                id: "aug-5",
-                category: "Debt",
-                description: "Small debt",
-                amount: 50,
-                completed: false
-              },
-              {
-                id: "aug-6",
-                category: "Housing",
-                description: "Apartment rent",
-                amount: 270,
-                completed: false
-              },
-              {
-                id: "aug-7",
-                category: "Living",
-                description: "Food and household expenses (Tbilisi)",
-                amount: 189.39,
-                completed: false
-              }
-            ]
-          }
-        ]
-      };
-      const res = await apiFetch("/api/data/sync", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(demoData)
-      });
-      if (!res.ok) throw new Error("Unable to restore the demo data");
-      const json = await res.json();
-      setStoragePersistent(res.headers.get("X-Storage-Persistent") !== "false");
-      setStorageProvider(res.headers.get("X-Storage-Provider"));
-      setData(json.data);
-      setSyncStatus('synced');
-      setSelectedMonthStr("2026-08"); // Focus August after reset
-    } catch (e) {
-      triggerAlert("Reset failed", "The demo data could not be restored.");
-    } finally {
-      setLoading(false);
-    }
-  };
-
   // Clear All
   const handleClearAll = () => {
     const updated: FinanceData = {
       baselineMonthlyIncome: 0,
       baselineBalance: 0,
       monthlyBudgets: [],
+      activeMonths: [getCurrentMonthStr()],
       workoutWeeks: data.workoutWeeks,
     };
     saveStateToDB(updated);
@@ -548,8 +496,10 @@ export default function App() {
   // Add a new month chronologically (sequential after the latest month)
   const handleAddMonth = () => {
     if (!data) return;
-    const currentSequence = calculatedMonths.map(m => m.monthStr);
-    let maxMonthStr = currentSequence.length > 0 ? currentSequence[currentSequence.length - 1] : getCurrentMonthStr();
+    const existingActive = data.activeMonths?.length
+      ? [...data.activeMonths].sort()
+      : [...new Set([getCurrentMonthStr(), ...data.monthlyBudgets.map(budget => budget.monthStr)])].sort();
+    let maxMonthStr = existingActive[existingActive.length - 1] ?? getCurrentMonthStr();
 
     let [year, month] = maxMonthStr.split('-').map(Number);
     month += 1;
@@ -559,7 +509,6 @@ export default function App() {
     }
     const nextMonthStr = `${year}-${String(month).padStart(2, '0')}`;
 
-    const existingActive = data.activeMonths || currentSequence;
     if (existingActive.includes(nextMonthStr)) {
       triggerAlert("Unable to add month", "This month has already been added.");
       return;
@@ -587,8 +536,9 @@ export default function App() {
   // Delete a month
   const handleDeleteMonth = (monthStr: string) => {
     if (!data) return;
-    const currentSequence = calculatedMonths.map(m => m.monthStr);
-    const existingActive = data.activeMonths || currentSequence;
+    const existingActive = data.activeMonths?.length
+      ? [...data.activeMonths].sort()
+      : [...new Set([getCurrentMonthStr(), ...data.monthlyBudgets.map(budget => budget.monthStr)])].sort();
 
     if (existingActive.length <= 1) {
       triggerAlert("Unable to delete month", "At least one month must remain in the list.");
@@ -831,6 +781,7 @@ export default function App() {
                   onNavigateToEditor={() => setActiveTab("budget")}
                   onAddMonth={handleAddMonth}
                   onDeleteMonth={handleDeleteMonth}
+                  triggerAlert={triggerAlert}
                 />
               )}
 

@@ -3,19 +3,12 @@ import { CalculatedMonth } from "../utils/calculations";
 import { ExpenseItem, ExpenseTemplate } from "../types";
 import { FigmaIcon } from "./FigmaIcon";
 import {
-  Wallet,
-  ChevronLeft,
-  ChevronRight,
   Plus,
   X,
   Edit3,
   Trash2,
   Check,
-  ArrowDownRight,
   HelpCircle,
-  DollarSign,
-  Briefcase,
-  AlertCircle,
   Calendar
 } from "lucide-react";
 
@@ -72,6 +65,15 @@ const INCOME_CATEGORIES = [
 ];
 
 const normalizeTemplateTitle = (value: string) => value.trim().replace(/\s+/g, " ").toLocaleLowerCase();
+
+const USD_FORMATTER = new Intl.NumberFormat("en-US", {
+  style: "currency",
+  currency: "USD",
+  minimumFractionDigits: 2,
+  maximumFractionDigits: 2,
+});
+
+const formatCurrency = (value: number) => USD_FORMATTER.format(value);
 
 export const DashboardView: React.FC<DashboardViewProps> = ({
   calculatedMonths,
@@ -135,29 +137,6 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
       setCustomCategory("");
     }
   }, [transactionType, editingExpense]);
-
-  // Format currency for display
-  const formatCurrency = (val: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2
-    }).format(val);
-  };
-
-  // Switch month helpers
-  const handlePrevMonth = () => {
-    if (activeIndex > 0) {
-      onSetSelectedMonthStr(calculatedMonths[activeIndex - 1].monthStr);
-    }
-  };
-
-  const handleNextMonth = () => {
-    if (activeIndex < calculatedMonths.length - 1) {
-      onSetSelectedMonthStr(calculatedMonths[activeIndex + 1].monthStr);
-    }
-  };
 
   // Handle opening form for adding a new row
   const handleOpenAddForm = (type: "expense" | "income" = "expense") => {
@@ -340,10 +319,6 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
 
   // Calculate stats for current view
   const activeCategories = transactionType === "income" ? INCOME_CATEGORIES : EXPENSE_CATEGORIES;
-
-  // Let's compute local totals for itemized entries
-  const localIncomesTotal = currentMonth.expenses.filter(e => e.type === "income").reduce((sum, e) => sum + e.amount, 0);
-  const localExpensesTotal = currentMonth.expenses.filter(e => e.type !== "income").reduce((sum, e) => sum + e.amount, 0);
 
   return (
     <div className="figma-budget space-y-6">

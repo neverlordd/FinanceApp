@@ -8,10 +8,16 @@ import {
 const telegramInitData = () => window.Telegram?.WebApp.initData ?? "";
 const isStaticStorage = import.meta.env.VITE_STATIC_STORAGE === "true";
 
+const getCurrentMonthStr = () => {
+  const date = new Date();
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
+};
+
 const defaultData = (): FinanceData => ({
   baselineMonthlyIncome: 0,
   baselineBalance: 0,
   monthlyBudgets: [],
+  activeMonths: [getCurrentMonthStr()],
   debts: [],
 });
 
@@ -21,6 +27,16 @@ const localStorageKey = () => {
 };
 
 const browserStorageKey = "finance-tracker-data:v1:browser";
+
+const isStoredFinanceData = (value: unknown): value is FinanceData => {
+  if (!value || typeof value !== "object") return false;
+  const data = value as Partial<FinanceData>;
+  return typeof data.baselineMonthlyIncome === "number" &&
+    Number.isFinite(data.baselineMonthlyIncome) &&
+    typeof data.baselineBalance === "number" &&
+    Number.isFinite(data.baselineBalance) &&
+    Array.isArray(data.monthlyBudgets);
+};
 
 const staticResponse = (body: unknown, status = 200, provider = "browser", needsCloudRepair = false) =>
   new Response(JSON.stringify(body), {
@@ -40,17 +56,21 @@ const readLocalData = (): FinanceData | null => {
   for (const key of keys) {
     const value = localStorage.getItem(key);
     if (!value) continue;
-    const parsed = JSON.parse(value) as FinanceData;
-    firstSavedData ??= parsed;
-    if (
-      parsed.baselineMonthlyIncome !== 0 ||
-      parsed.baselineBalance !== 0 ||
-      parsed.monthlyBudgets.length > 0 ||
-      parsed.debts?.length ||
-      parsed.workoutWeeks?.length ||
-      parsed.expenseTemplateOverrides?.length ||
-      parsed.activeMonths?.length
-    ) return parsed;
+    try {
+      const parsed = JSON.parse(value) as unknown;
+      if (!isStoredFinanceData(parsed)) continue;
+      firstSavedData ??= parsed;
+      if (
+        parsed.baselineMonthlyIncome !== 0 ||
+        parsed.baselineBalance !== 0 ||
+        parsed.monthlyBudgets.length > 0 ||
+        parsed.debts?.length ||
+        parsed.workoutWeeks?.length ||
+        parsed.expenseTemplateOverrides?.length
+      ) return parsed;
+    } catch (error) {
+      console.warn(`Ignoring invalid saved data in ${key}:`, error);
+    }
   }
 
   return firstSavedData;
@@ -66,8 +86,7 @@ const hasUserData = (data: FinanceData) =>
   data.monthlyBudgets.length > 0 ||
   Boolean(data.debts?.length) ||
   Boolean(data.workoutWeeks?.length) ||
-  Boolean(data.expenseTemplateOverrides?.length) ||
-  Boolean(data.activeMonths?.length);
+  Boolean(data.expenseTemplateOverrides?.length);
 
 const staticApiFetch = async (input: RequestInfo | URL, init: RequestInit): Promise<Response> => {
   const url = typeof input === "string" ? input : input instanceof URL ? input.pathname : input.url;
@@ -106,7 +125,13 @@ const staticApiFetch = async (input: RequestInfo | URL, init: RequestInit): Prom
   if (url.endsWith("/api/data/sync") && init.method === "POST") {
     try {
       const data = JSON.parse(String(init.body)) as FinanceData;
-      writeLocalData(data);
+      let localSaveError: unknown = null;
+      try {
+        writeLocalData(data);
+      } catch (error) {
+        localSaveError = error;
+        console.error("Browser storage save failed:", error);
+      }
 
       const cloudStorage = getTelegramCloudStorage();
       if (cloudStorage) {
@@ -115,10 +140,14 @@ const staticApiFetch = async (input: RequestInfo | URL, init: RequestInit): Prom
           return staticResponse({ success: true, data }, 200, "telegram-cloud");
         } catch (error) {
           console.error("Telegram cloud save failed:", error);
+          if (localSaveError) {
+            return staticResponse({ error: "Unable to save data on this device or in Telegram cloud" }, 507);
+          }
           return staticResponse({ error: "Saved on this device, but Telegram cloud sync failed" }, 503);
         }
       }
 
+      if (localSaveError) throw localSaveError;
       return staticResponse({ success: true, data });
     } catch {
       return staticResponse({ error: "Unable to save data in this browser" }, 507);

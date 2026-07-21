@@ -102,7 +102,9 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({ weeks, onChange, trigg
       return;
     }
     const latest = sortedWeeks[0];
-    const nextStart = addDays(latest.startDate, 7);
+    let nextStart = addDays(latest.startDate, 7);
+    const existingStarts = new Set(weeks.map(week => week.startDate));
+    while (existingStarts.has(nextStart)) nextStart = addDays(nextStart, 7);
     const week = cloneWorkoutWeek(latest, nextStart);
     onChange([...weeks, week]);
     openWeek(week);

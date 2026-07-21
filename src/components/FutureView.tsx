@@ -10,6 +10,7 @@ interface FutureViewProps {
   onNavigateToEditor: () => void;
   onAddMonth?: () => void;
   onDeleteMonth?: (monthStr: string) => void;
+  triggerAlert: (title: string, message: string) => void;
 }
 
 const formatCurrency = (value: number) => new Intl.NumberFormat("en-US", {
@@ -26,6 +27,7 @@ export const FutureView: React.FC<FutureViewProps> = ({
   onNavigateToEditor,
   onAddMonth,
   onDeleteMonth,
+  triggerAlert,
 }) => {
   const [expandedMonthStr, setExpandedMonthStr] = React.useState<string | null>(null);
   const [actualBalanceInput, setActualBalanceInput] = React.useState("");
@@ -49,7 +51,11 @@ export const FutureView: React.FC<FutureViewProps> = ({
 
   const saveActualBalance = (monthStr: string) => {
     const value = Number.parseFloat(actualBalanceInput);
-    if (Number.isFinite(value)) onUpdateActualBalance(monthStr, value);
+    if (!Number.isFinite(value)) {
+      triggerAlert("Check the balance", "Enter a valid balance amount.");
+      return;
+    }
+    onUpdateActualBalance(monthStr, value);
   };
 
   return (
@@ -123,6 +129,7 @@ export const FutureView: React.FC<FutureViewProps> = ({
                         <input
                           type="number"
                           step="0.01"
+                          inputMode="decimal"
                           value={actualBalanceInput}
                           onChange={event => setActualBalanceInput(event.target.value)}
                           className="figma-input h-[38px] min-w-0 flex-1 rounded-full px-3.5 text-[13px] font-semibold text-white outline-none"

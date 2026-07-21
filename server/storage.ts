@@ -13,10 +13,16 @@ interface FinanceDataRow extends RowDataPacket {
   finance_data: FinanceData | string;
 }
 
+const getCurrentMonthStr = () => {
+  const date = new Date();
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
+};
+
 const defaultData = (): FinanceData => ({
   baselineMonthlyIncome: 0,
   baselineBalance: 0,
   monthlyBudgets: [],
+  activeMonths: [getCurrentMonthStr()],
 });
 
 const memoryStore = new Map<string, FinanceData>();

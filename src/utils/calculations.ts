@@ -77,6 +77,7 @@ export const getMonthSequence = (data: FinanceData, currentMonthStr: string): st
 export const calculateMonthlyStats = (data: FinanceData, currentMonthStr: string): CalculatedMonth[] => {
   const monthSequence = getMonthSequence(data, currentMonthStr);
   const calculated: CalculatedMonth[] = [];
+  const budgetsByMonth = new Map(data.monthlyBudgets.map(budget => [budget.monthStr, budget]));
 
   let runningSavings = data.baselineBalance || 0;
 
@@ -87,7 +88,7 @@ export const calculateMonthlyStats = (data: FinanceData, currentMonthStr: string
     const isFuture = monthStr > currentMonthStr;
 
     // Find custom budget for this month
-    const budget = data.monthlyBudgets.find(b => b.monthStr === monthStr);
+    const budget = budgetsByMonth.get(monthStr);
 
     // Base monthly income defaults to baseline if not customized
     const baseIncome = budget && typeof budget.income === 'number' ? budget.income : data.baselineMonthlyIncome;
@@ -95,15 +96,20 @@ export const calculateMonthlyStats = (data: FinanceData, currentMonthStr: string
     // All items (both incomes and expenses) for this month
     const expenses = budget ? budget.expenses : [];
 
-    // Additional items of type === 'income'
-    const itemizedIncomes = expenses.filter(e => e.type === "income").reduce((sum, e) => sum + e.amount, 0);
+    let itemizedIncomes = 0;
+    let totalExpenses = 0;
+    let completedExpenses = 0;
+    for (const item of expenses) {
+      if (item.type === "income") {
+        itemizedIncomes += item.amount;
+      } else {
+        totalExpenses += item.amount;
+        if (item.completed) completedExpenses += item.amount;
+      }
+    }
 
     // Total income = base monthly income + itemized additional incomes
     const income = baseIncome + itemizedIncomes;
-
-    // Total expenses = only items that are NOT of type === 'income' (i.e. 'expense' or undefined)
-    const totalExpenses = expenses.filter(e => e.type !== "income").reduce((sum, e) => sum + e.amount, 0);
-    const completedExpenses = expenses.filter(e => e.type !== "income" && e.completed).reduce((sum, e) => sum + e.amount, 0);
 
     const net = income - totalExpenses;
     const startingSavings = runningSavings;

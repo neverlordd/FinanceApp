@@ -1,5 +1,9 @@
 import { FinanceData } from "./types";
-import { compressToBase64, decompressFromBase64 } from "lz-string";
+import {
+  compressToUTF16,
+  decompressFromBase64,
+  decompressFromUTF16,
+} from "lz-string";
 
 type CloudStorage = NonNullable<NonNullable<Window["Telegram"]>["WebApp"]["CloudStorage"]>;
 
@@ -13,7 +17,7 @@ type CloudMeta = {
   chunks: number;
   updatedAt: number;
   generation?: string;
-  encoding?: "lz-base64-v1";
+  encoding?: "lz-base64-v1" | "lz-utf16-v1";
 };
 
 const getItem = (storage: CloudStorage, key: string) =>
@@ -70,7 +74,9 @@ const parseMeta = (value: string): CloudMeta | null => {
     const generation = typeof meta.generation === "string" && /^[a-z0-9_-]+$/i.test(meta.generation)
       ? meta.generation
       : undefined;
-    const encoding = meta.encoding === "lz-base64-v1" ? meta.encoding : undefined;
+    const encoding = meta.encoding === "lz-base64-v1" || meta.encoding === "lz-utf16-v1"
+      ? meta.encoding
+      : undefined;
     return { chunks: meta.chunks, updatedAt: Number(meta.updatedAt) || 0, generation, encoding };
   } catch {
     return null;
@@ -91,14 +97,18 @@ export const readTelegramCloudData = async (storage: CloudStorage): Promise<Fina
   const values = await getItems(storage, keys);
   const serialized = keys.map(key => values[key] ?? "").join("");
   if (!serialized) return null;
-  const json = meta.encoding === "lz-base64-v1" ? decompressFromBase64(serialized) : serialized;
+  const json = meta.encoding === "lz-base64-v1"
+    ? decompressFromBase64(serialized)
+    : meta.encoding === "lz-utf16-v1"
+      ? decompressFromUTF16(serialized)
+      : serialized;
   if (!json) throw new SyntaxError("Unable to decompress Telegram CloudStorage data");
   return JSON.parse(json) as FinanceData;
 };
 
 export const writeTelegramCloudData = async (storage: CloudStorage, data: FinanceData): Promise<void> => {
   const previousMeta = parseMeta(await getItem(storage, META_KEY));
-  const serialized = compressToBase64(JSON.stringify(data));
+  const serialized = compressToUTF16(JSON.stringify(data));
   const chunks = Array.from(
     { length: Math.max(1, Math.ceil(serialized.length / CHUNK_SIZE)) },
     (_, index) => serialized.slice(index * CHUNK_SIZE, (index + 1) * CHUNK_SIZE),
@@ -115,7 +125,7 @@ export const writeTelegramCloudData = async (storage: CloudStorage, data: Financ
     chunks: chunks.length,
     updatedAt: Date.now(),
     generation,
-    encoding: "lz-base64-v1",
+    encoding: "lz-utf16-v1",
   }));
 
   if (previousMeta) {
