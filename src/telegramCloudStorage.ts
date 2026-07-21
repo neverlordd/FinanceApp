@@ -1,17 +1,19 @@
 import { FinanceData } from "./types";
+import { compressToBase64, decompressFromBase64 } from "lz-string";
 
 type CloudStorage = NonNullable<NonNullable<Window["Telegram"]>["WebApp"]["CloudStorage"]>;
 
 const META_KEY = "finance_data_meta_v1";
 const LEGACY_CHUNK_PREFIX = "finance_data_v1_";
 const CHUNK_PREFIX = "finance_data_v2_";
-const CHUNK_SIZE_BYTES = 3500;
+const CHUNK_SIZE = 3800;
 const CLOUD_OPERATION_TIMEOUT_MS = 6000;
 
 type CloudMeta = {
   chunks: number;
   updatedAt: number;
   generation?: string;
+  encoding?: "lz-base64-v1";
 };
 
 const getItem = (storage: CloudStorage, key: string) =>
@@ -60,27 +62,6 @@ const chunkKey = (index: number, generation?: string) => generation
   ? `${CHUNK_PREFIX}${generation}_${index}`
   : `${LEGACY_CHUNK_PREFIX}${index}`;
 
-const splitByUtf8Bytes = (value: string, maxBytes: number) => {
-  const encoder = new TextEncoder();
-  const chunks: string[] = [];
-  let current: string[] = [];
-  let currentBytes = 0;
-
-  for (const character of value) {
-    const characterBytes = encoder.encode(character).byteLength;
-    if (current.length > 0 && currentBytes + characterBytes > maxBytes) {
-      chunks.push(current.join(""));
-      current = [];
-      currentBytes = 0;
-    }
-    current.push(character);
-    currentBytes += characterBytes;
-  }
-
-  chunks.push(current.join(""));
-  return chunks;
-};
-
 const parseMeta = (value: string): CloudMeta | null => {
   if (!value) return null;
   try {
@@ -89,7 +70,8 @@ const parseMeta = (value: string): CloudMeta | null => {
     const generation = typeof meta.generation === "string" && /^[a-z0-9_-]+$/i.test(meta.generation)
       ? meta.generation
       : undefined;
-    return { chunks: meta.chunks, updatedAt: Number(meta.updatedAt) || 0, generation };
+    const encoding = meta.encoding === "lz-base64-v1" ? meta.encoding : undefined;
+    return { chunks: meta.chunks, updatedAt: Number(meta.updatedAt) || 0, generation, encoding };
   } catch {
     return null;
   }
@@ -109,13 +91,18 @@ export const readTelegramCloudData = async (storage: CloudStorage): Promise<Fina
   const values = await getItems(storage, keys);
   const serialized = keys.map(key => values[key] ?? "").join("");
   if (!serialized) return null;
-  return JSON.parse(serialized) as FinanceData;
+  const json = meta.encoding === "lz-base64-v1" ? decompressFromBase64(serialized) : serialized;
+  if (!json) throw new SyntaxError("Unable to decompress Telegram CloudStorage data");
+  return JSON.parse(json) as FinanceData;
 };
 
 export const writeTelegramCloudData = async (storage: CloudStorage, data: FinanceData): Promise<void> => {
   const previousMeta = parseMeta(await getItem(storage, META_KEY));
-  const serialized = JSON.stringify(data);
-  const chunks = splitByUtf8Bytes(serialized, CHUNK_SIZE_BYTES);
+  const serialized = compressToBase64(JSON.stringify(data));
+  const chunks = Array.from(
+    { length: Math.max(1, Math.ceil(serialized.length / CHUNK_SIZE)) },
+    (_, index) => serialized.slice(index * CHUNK_SIZE, (index + 1) * CHUNK_SIZE),
+  );
   const generation = `${Date.now().toString(36)}_${crypto.randomUUID().slice(0, 8)}`;
 
   if (chunks.length > 1023) throw new Error("Finance data exceeds Telegram CloudStorage capacity");
@@ -124,7 +111,12 @@ export const writeTelegramCloudData = async (storage: CloudStorage, data: Financ
     await setItem(storage, chunkKey(index, generation), chunks[index]);
   }
 
-  await setItem(storage, META_KEY, JSON.stringify({ chunks: chunks.length, updatedAt: Date.now(), generation }));
+  await setItem(storage, META_KEY, JSON.stringify({
+    chunks: chunks.length,
+    updatedAt: Date.now(),
+    generation,
+    encoding: "lz-base64-v1",
+  }));
 
   if (previousMeta) {
     const obsoleteKeys = Array.from(
