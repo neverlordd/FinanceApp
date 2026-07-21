@@ -56,6 +56,8 @@ export interface WorkoutExercise {
   id: string;
   title: string;
   muscleGroup: string;
+  sets?: number;
+  reps?: string;
   setup: string;
   technique: string;
   important?: string;

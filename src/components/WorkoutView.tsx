@@ -25,6 +25,8 @@ interface ExerciseDraft {
   id?: string;
   title: string;
   muscleGroup: string;
+  sets: string;
+  reps: string;
   setup: string;
   technique: string;
   important: string;
@@ -50,6 +52,8 @@ const emptyDraft = (dayId: string): ExerciseDraft => ({
   dayId,
   title: "",
   muscleGroup: "",
+  sets: "",
+  reps: "",
   setup: "",
   technique: "",
   important: "",
@@ -133,6 +137,8 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({ weeks, onChange, trigg
       id: exercise.id,
       title: exercise.title,
       muscleGroup: exercise.muscleGroup,
+      sets: exercise.sets?.toString() ?? "",
+      reps: exercise.reps ?? "",
       setup: exercise.setup,
       technique: exercise.technique,
       important: exercise.important ?? "",
@@ -149,10 +155,13 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({ weeks, onChange, trigg
     }
 
     const existing = selectedWeek.days.flatMap(day => day.exercises).find(exercise => exercise.id === draft.id);
+    const parsedSets = Number.parseInt(draft.sets, 10);
     const exercise: WorkoutExercise = {
       id: draft.id ?? crypto.randomUUID(),
       title,
       muscleGroup: draft.muscleGroup.trim(),
+      sets: Number.isFinite(parsedSets) && parsedSets > 0 ? parsedSets : undefined,
+      reps: draft.reps.trim() || undefined,
       setup: draft.setup.trim(),
       technique: draft.technique.trim(),
       important: draft.important.trim() || undefined,
@@ -303,7 +312,14 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({ weeks, onChange, trigg
                             </button>
                             <button onClick={() => setExpandedExerciseId(detailsOpen ? null : exercise.id)} className="min-w-0 flex-1 text-left">
                               <h4 className={`text-[13px] font-semibold leading-5 ${exercise.completed ? "text-white/45 line-through" : "text-white"}`}>{exercise.title}</h4>
-                              <p className="truncate text-[10px] text-white/35">{exercise.muscleGroup || "Exercise"}</p>
+                              <div className="mt-0.5 flex min-w-0 items-center gap-2 text-[10px]">
+                                <p className="truncate text-white/35">{exercise.muscleGroup || "Exercise"}</p>
+                                {(exercise.sets || exercise.reps) && (
+                                  <span className="shrink-0 rounded-full bg-white/[0.065] px-2 py-0.5 font-semibold tabular-nums text-white/60">
+                                    {[exercise.sets ? `${exercise.sets} sets` : "", exercise.reps ?? ""].filter(Boolean).join(" · ")}
+                                  </span>
+                                )}
+                              </div>
                             </button>
                             <button onClick={() => openEditor(day, exercise)} className="figma-icon-button text-white/50" aria-label={`Edit ${exercise.title}`}>
                               <Pencil size={15} />
@@ -359,6 +375,16 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({ weeks, onChange, trigg
                 <span className="pl-3 text-[10px] text-white/40">Muscle group</span>
                 <input value={draft.muscleGroup} onChange={event => setDraft({ ...draft, muscleGroup: event.target.value })} className="figma-input min-h-11 w-full rounded-full px-4 text-xs text-white outline-none" />
               </label>
+              <div className="grid grid-cols-[minmax(0,0.7fr)_minmax(0,1.3fr)] gap-2.5">
+                <label className="block space-y-1.5">
+                  <span className="pl-3 text-[10px] text-white/40">Sets</span>
+                  <input type="number" min="1" inputMode="numeric" value={draft.sets} onChange={event => setDraft({ ...draft, sets: event.target.value })} className="figma-input min-h-11 w-full rounded-full px-4 text-xs text-white outline-none" />
+                </label>
+                <label className="block space-y-1.5">
+                  <span className="pl-3 text-[10px] text-white/40">Reps / duration</span>
+                  <input value={draft.reps} onChange={event => setDraft({ ...draft, reps: event.target.value })} placeholder="10–12 reps" className="figma-input min-h-11 w-full rounded-full px-4 text-xs text-white outline-none" />
+                </label>
+              </div>
               {(["setup", "technique", "important"] as const).map(field => (
                 <label key={field} className="block space-y-1.5">
                   <span className="pl-3 text-[10px] capitalize text-white/40">{field === "setup" ? "Start position" : field}</span>
