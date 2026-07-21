@@ -188,23 +188,32 @@ export default function App() {
       const reconciledData = dataWithWorkouts.debts?.length
         ? { ...dataWithWorkouts, debts: syncDebtPayments(dataWithWorkouts.debts, dataWithWorkouts.monthlyBudgets) }
         : dataWithWorkouts;
-      if (needsStarterWorkout) {
-        try {
-          const seedResponse = await apiFetch("/api/data/sync", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(reconciledData),
-          });
-          if (!seedResponse.ok) console.error("Unable to seed starter workout");
-        } catch (error) {
-          console.error("Unable to seed starter workout:", error);
-        }
-      }
       setStoragePersistent(res.headers.get("X-Storage-Persistent") !== "false");
       setStorageProvider(res.headers.get("X-Storage-Provider"));
       setData(reconciledData);
-      setSyncStatus('synced');
       setErrorMsg(null);
+      if (needsStarterWorkout) {
+        setSyncStatus('syncing');
+        saveQueueRef.current = saveQueueRef.current
+          .catch(() => undefined)
+          .then(async () => {
+            const seedResponse = await apiFetch("/api/data/sync", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(reconciledData),
+            });
+            if (!seedResponse.ok) throw new Error("Unable to seed starter workout");
+            setStoragePersistent(seedResponse.headers.get("X-Storage-Persistent") !== "false");
+            setStorageProvider(seedResponse.headers.get("X-Storage-Provider"));
+            setSyncStatus('synced');
+          })
+          .catch(error => {
+            console.error("Unable to seed starter workout:", error);
+            setSyncStatus('offline');
+          });
+      } else {
+        setSyncStatus('synced');
+      }
     } catch (err: any) {
       console.error("Sync error:", err);
       setSyncStatus('offline');

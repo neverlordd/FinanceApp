@@ -5,6 +5,7 @@ type CloudStorage = NonNullable<NonNullable<Window["Telegram"]>["WebApp"]["Cloud
 const META_KEY = "finance_data_meta_v1";
 const CHUNK_PREFIX = "finance_data_v1_";
 const CHUNK_SIZE = 3800;
+const CLOUD_OPERATION_TIMEOUT_MS = 6000;
 
 type CloudMeta = {
   chunks: number;
@@ -13,7 +14,9 @@ type CloudMeta = {
 
 const getItem = (storage: CloudStorage, key: string) =>
   new Promise<string>((resolve, reject) => {
+    const timer = window.setTimeout(() => reject(new Error("Telegram CloudStorage read timed out")), CLOUD_OPERATION_TIMEOUT_MS);
     storage.getItem(key, (error, value) => {
+      window.clearTimeout(timer);
       if (error) reject(new Error(error));
       else resolve(value ?? "");
     });
@@ -21,7 +24,9 @@ const getItem = (storage: CloudStorage, key: string) =>
 
 const getItems = (storage: CloudStorage, keys: string[]) =>
   new Promise<Record<string, string>>((resolve, reject) => {
+    const timer = window.setTimeout(() => reject(new Error("Telegram CloudStorage read timed out")), CLOUD_OPERATION_TIMEOUT_MS);
     storage.getItems(keys, (error, values) => {
+      window.clearTimeout(timer);
       if (error) reject(new Error(error));
       else resolve(values ?? {});
     });
@@ -29,7 +34,9 @@ const getItems = (storage: CloudStorage, keys: string[]) =>
 
 const setItem = (storage: CloudStorage, key: string, value: string) =>
   new Promise<void>((resolve, reject) => {
+    const timer = window.setTimeout(() => reject(new Error("Telegram CloudStorage save timed out")), CLOUD_OPERATION_TIMEOUT_MS);
     storage.setItem(key, value, (error, stored) => {
+      window.clearTimeout(timer);
       if (error) reject(new Error(error));
       else if (stored === false) reject(new Error("Telegram CloudStorage did not save the value"));
       else resolve();
@@ -39,7 +46,9 @@ const setItem = (storage: CloudStorage, key: string, value: string) =>
 const removeItems = (storage: CloudStorage, keys: string[]) =>
   new Promise<void>((resolve, reject) => {
     if (keys.length === 0) return resolve();
+    const timer = window.setTimeout(() => reject(new Error("Telegram CloudStorage cleanup timed out")), CLOUD_OPERATION_TIMEOUT_MS);
     storage.removeItems(keys, (error) => {
+      window.clearTimeout(timer);
       if (error) reject(new Error(error));
       else resolve();
     });
