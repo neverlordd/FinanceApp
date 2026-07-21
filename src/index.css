@@ -110,12 +110,22 @@ input[type="number"]::-webkit-outer-spin-button {
   width: 100%;
 }
 
-.budget-templates.is-collapsed {
-  padding-block: 0.5rem;
+.figma-budget .budget-templates.is-collapsed {
+  padding: 0;
+  border-color: transparent;
+  background: transparent;
 }
 
-.budget-templates.is-collapsed .budget-templates-toggle {
+.figma-budget .budget-templates.is-collapsed .budget-templates-toggle {
   min-height: 2.375rem !important;
+  padding: 0 0.875rem;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.figma-settings .figma-settings-link {
+  height: 2.375rem;
+  min-height: 2.375rem;
 }
 
 .transaction-modal,
@@ -579,7 +589,9 @@ select:focus-visible {
   }
 
   .figma-budget .budget-templates.is-collapsed {
-    padding: 0.5rem 0.875rem;
+    padding: 0;
+    border-color: transparent;
+    background: transparent;
   }
 
   .figma-budget .budget-template-chip,
@@ -606,14 +618,22 @@ select:focus-visible {
 }
 
 @media (max-width: 767px) {
-  .telegram-app-header,
-  .telegram-mini-app .telegram-app-header {
+  .telegram-app-shell {
     padding-top: max(
       2.5rem,
       env(safe-area-inset-top),
       var(--tg-safe-area-inset-top, 0px),
       var(--tg-content-safe-area-inset-top, 0px)
     );
+  }
+
+  .telegram-app-header,
+  .telegram-mini-app .telegram-app-header {
+    padding-top: 0.75rem;
+  }
+
+  .telegram-mini-app .telegram-app-header {
+    padding-top: 1rem;
   }
 
   .telegram-app-shell {
@@ -982,6 +1002,19 @@ select:focus-visible {
     padding: 0;
     border: 0;
     background: transparent;
+  }
+
+  .figma-budget .budget-templates.is-collapsed {
+    padding: 0;
+    border-color: transparent;
+    background: transparent;
+  }
+
+  .figma-budget .budget-templates.is-collapsed .budget-templates-toggle {
+    min-height: 2.375rem !important;
+    padding: 0 0.875rem;
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    background: rgba(255, 255, 255, 0.05);
   }
 
   .figma-budget .budget-templates-toggle > span:first-child {

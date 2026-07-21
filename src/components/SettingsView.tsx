@@ -45,12 +45,12 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
 
   return (
     <div className="figma-settings mx-auto max-w-3xl space-y-3.5">
-      <button type="button" onClick={onOpenTemplates} className="figma-settings-link flex min-h-[68px] w-full items-center rounded-[30px] p-3.5 text-left">
-        <span className="min-w-0 flex-1">
-          <span className="block text-base font-semibold leading-5 text-white">Templates</span>
-          <span className="mt-1 block text-[11px] leading-[15px] text-white/40">{templateCount} active</span>
+      <button type="button" onClick={onOpenTemplates} className="figma-settings-link flex h-[38px] min-h-[38px] w-full items-center rounded-full px-3.5 text-left">
+        <span className="min-w-0 flex-1 text-[11px] font-normal text-white/60">Templates</span>
+        <span className="flex shrink-0 items-center gap-2 text-[9px] font-semibold text-white/35">
+          {templateCount} active
+          <FigmaIcon name="arrow-right-muted" size={16} className="opacity-50" />
         </span>
-        <FigmaIcon name="arrow-right-muted" size={16} className="opacity-50" />
       </button>
 
       <section className="figma-surface figma-settings-baseline rounded-[30px] p-3.5">
