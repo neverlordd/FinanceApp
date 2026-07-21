@@ -805,7 +805,6 @@ export default function App() {
                   triggerConfirm={triggerConfirm}
                   triggerAlert={triggerAlert}
                   onOpenTemplates={() => setActiveTab("template-settings")}
-                  onOpenDebts={() => setActiveTab("debts")}
                   templateCount={expenseTemplates.length}
                 />
               )}

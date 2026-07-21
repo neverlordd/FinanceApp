@@ -169,6 +169,10 @@ input[type="number"]::-webkit-outer-spin-button {
   min-height: 100vh;
 }
 
+.app-content {
+  padding-top: 2.5rem;
+}
+
 .telegram-app-shell {
   min-height: var(--tg-viewport-stable-height, 100vh);
   padding-left: max(env(safe-area-inset-left), var(--tg-safe-area-inset-left, 0px));
@@ -823,7 +827,7 @@ select:focus-visible {
   }
 
   .budget-screen .app-content {
-    padding: 0.5rem 1rem 6.5rem;
+    padding: 2.5rem 1rem 6.5rem;
   }
 
   .figma-budget > .grid {

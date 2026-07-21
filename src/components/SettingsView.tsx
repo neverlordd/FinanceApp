@@ -9,7 +9,6 @@ interface SettingsViewProps {
   triggerConfirm: (title: string, message: string, onConfirm: () => void) => void;
   triggerAlert: (title: string, message: string) => void;
   onOpenTemplates: () => void;
-  onOpenDebts: () => void;
   templateCount: number;
 }
 
@@ -20,7 +19,6 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
   triggerConfirm,
   triggerAlert,
   onOpenTemplates,
-  onOpenDebts,
   templateCount,
 }) => {
   const [baselineIncome, setBaselineIncome] = useState(data.baselineMonthlyIncome.toString());
@@ -47,13 +45,6 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
 
   return (
     <div className="figma-settings mx-auto max-w-3xl space-y-3.5">
-      <div className="flex items-center justify-between gap-4">
-        <h2 className="text-base font-semibold text-white">Debts</h2>
-        <button onClick={onOpenDebts} className="figma-soft-button flex h-[38px] items-center gap-1.5 rounded-full px-3.5 text-[13px] text-white">
-          <FigmaIcon name="add" size={14} /> Add Debts
-        </button>
-      </div>
-
       <button type="button" onClick={onOpenTemplates} className="figma-settings-link flex min-h-[68px] w-full items-center rounded-[30px] p-3.5 text-left">
         <span className="min-w-0 flex-1">
           <span className="block text-base font-semibold leading-5 text-white">Templates</span>
