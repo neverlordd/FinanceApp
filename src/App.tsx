@@ -671,11 +671,11 @@ export default function App() {
 
             <button
               onClick={() => fetchData(false)}
-              className="liquid-glass rounded-full p-2 text-white/60 transition duration-200 hover:text-white"
+              className="liquid-glass flex items-center justify-center rounded-full p-2 text-white/60 transition duration-200 hover:text-white"
               aria-label="Refresh data"
             >
               <span className="hidden md:block"><RefreshCw size={12} className={syncStatus === 'syncing' ? 'animate-spin' : ''} /></span>
-              <span className={`hidden figma-mobile-icon ${syncStatus === 'syncing' ? 'animate-spin' : ''}`}><FigmaIcon name="refresh-2" size={14} /></span>
+              <span className={`hidden figma-mobile-icon leading-none ${syncStatus === 'syncing' ? 'animate-spin' : ''}`}><FigmaIcon name="refresh-2" size={14} /></span>
             </button>
           </div>
         </div>

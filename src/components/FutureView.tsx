@@ -29,8 +29,6 @@ export const FutureView: React.FC<FutureViewProps> = ({
 }) => {
   const [expandedMonthStr, setExpandedMonthStr] = React.useState<string | null>(null);
   const [actualBalanceInput, setActualBalanceInput] = React.useState("");
-  const currentMonth = calculatedMonths.find(month => month.isCurrent) ?? calculatedMonths[0];
-  const summaryMonth = calculatedMonths.find(month => month.monthStr === expandedMonthStr) ?? currentMonth;
 
   React.useEffect(() => {
     if (expandedMonthStr && !calculatedMonths.some(month => month.monthStr === expandedMonthStr)) {
@@ -56,14 +54,6 @@ export const FutureView: React.FC<FutureViewProps> = ({
 
   return (
     <div className="figma-plans mx-auto max-w-3xl space-y-5">
-      <section className="figma-surface figma-plans-summary rounded-[30px] p-3.5">
-        <div className="flex items-center justify-between text-[13px] text-white/60">
-          <span>{summaryMonth?.actualEndingBalance !== undefined ? "Actual end balance" : "End-of-month saving"}</span>
-          <FigmaIcon name="coin-large" size={20} className="opacity-60" />
-        </div>
-        <p className="mt-5 text-[30px] font-extrabold leading-none text-white">{formatCurrency(summaryMonth?.endingSavings ?? 0)}</p>
-      </section>
-
       <section className="space-y-5">
         <div className="flex items-center justify-between gap-4">
           <h2 className="text-base font-semibold text-white">Cash flow</h2>
