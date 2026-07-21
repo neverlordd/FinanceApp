@@ -7,9 +7,11 @@ import { FutureView } from "./components/FutureView";
 import { SettingsView } from "./components/SettingsView";
 import { TemplateSettingsView } from "./components/TemplateSettingsView";
 import { DebtView } from "./components/DebtView";
+import { WorkoutView } from "./components/WorkoutView";
 import { ConfirmModal } from "./components/ConfirmModal";
 import { FigmaIcon } from "./components/FigmaIcon";
 import { apiFetch } from "./api";
+import { buildStarterWorkoutWeek } from "./data/starterWorkout";
 import {
   Wallet,
   Calendar,
@@ -20,6 +22,7 @@ import {
   Database,
   HandCoins,
   PartyPopper,
+  Dumbbell,
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 
@@ -178,9 +181,25 @@ export default function App() {
         throw new Error(message);
       }
       const json = await res.json() as FinanceData;
-      const reconciledData = json.debts?.length
-        ? { ...json, debts: syncDebtPayments(json.debts, json.monthlyBudgets) }
+      const needsStarterWorkout = json.workoutWeeks === undefined;
+      const dataWithWorkouts: FinanceData = needsStarterWorkout
+        ? { ...json, workoutWeeks: [buildStarterWorkoutWeek()] }
         : json;
+      const reconciledData = dataWithWorkouts.debts?.length
+        ? { ...dataWithWorkouts, debts: syncDebtPayments(dataWithWorkouts.debts, dataWithWorkouts.monthlyBudgets) }
+        : dataWithWorkouts;
+      if (needsStarterWorkout) {
+        try {
+          const seedResponse = await apiFetch("/api/data/sync", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(reconciledData),
+          });
+          if (!seedResponse.ok) console.error("Unable to seed starter workout");
+        } catch (error) {
+          console.error("Unable to seed starter workout:", error);
+        }
+      }
       setStoragePersistent(res.headers.get("X-Storage-Persistent") !== "false");
       setStorageProvider(res.headers.get("X-Storage-Provider"));
       setData(reconciledData);
@@ -426,6 +445,7 @@ export default function App() {
       const demoData: FinanceData = {
         baselineMonthlyIncome: 3000,
         baselineBalance: 1500,
+        workoutWeeks: data.workoutWeeks,
         monthlyBudgets: [
           {
             monthStr: "2026-08",
@@ -508,7 +528,8 @@ export default function App() {
     const updated: FinanceData = {
       baselineMonthlyIncome: 0,
       baselineBalance: 0,
-      monthlyBudgets: []
+      monthlyBudgets: [],
+      workoutWeeks: data.workoutWeeks,
     };
     saveStateToDB(updated);
     setSelectedMonthStr(getCurrentMonthStr());
@@ -587,6 +608,10 @@ export default function App() {
         }
       }
     );
+  };
+
+  const handleWorkoutWeeksChange = (workoutWeeks: NonNullable<FinanceData["workoutWeeks"]>) => {
+    saveStateToDB({ ...data, workoutWeeks });
   };
 
   return (
@@ -723,6 +748,18 @@ export default function App() {
           </button>
 
           <button
+            onClick={() => setActiveTab("workouts")}
+            className={`w-full flex items-center gap-3 px-4 py-3 rounded-full text-xs font-semibold tracking-wide transition duration-150 cursor-pointer ${
+              activeTab === "workouts"
+                ? "bg-white/[0.06] border border-white/[0.1] text-white shadow-[0_4px_12px_rgba(255,255,255,0.02)]"
+                : "text-white/50 hover:text-white hover:bg-white/[0.03] border border-transparent"
+            }`}
+          >
+            <Dumbbell size={16} />
+            Workouts
+          </button>
+
+          <button
             onClick={() => setActiveTab("settings")}
             className={`w-full flex items-center gap-3 px-4 py-3 rounded-full text-xs font-semibold tracking-wide transition duration-150 cursor-pointer ${
               activeTab === "settings" || activeTab === "template-settings"
@@ -797,6 +834,15 @@ export default function App() {
                 />
               )}
 
+              {activeTab === "workouts" && (
+                <WorkoutView
+                  weeks={data.workoutWeeks ?? []}
+                  onChange={handleWorkoutWeeksChange}
+                  triggerConfirm={triggerConfirm}
+                  triggerAlert={triggerAlert}
+                />
+              )}
+
               {activeTab === "settings" && (
                 <SettingsView
                   data={data}
@@ -846,6 +892,17 @@ export default function App() {
         >
           <FigmaIcon name={activeTab === "debts" ? "money-send-bold" : "money-send"} size={24} />
           <span className="app-nav-label text-[10px] font-semibold mt-1">Debts</span>
+        </button>
+
+        <button
+          onClick={() => setActiveTab("workouts")}
+          aria-current={activeTab === "workouts" ? "page" : undefined}
+          className={`flex flex-col items-center justify-center flex-1 h-full rounded-xl transition cursor-pointer ${
+            activeTab === "workouts" ? "text-emerald-400" : "text-slate-400 hover:text-slate-200"
+          }`}
+        >
+          <Dumbbell size={24} />
+          <span className="app-nav-label text-[10px] font-semibold mt-1">Train</span>
         </button>
 
         <button
