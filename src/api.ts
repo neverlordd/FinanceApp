@@ -22,13 +22,14 @@ const localStorageKey = () => {
 
 const browserStorageKey = "finance-tracker-data:v1:browser";
 
-const staticResponse = (body: unknown, status = 200, provider = "browser") =>
+const staticResponse = (body: unknown, status = 200, provider = "browser", needsCloudRepair = false) =>
   new Response(JSON.stringify(body), {
     status,
     headers: {
       "Content-Type": "application/json",
       "X-Storage-Provider": provider,
       "X-Storage-Persistent": "true",
+      ...(needsCloudRepair ? { "X-Storage-Needs-Repair": "true" } : {}),
     },
   });
 
@@ -95,7 +96,7 @@ const staticApiFetch = async (input: RequestInfo | URL, init: RequestInit): Prom
         return staticResponse(localData ?? defaultData(), 200, "telegram-cloud");
       } catch (error) {
         console.error("Telegram cloud read failed:", error);
-        return staticResponse(localData ?? defaultData());
+        return staticResponse(localData ?? defaultData(), 200, "browser", error instanceof SyntaxError);
       }
     } catch {
       return staticResponse({ error: "Unable to read browser storage" }, 500);

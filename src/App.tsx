@@ -182,6 +182,7 @@ export default function App() {
       }
       const json = await res.json() as FinanceData;
       const needsStarterWorkout = json.workoutWeeks === undefined;
+      const needsCloudRepair = res.headers.get("X-Storage-Needs-Repair") === "true";
       const dataWithWorkouts: FinanceData = needsStarterWorkout
         ? { ...json, workoutWeeks: [buildStarterWorkoutWeek()] }
         : json;
@@ -192,7 +193,7 @@ export default function App() {
       setStorageProvider(res.headers.get("X-Storage-Provider"));
       setData(reconciledData);
       setErrorMsg(null);
-      if (needsStarterWorkout) {
+      if (needsStarterWorkout || needsCloudRepair) {
         setSyncStatus('syncing');
         saveQueueRef.current = saveQueueRef.current
           .catch(() => undefined)
@@ -202,13 +203,13 @@ export default function App() {
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify(reconciledData),
             });
-            if (!seedResponse.ok) throw new Error("Unable to seed starter workout");
+            if (!seedResponse.ok) throw new Error("Unable to finish initial cloud sync");
             setStoragePersistent(seedResponse.headers.get("X-Storage-Persistent") !== "false");
             setStorageProvider(seedResponse.headers.get("X-Storage-Provider"));
             setSyncStatus('synced');
           })
           .catch(error => {
-            console.error("Unable to seed starter workout:", error);
+            console.error("Unable to finish initial cloud sync:", error);
             setSyncStatus('offline');
           });
       } else {
