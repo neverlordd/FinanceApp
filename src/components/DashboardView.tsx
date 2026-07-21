@@ -101,7 +101,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
   // Income inline edit state
   const [isEditingIncome, setIsEditingIncome] = useState(false);
   const [incomeInput, setIncomeInput] = useState("");
-  const [templatesExpanded, setTemplatesExpanded] = useState(true);
+  const [templatesExpanded, setTemplatesExpanded] = useState(false);
 
   // Table filter state
   const [filterType, setFilterType] = useState<"all" | "expense" | "income">("all");
@@ -345,19 +345,14 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
   const localIncomesTotal = currentMonth.expenses.filter(e => e.type === "income").reduce((sum, e) => sum + e.amount, 0);
   const localExpensesTotal = currentMonth.expenses.filter(e => e.type !== "income").reduce((sum, e) => sum + e.amount, 0);
 
-  // Compute progress of paid expenses
-  const expensePercentage = currentMonth.totalExpenses > 0
-    ? Math.min(Math.round((currentMonth.completedExpenses / currentMonth.totalExpenses) * 100), 100)
-    : 0;
-
   return (
     <div className="figma-budget space-y-6">
 
       {/* TWO BLOCK LAYOUT: 1. Left (Selector + Compact KPIs) | 2. Right (Transactions Table) */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
 
-        {/* Left Column (Selector + KPIs) - Spans 4 columns on large screens */}
-        <div className="budget-overview lg:col-span-5 xl:col-span-4 space-y-6">
+        {/* Left Column (Selector + KPIs) */}
+        <div className="budget-overview space-y-6 lg:col-span-5">
 
           {/* 1. COMPACT HORIZONTAL MONTH PILLS */}
           <div className="budget-months liquid-glass p-4 rounded-3xl space-y-3">
@@ -421,7 +416,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                 </div>
               </div>
 
-              <div className="space-y-1 mt-1">
+              <div className="budget-kpi-value space-y-1 mt-1">
                 {isEditingIncome ? (
                   <div className="flex items-center gap-1">
                     <input
@@ -454,7 +449,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                     </button>
                   </div>
                 ) : (
-                  <div className="flex items-baseline justify-between group/edit">
+                  <div className="flex items-center justify-between group/edit">
                     <h3 className="text-lg font-black text-white tracking-tight font-sans">
                       {formatCurrency(currentMonth.income)}
                     </h3>
@@ -481,7 +476,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                 </div>
               </div>
 
-              <div className="space-y-1 mt-1">
+              <div className="budget-kpi-value space-y-1 mt-1">
                 <h3 className="text-lg font-black text-white tracking-tight font-sans">
                   {formatCurrency(currentMonth.totalExpenses)}
                 </h3>
@@ -499,24 +494,12 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                 </div>
               </div>
 
-              <div className="space-y-2 mt-1">
+              <div className="budget-kpi-value mt-1">
                 <h3 className="text-lg font-black text-white tracking-tight font-sans">
                   {formatCurrency(currentMonth.completedExpenses)}
                 </h3>
-
-                {/* Embedded Progress Bar */}
-                <div className="space-y-1">
-                  <div className="flex items-center justify-between text-[7px] text-white/30 font-medium">
-                    <span>Completed {expensePercentage}%</span>
-                  </div>
-                  <div className="w-full h-1 bg-white/[0.05] rounded-full overflow-hidden">
-                    <div
-                      className="h-full bg-gradient-to-r from-emerald-500 to-emerald-400 rounded-full transition-all duration-500"
-                      style={{ width: `${expensePercentage}%` }}
-                    />
-                  </div>
-                </div>
               </div>
+
             </div>
 
             {/* KPI 4: Leftover */}
@@ -530,7 +513,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                 </div>
               </div>
 
-              <div className="space-y-1 mt-1">
+              <div className="budget-kpi-value space-y-1 mt-1">
                 <h3 className={`text-lg font-black tracking-tight font-sans ${currentMonth.net >= 0 ? "text-emerald-400" : "text-rose-400"}`}>
                   {currentMonth.net >= 0 ? "+" : ""}{formatCurrency(currentMonth.net)}
                 </h3>
@@ -540,8 +523,8 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
 
         </div>
 
-        {/* Right Column (Transactions) - Spans 8 columns on large screens */}
-        <div className="budget-transactions lg:col-span-7 xl:col-span-8">
+        {/* Right Column (Transactions) */}
+        <div className="budget-transactions lg:col-span-7">
 
           <div className="space-y-5">
 
@@ -609,7 +592,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
             </div>
 
             {expenseTemplates.length > 0 && (
-              <section className="budget-templates space-y-2" aria-label="Expense templates">
+              <section className={`budget-templates space-y-2 ${templatesExpanded ? "is-expanded" : "is-collapsed"}`} aria-label="Expense templates">
                 <button
                   type="button"
                   onClick={() => setTemplatesExpanded(value => !value)}

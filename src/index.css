@@ -26,6 +26,22 @@ body {
   font-family: "Manrope Variable", Manrope, ui-sans-serif, system-ui, sans-serif;
 }
 
+button {
+  border-radius: 9999px;
+}
+
+input[type="number"] {
+  appearance: textfield;
+  -moz-appearance: textfield;
+}
+
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+  margin: 0;
+  appearance: none;
+  -webkit-appearance: none;
+}
+
 .figma-surface,
 .figma-month-card,
 .figma-debt-card {
@@ -81,6 +97,25 @@ body {
 .figma-soft-button.is-primary {
   border-color: rgba(255, 255, 255, 0.22);
   background: rgba(255, 255, 255, 0.16);
+}
+
+.budget-kpi-value {
+  height: 2.65rem;
+  min-height: 2.65rem;
+  display: flex;
+  align-items: center;
+}
+
+.budget-kpi-value > * {
+  width: 100%;
+}
+
+.budget-templates.is-collapsed {
+  padding-block: 0.5rem;
+}
+
+.budget-templates.is-collapsed .budget-templates-toggle {
+  min-height: 2.375rem !important;
 }
 
 .transaction-modal,
@@ -479,6 +514,97 @@ select:focus-visible {
   }
 }
 
+@media (min-width: 768px) {
+  .telegram-app-header .app-logo-image {
+    display: none;
+  }
+
+  .telegram-app-header .app-figma-logo {
+    display: block;
+  }
+
+  .liquid-sidebar,
+  .budget-months,
+  .budget-actions,
+  .figma-budget .budget-kpi,
+  .figma-budget .budget-row,
+  .figma-budget .budget-templates {
+    border-color: rgba(255, 255, 255, 0.18);
+    background: rgba(255, 255, 255, 0.025);
+    box-shadow: none;
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+
+  .figma-budget .budget-kpi-grid {
+    gap: 0.625rem;
+  }
+
+  .figma-budget .budget-kpi {
+    min-height: 7.5rem;
+    padding: 1rem;
+    border-radius: 1.875rem;
+  }
+
+  .figma-budget .budget-kpi-income { order: 2; }
+  .figma-budget .budget-kpi-planned { order: 1; }
+  .figma-budget .budget-kpi-paid { order: 3; }
+  .figma-budget .budget-kpi-leftover { order: 4; }
+
+  .figma-budget .budget-kpi > div:first-child {
+    opacity: 0.45;
+  }
+
+  .figma-budget .budget-kpi .budget-kpi-icon {
+    padding: 0;
+    border: 0;
+    background: transparent;
+  }
+
+  .figma-budget .budget-kpi span {
+    font-family: "Manrope Variable", Manrope, ui-sans-serif, system-ui, sans-serif;
+    font-size: 0.6875rem;
+    font-weight: 400;
+    letter-spacing: 0;
+    text-transform: none;
+  }
+
+  .figma-budget .budget-kpi h3 {
+    font-size: 1.35rem;
+    font-weight: 800;
+  }
+
+  .figma-budget .budget-templates {
+    border-radius: 1.875rem;
+  }
+
+  .figma-budget .budget-templates.is-collapsed {
+    padding: 0.5rem 0.875rem;
+  }
+
+  .figma-budget .budget-template-chip,
+  .figma-budget .budget-row {
+    border-radius: 1.875rem;
+  }
+
+  .figma-budget .budget-template-chip {
+    min-height: 2.75rem;
+    background: rgba(255, 255, 255, 0.025);
+  }
+
+  .figma-budget .budget-row-income {
+    background: radial-gradient(circle at 52% 135%, rgba(41, 255, 94, 0.16), transparent 54%), rgba(255, 255, 255, 0.015);
+  }
+
+  .figma-budget .budget-row-expense {
+    background: radial-gradient(circle at 52% 135%, rgba(255, 80, 80, 0.16), transparent 54%), rgba(255, 255, 255, 0.015);
+  }
+
+  .figma-budget .budget-row-completed {
+    background: radial-gradient(circle at 52% 135%, rgba(41, 255, 94, 0.1), transparent 54%), rgba(255, 255, 255, 0.015);
+  }
+}
+
 @media (max-width: 767px) {
   .telegram-app-shell {
     padding-bottom: calc(5rem + max(env(safe-area-inset-bottom), var(--tg-content-safe-area-inset-bottom, 0px)));
@@ -801,10 +927,6 @@ select:focus-visible {
   .figma-budget .budget-kpi h3 {
     font-size: 1.25rem;
     font-weight: 800;
-  }
-
-  .figma-budget .budget-kpi-paid h3 + div {
-    display: none;
   }
 
   .figma-budget .budget-actions {
