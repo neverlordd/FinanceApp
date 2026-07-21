@@ -169,10 +169,6 @@ input[type="number"]::-webkit-outer-spin-button {
   min-height: 100vh;
 }
 
-.app-content {
-  padding-top: 2.5rem;
-}
-
 .telegram-app-shell {
   min-height: var(--tg-viewport-stable-height, 100vh);
   padding-left: max(env(safe-area-inset-left), var(--tg-safe-area-inset-left, 0px));
@@ -610,6 +606,16 @@ select:focus-visible {
 }
 
 @media (max-width: 767px) {
+  .telegram-app-header,
+  .telegram-mini-app .telegram-app-header {
+    padding-top: max(
+      2.5rem,
+      env(safe-area-inset-top),
+      var(--tg-safe-area-inset-top, 0px),
+      var(--tg-content-safe-area-inset-top, 0px)
+    );
+  }
+
   .telegram-app-shell {
     padding-bottom: calc(5rem + max(env(safe-area-inset-bottom), var(--tg-content-safe-area-inset-bottom, 0px)));
     background: #0a0a0e;
@@ -827,7 +833,7 @@ select:focus-visible {
   }
 
   .budget-screen .app-content {
-    padding: 2.5rem 1rem 6.5rem;
+    padding: 0.5rem 1rem 6.5rem;
   }
 
   .figma-budget > .grid {
