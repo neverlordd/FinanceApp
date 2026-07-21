@@ -620,7 +620,7 @@ select:focus-visible {
 @media (max-width: 767px) {
   .telegram-app-shell {
     padding-top: max(
-      2.5rem,
+      5rem,
       env(safe-area-inset-top),
       var(--tg-safe-area-inset-top, 0px),
       var(--tg-content-safe-area-inset-top, 0px)
