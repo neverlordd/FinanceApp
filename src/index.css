@@ -853,11 +853,11 @@ select:focus-visible {
   }
 
   .figma-budget > .grid {
-    gap: 0.625rem;
+    gap: 1.25rem;
   }
 
   .figma-budget .budget-overview > * + * {
-    margin-top: 0.625rem;
+    margin-top: 1.25rem;
   }
 
   .figma-budget .budget-months {
@@ -1044,7 +1044,7 @@ select:focus-visible {
 
   .figma-budget .budget-template-list {
     gap: 0.625rem;
-    margin-top: 0.875rem;
+    margin-top: 0.625rem;
     padding-bottom: 0;
   }
 
@@ -1071,6 +1071,10 @@ select:focus-visible {
     margin-top: 0.625rem;
     padding-top: 0.625rem;
     border-top: 1px solid rgba(255, 255, 255, 0.09);
+  }
+
+  .figma-budget .transaction-list .space-y-2 > * + * {
+    margin-top: 0.625rem;
   }
 
   .figma-budget .budget-group-heading,
