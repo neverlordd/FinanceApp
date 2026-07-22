@@ -19,7 +19,8 @@ type CloudMeta = {
   chunks: number;
   updatedAt: number;
   generation?: string;
-  encoding?: "lz-base64-v1" | "lz-utf16-v1";
+  encoding?: "lz-base64-v1" | "lz-utf16-v1" | "lz-utf16-inline-v1";
+  data?: string;
 };
 
 const getItem = (storage: CloudStorage, key: string) =>
@@ -109,6 +110,15 @@ const parseMeta = (value: string): CloudMeta | null => {
   if (!value) return null;
   try {
     const meta = JSON.parse(value) as Partial<CloudMeta>;
+    if (meta.encoding === "lz-utf16-inline-v1" && typeof meta.data === "string" && meta.data) {
+      return {
+        chunks: 0,
+        updatedAt: Number(meta.updatedAt) || 0,
+        generation: "inline",
+        encoding: meta.encoding,
+        data: meta.data,
+      };
+    }
     if (!Number.isInteger(meta.chunks) || !meta.chunks || meta.chunks < 1 || meta.chunks > 1023) return null;
     const generation = typeof meta.generation === "string" && /^[a-z0-9_-]+$/i.test(meta.generation)
       ? meta.generation
@@ -132,6 +142,12 @@ export const readTelegramCloudData = async (storage: CloudStorage): Promise<Fina
   const meta = parseMeta(await withRetry(() => getItem(storage, META_KEY)));
   if (!meta) return null;
 
+  if (meta.encoding === "lz-utf16-inline-v1") {
+    const json = decompressFromUTF16(meta.data ?? "");
+    if (!json) throw new SyntaxError("Unable to decompress Telegram CloudStorage data");
+    return JSON.parse(json) as FinanceData;
+  }
+
   const keys = Array.from({ length: meta.chunks }, (_, index) => chunkKey(index, meta.generation));
   const values = await withRetry(() => getItems(storage, keys));
   const serialized = keys.map(key => values[key] ?? "").join("");
@@ -148,6 +164,24 @@ export const readTelegramCloudData = async (storage: CloudStorage): Promise<Fina
 export const writeTelegramCloudData = async (storage: CloudStorage, data: FinanceData): Promise<void> => {
   const previousMeta = parseMeta(await withRetry(() => getItem(storage, META_KEY)));
   const serialized = compressToUTF16(JSON.stringify(data));
+  const inlineValue = JSON.stringify({
+    chunks: 0,
+    updatedAt: Date.now(),
+    generation: "inline",
+    encoding: "lz-utf16-inline-v1",
+    data: serialized,
+  });
+
+  if (inlineValue.length <= 4096) {
+    await withRetry(() => setItem(storage, META_KEY, inlineValue));
+    try {
+      await cleanupStaleChunks(storage, new Set());
+    } catch (error) {
+      console.warn("Unable to clean up old Telegram CloudStorage chunks:", error);
+    }
+    return;
+  }
+
   const chunks = Array.from(
     { length: Math.max(1, Math.ceil(serialized.length / CHUNK_SIZE)) },
     (_, index) => serialized.slice(index * CHUNK_SIZE, (index + 1) * CHUNK_SIZE),
