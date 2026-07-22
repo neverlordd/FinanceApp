@@ -7,12 +7,9 @@ import { FutureView } from "./components/FutureView";
 import { SettingsView } from "./components/SettingsView";
 import { TemplateSettingsView } from "./components/TemplateSettingsView";
 import { DebtView } from "./components/DebtView";
-import { WorkoutView } from "./components/WorkoutView";
 import { ConfirmModal } from "./components/ConfirmModal";
 import { FigmaIcon } from "./components/FigmaIcon";
 import { apiFetch } from "./api";
-import { buildStarterWorkoutWeek } from "./data/starterWorkout";
-import { prunePastWorkoutDescriptions } from "./utils/workoutStorage";
 import {
   Wallet,
   Calendar,
@@ -22,7 +19,6 @@ import {
   Database,
   HandCoins,
   PartyPopper,
-  Dumbbell,
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 
@@ -181,7 +177,10 @@ export default function App() {
           : "Unable to load data from the server.";
         throw new Error(message);
       }
-      const json = await res.json() as FinanceData;
+      const rawJson = await res.json() as FinanceData & { workoutWeeks?: unknown };
+      const hadWorkoutData = Object.prototype.hasOwnProperty.call(rawJson, "workoutWeeks");
+      const json = { ...rawJson };
+      delete json.workoutWeeks;
       const activeMonthSource = json.activeMonths?.length
         ? json.activeMonths
         : [getCurrentMonthStr(), ...json.monthlyBudgets.map(budget => budget.monthStr)];
@@ -190,23 +189,18 @@ export default function App() {
       const normalizedJson: FinanceData = needsActiveMonthRepair
         ? { ...json, activeMonths: normalizedActiveMonths }
         : json;
-      const needsStarterWorkout = json.workoutWeeks === undefined;
       const needsCloudRepair = res.headers.get("X-Storage-Needs-Repair") === "true";
-      const dataWithWorkouts: FinanceData = needsStarterWorkout
-        ? { ...normalizedJson, workoutWeeks: [buildStarterWorkoutWeek()] }
+      const reconciledData = normalizedJson.debts?.length
+        ? { ...normalizedJson, debts: syncDebtPayments(normalizedJson.debts, normalizedJson.monthlyBudgets) }
         : normalizedJson;
-      const reconciledData = dataWithWorkouts.debts?.length
-        ? { ...dataWithWorkouts, debts: syncDebtPayments(dataWithWorkouts.debts, dataWithWorkouts.monthlyBudgets) }
-        : dataWithWorkouts;
-      const debtSyncChanged = Boolean(dataWithWorkouts.debts?.length) &&
-        JSON.stringify(dataWithWorkouts.debts) !== JSON.stringify(reconciledData.debts);
-      const optimized = prunePastWorkoutDescriptions(reconciledData);
+      const debtSyncChanged = Boolean(normalizedJson.debts?.length) &&
+        JSON.stringify(normalizedJson.debts) !== JSON.stringify(reconciledData.debts);
       setStoragePersistent(res.headers.get("X-Storage-Persistent") !== "false");
       setStorageProvider(res.headers.get("X-Storage-Provider"));
-      setData(optimized.data);
+      setData(reconciledData);
       setErrorMsg(null);
-      const optimizedSerialized = JSON.stringify(optimized.data);
-      if (needsStarterWorkout || needsCloudRepair || needsActiveMonthRepair || debtSyncChanged || optimized.changed) {
+      const optimizedSerialized = JSON.stringify(reconciledData);
+      if (hadWorkoutData || needsCloudRepair || needsActiveMonthRepair || debtSyncChanged) {
         setSyncStatus('syncing');
         saveQueueRef.current = saveQueueRef.current
           .catch(() => undefined)
@@ -290,9 +284,8 @@ export default function App() {
 
   // Helper to save state back to DB via Sync API
   const saveStateToDB = (updated: FinanceData) => {
-    const optimized = prunePastWorkoutDescriptions(updated).data;
-    const serialized = JSON.stringify(optimized);
-    setData(optimized);
+    const serialized = JSON.stringify(updated);
+    setData(updated);
     if (serialized === lastPersistedDataRef.current) {
       setSyncStatus('synced');
       setErrorMsg(null);
@@ -487,7 +480,6 @@ export default function App() {
       baselineBalance: 0,
       monthlyBudgets: [],
       activeMonths: [getCurrentMonthStr()],
-      workoutWeeks: data.workoutWeeks,
     };
     saveStateToDB(updated);
     setSelectedMonthStr(getCurrentMonthStr());
@@ -568,10 +560,6 @@ export default function App() {
         }
       }
     );
-  };
-
-  const handleWorkoutWeeksChange = (workoutWeeks: NonNullable<FinanceData["workoutWeeks"]>) => {
-    saveStateToDB({ ...data, workoutWeeks });
   };
 
   return (
@@ -708,18 +696,6 @@ export default function App() {
           </button>
 
           <button
-            onClick={() => setActiveTab("workouts")}
-            className={`w-full flex items-center gap-3 px-4 py-3 rounded-full text-xs font-semibold tracking-wide transition duration-150 cursor-pointer ${
-              activeTab === "workouts"
-                ? "bg-white/[0.06] border border-white/[0.1] text-white shadow-[0_4px_12px_rgba(255,255,255,0.02)]"
-                : "text-white/50 hover:text-white hover:bg-white/[0.03] border border-transparent"
-            }`}
-          >
-            <Dumbbell size={16} />
-            Workouts
-          </button>
-
-          <button
             onClick={() => setActiveTab("settings")}
             className={`w-full flex items-center gap-3 px-4 py-3 rounded-full text-xs font-semibold tracking-wide transition duration-150 cursor-pointer ${
               activeTab === "settings" || activeTab === "template-settings"
@@ -795,15 +771,6 @@ export default function App() {
                 />
               )}
 
-              {activeTab === "workouts" && (
-                <WorkoutView
-                  weeks={data.workoutWeeks ?? []}
-                  onChange={handleWorkoutWeeksChange}
-                  triggerConfirm={triggerConfirm}
-                  triggerAlert={triggerAlert}
-                />
-              )}
-
               {activeTab === "settings" && (
                 <SettingsView
                   data={data}
@@ -853,17 +820,6 @@ export default function App() {
         >
           <FigmaIcon name={activeTab === "debts" ? "money-send-bold" : "money-send"} size={24} />
           <span className="app-nav-label text-[10px] font-semibold mt-1">Debts</span>
-        </button>
-
-        <button
-          onClick={() => setActiveTab("workouts")}
-          aria-current={activeTab === "workouts" ? "page" : undefined}
-          className={`flex flex-col items-center justify-center flex-1 h-full rounded-xl transition cursor-pointer ${
-            activeTab === "workouts" ? "text-emerald-400" : "text-slate-400 hover:text-slate-200"
-          }`}
-        >
-          <Dumbbell size={24} />
-          <span className="app-nav-label text-[10px] font-semibold mt-1">Train</span>
         </button>
 
         <button

@@ -52,32 +52,6 @@ export interface ExpenseTemplateOverride {
   hidden?: boolean;
 }
 
-export interface WorkoutExercise {
-  id: string;
-  title: string;
-  muscleGroup: string;
-  sets?: number;
-  reps?: string;
-  setup: string;
-  technique: string;
-  important?: string;
-  completed: boolean;
-}
-
-export interface WorkoutDay {
-  id: string;
-  name: string;
-  focus: string;
-  exercises: WorkoutExercise[];
-}
-
-export interface WorkoutWeek {
-  id: string;
-  startDate: string;
-  title: string;
-  days: WorkoutDay[];
-}
-
 export interface FinanceData {
   baselineMonthlyIncome: number; // default monthly income in USD
   baselineBalance: number; // initial savings/balance in USD
@@ -85,5 +59,4 @@ export interface FinanceData {
   activeMonths?: string[]; // stored in database
   debts?: DebtItem[];
   expenseTemplateOverrides?: ExpenseTemplateOverride[];
-  workoutWeeks?: WorkoutWeek[];
 }

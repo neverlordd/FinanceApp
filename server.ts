@@ -69,34 +69,6 @@ const isFinanceData = (value: unknown): value is FinanceData => {
     )
   )) return false;
 
-  if (data.workoutWeeks !== undefined && (
-    !Array.isArray(data.workoutWeeks) ||
-    data.workoutWeeks.some(week =>
-      !week ||
-      typeof week.id !== "string" || week.id.length === 0 ||
-      typeof week.startDate !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(week.startDate) ||
-      typeof week.title !== "string" ||
-      !Array.isArray(week.days) ||
-      week.days.some(day =>
-        !day ||
-        typeof day.id !== "string" || day.id.length === 0 ||
-        typeof day.name !== "string" || day.name.trim().length === 0 ||
-        typeof day.focus !== "string" ||
-        !Array.isArray(day.exercises) ||
-        day.exercises.some(exercise =>
-          !exercise ||
-          typeof exercise.id !== "string" || exercise.id.length === 0 ||
-          typeof exercise.title !== "string" || exercise.title.trim().length === 0 ||
-          typeof exercise.muscleGroup !== "string" ||
-          typeof exercise.setup !== "string" ||
-          typeof exercise.technique !== "string" ||
-          (exercise.important !== undefined && typeof exercise.important !== "string") ||
-          typeof exercise.completed !== "boolean"
-        )
-      )
-    )
-  )) return false;
-
   return data.monthlyBudgets.every(budget =>
     budget &&
     /^\d{4}-(0[1-9]|1[0-2])$/.test(budget.monthStr) &&
