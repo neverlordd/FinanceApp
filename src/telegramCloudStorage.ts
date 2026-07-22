@@ -11,7 +11,9 @@ const META_KEY = "finance_data_meta_v1";
 const LEGACY_CHUNK_PREFIX = "finance_data_v1_";
 const CHUNK_PREFIX = "finance_data_v2_";
 const CHUNK_SIZE = 3800;
-const CLOUD_OPERATION_TIMEOUT_MS = 6000;
+const CLOUD_OPERATION_TIMEOUT_MS = 12000;
+const CLOUD_RETRY_DELAY_MS = 300;
+const CLEANUP_BATCH_SIZE = 100;
 
 type CloudMeta = {
   chunks: number;
@@ -37,6 +39,16 @@ const getItems = (storage: CloudStorage, keys: string[]) =>
       window.clearTimeout(timer);
       if (error) reject(new Error(error));
       else resolve(values ?? {});
+    });
+  });
+
+const getKeys = (storage: CloudStorage) =>
+  new Promise<string[]>((resolve, reject) => {
+    const timer = window.setTimeout(() => reject(new Error("Telegram CloudStorage key listing timed out")), CLOUD_OPERATION_TIMEOUT_MS);
+    storage.getKeys((error, keys) => {
+      window.clearTimeout(timer);
+      if (error) reject(new Error(error));
+      else resolve(keys ?? []);
     });
   });
 
@@ -66,6 +78,33 @@ const chunkKey = (index: number, generation?: string) => generation
   ? `${CHUNK_PREFIX}${generation}_${index}`
   : `${LEGACY_CHUNK_PREFIX}${index}`;
 
+const waitBeforeRetry = () => new Promise(resolve => window.setTimeout(resolve, CLOUD_RETRY_DELAY_MS));
+
+const withRetry = async <T>(operation: () => Promise<T>): Promise<T> => {
+  try {
+    return await operation();
+  } catch (firstError) {
+    await waitBeforeRetry();
+    try {
+      return await operation();
+    } catch {
+      throw firstError;
+    }
+  }
+};
+
+const isFinanceChunkKey = (key: string) =>
+  key.startsWith(CHUNK_PREFIX) || key.startsWith(LEGACY_CHUNK_PREFIX);
+
+const cleanupStaleChunks = async (storage: CloudStorage, keepKeys: Set<string>) => {
+  const keys = await withRetry(() => getKeys(storage));
+  const staleKeys = keys.filter(key => isFinanceChunkKey(key) && !keepKeys.has(key));
+  for (let index = 0; index < staleKeys.length; index += CLEANUP_BATCH_SIZE) {
+    const batch = staleKeys.slice(index, index + CLEANUP_BATCH_SIZE);
+    await withRetry(() => removeItems(storage, batch));
+  }
+};
+
 const parseMeta = (value: string): CloudMeta | null => {
   if (!value) return null;
   try {
@@ -90,11 +129,11 @@ export const getTelegramCloudStorage = () => {
 };
 
 export const readTelegramCloudData = async (storage: CloudStorage): Promise<FinanceData | null> => {
-  const meta = parseMeta(await getItem(storage, META_KEY));
+  const meta = parseMeta(await withRetry(() => getItem(storage, META_KEY)));
   if (!meta) return null;
 
   const keys = Array.from({ length: meta.chunks }, (_, index) => chunkKey(index, meta.generation));
-  const values = await getItems(storage, keys);
+  const values = await withRetry(() => getItems(storage, keys));
   const serialized = keys.map(key => values[key] ?? "").join("");
   if (!serialized) return null;
   const json = meta.encoding === "lz-base64-v1"
@@ -107,36 +146,40 @@ export const readTelegramCloudData = async (storage: CloudStorage): Promise<Fina
 };
 
 export const writeTelegramCloudData = async (storage: CloudStorage, data: FinanceData): Promise<void> => {
-  const previousMeta = parseMeta(await getItem(storage, META_KEY));
+  const previousMeta = parseMeta(await withRetry(() => getItem(storage, META_KEY)));
   const serialized = compressToUTF16(JSON.stringify(data));
   const chunks = Array.from(
     { length: Math.max(1, Math.ceil(serialized.length / CHUNK_SIZE)) },
     (_, index) => serialized.slice(index * CHUNK_SIZE, (index + 1) * CHUNK_SIZE),
   );
-  const generation = `${Date.now().toString(36)}_${crypto.randomUUID().slice(0, 8)}`;
+  const generation = previousMeta?.generation === "a" ? "b" : "a";
 
   if (chunks.length > 1023) throw new Error("Finance data exceeds Telegram CloudStorage capacity");
 
-  for (let index = 0; index < chunks.length; index += 1) {
-    await setItem(storage, chunkKey(index, generation), chunks[index]);
+  const previousKeys = previousMeta
+    ? new Set(Array.from({ length: previousMeta.chunks }, (_, index) => chunkKey(index, previousMeta.generation)))
+    : new Set<string>();
+  try {
+    await cleanupStaleChunks(storage, previousKeys);
+  } catch (error) {
+    console.warn("Unable to run Telegram CloudStorage preflight cleanup:", error);
   }
 
-  await setItem(storage, META_KEY, JSON.stringify({
+  for (let index = 0; index < chunks.length; index += 1) {
+    await withRetry(() => setItem(storage, chunkKey(index, generation), chunks[index]));
+  }
+
+  await withRetry(() => setItem(storage, META_KEY, JSON.stringify({
     chunks: chunks.length,
     updatedAt: Date.now(),
     generation,
     encoding: "lz-utf16-v1",
-  }));
+  })));
 
-  if (previousMeta) {
-    const obsoleteKeys = Array.from(
-      { length: previousMeta.chunks },
-      (_, index) => chunkKey(index, previousMeta.generation),
-    );
-    try {
-      await removeItems(storage, obsoleteKeys);
-    } catch (error) {
-      console.warn("Unable to clean up old Telegram CloudStorage chunks:", error);
-    }
+  const currentKeys = new Set(Array.from({ length: chunks.length }, (_, index) => chunkKey(index, generation)));
+  try {
+    await cleanupStaleChunks(storage, currentKeys);
+  } catch (error) {
+    console.warn("Unable to clean up old Telegram CloudStorage chunks:", error);
   }
 };

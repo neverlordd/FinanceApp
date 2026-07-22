@@ -38,7 +38,7 @@ const isStoredFinanceData = (value: unknown): value is FinanceData => {
     Array.isArray(data.monthlyBudgets);
 };
 
-const staticResponse = (body: unknown, status = 200, provider = "browser", needsCloudRepair = false) =>
+const staticResponse = (body: unknown, status = 200, provider = "browser", needsCloudRepair = false, syncPending = false) =>
   new Response(JSON.stringify(body), {
     status,
     headers: {
@@ -46,6 +46,7 @@ const staticResponse = (body: unknown, status = 200, provider = "browser", needs
       "X-Storage-Provider": provider,
       "X-Storage-Persistent": "true",
       ...(needsCloudRepair ? { "X-Storage-Needs-Repair": "true" } : {}),
+      ...(syncPending ? { "X-Storage-Sync-Pending": "true" } : {}),
     },
   });
 
@@ -79,6 +80,13 @@ const writeLocalData = (data: FinanceData) => {
   localStorage.setItem(localStorageKey(), JSON.stringify(data));
 };
 
+const pendingSyncKey = () => `${localStorageKey()}:pending-cloud-sync`;
+const hasPendingCloudSync = () => localStorage.getItem(pendingSyncKey()) === "1";
+const setPendingCloudSync = (pending: boolean) => {
+  if (pending) localStorage.setItem(pendingSyncKey(), "1");
+  else localStorage.removeItem(pendingSyncKey());
+};
+
 const hasUserData = (data: FinanceData) =>
   data.baselineMonthlyIncome !== 0 ||
   data.baselineBalance !== 0 ||
@@ -94,6 +102,17 @@ const staticApiFetch = async (input: RequestInfo | URL, init: RequestInit): Prom
       const localData = readLocalData();
       const cloudStorage = getTelegramCloudStorage();
       if (!cloudStorage) return staticResponse(localData ?? defaultData());
+
+      if (localData && hasPendingCloudSync()) {
+        try {
+          await writeTelegramCloudData(cloudStorage, localData);
+          setPendingCloudSync(false);
+          return staticResponse(localData, 200, "telegram-cloud");
+        } catch (error) {
+          console.error("Pending Telegram cloud sync failed:", error);
+          return staticResponse(localData, 200, "browser", false, true);
+        }
+      }
 
       try {
         const cloudData = await readTelegramCloudData(cloudStorage);
@@ -113,7 +132,7 @@ const staticApiFetch = async (input: RequestInfo | URL, init: RequestInit): Prom
         return staticResponse(localData ?? defaultData(), 200, "telegram-cloud");
       } catch (error) {
         console.error("Telegram cloud read failed:", error);
-        return staticResponse(localData ?? defaultData(), 200, "browser", error instanceof SyntaxError);
+        return staticResponse(localData ?? defaultData(), 200, "browser", error instanceof SyntaxError, true);
       }
     } catch {
       return staticResponse({ error: "Unable to read browser storage" }, 500);
@@ -135,13 +154,15 @@ const staticApiFetch = async (input: RequestInfo | URL, init: RequestInit): Prom
       if (cloudStorage) {
         try {
           await writeTelegramCloudData(cloudStorage, data);
+          try { setPendingCloudSync(false); } catch { /* Cloud is already up to date. */ }
           return staticResponse({ success: true, data }, 200, "telegram-cloud");
         } catch (error) {
           console.error("Telegram cloud save failed:", error);
+          try { setPendingCloudSync(true); } catch { /* Local data was still saved above. */ }
           if (localSaveError) {
             return staticResponse({ error: "Unable to save data on this device or in Telegram cloud" }, 507);
           }
-          return staticResponse({ error: "Saved on this device, but Telegram cloud sync failed" }, 503);
+          return staticResponse({ error: "Saved on this device. Telegram sync is pending; tap refresh to retry." }, 503);
         }
       }
 

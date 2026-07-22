@@ -76,7 +76,7 @@ export default function App() {
   // Finance State
   const [data, setData] = useState<FinanceData | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
-  const [syncStatus, setSyncStatus] = useState<'synced' | 'syncing' | 'offline'>('syncing');
+  const [syncStatus, setSyncStatus] = useState<'synced' | 'syncing' | 'pending' | 'offline'>('syncing');
   const [storagePersistent, setStoragePersistent] = useState<boolean | null>(null);
   const [storageProvider, setStorageProvider] = useState<string | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
@@ -190,6 +190,7 @@ export default function App() {
         ? { ...json, activeMonths: normalizedActiveMonths }
         : json;
       const needsCloudRepair = res.headers.get("X-Storage-Needs-Repair") === "true";
+      const syncPending = res.headers.get("X-Storage-Sync-Pending") === "true";
       const reconciledData = normalizedJson.debts?.length
         ? { ...normalizedJson, debts: syncDebtPayments(normalizedJson.debts, normalizedJson.monthlyBudgets) }
         : normalizedJson;
@@ -218,11 +219,11 @@ export default function App() {
           })
           .catch(error => {
             console.error("Unable to finish initial cloud sync:", error);
-            setSyncStatus('offline');
+            setSyncStatus('pending');
           });
       } else {
         lastPersistedDataRef.current = optimizedSerialized;
-        setSyncStatus('synced');
+        setSyncStatus(syncPending ? 'pending' : 'synced');
       }
     } catch (err: any) {
       console.error("Sync error:", err);
@@ -314,8 +315,9 @@ export default function App() {
       })
       .catch((err) => {
         console.error("Save error:", err);
-        setSyncStatus('offline');
-        setErrorMsg(err instanceof Error ? err.message : "Unable to save changes. Check your connection.");
+        const message = err instanceof Error ? err.message : "Unable to save changes. Check your connection.";
+        setSyncStatus(message.startsWith("Saved on this device") ? 'pending' : 'offline');
+        setErrorMsg(message);
       });
   };
 
@@ -659,6 +661,12 @@ export default function App() {
                 <>
                   <span className="w-1.5 h-1.5 bg-rose-500 rounded-full" />
                   <span className="app-sync-label text-rose-400 font-medium">Offline</span>
+                </>
+              )}
+              {syncStatus === 'pending' && (
+                <>
+                  <span className="h-1.5 w-1.5 rounded-full bg-amber-400 shadow-[0_0_8px_#fbbf24]" />
+                  <span className="app-sync-label font-medium text-amber-300">Sync pending</span>
                 </>
               )}
             </div>

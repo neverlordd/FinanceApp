@@ -31,6 +31,9 @@ type TelegramWebApp = {
       keys: string[],
       callback: (error: string | null, values?: Record<string, string>) => void,
     ) => void;
+    getKeys: (
+      callback: (error: string | null, keys?: string[]) => void,
+    ) => void;
     removeItems: (
       keys: string[],
       callback?: (error: string | null, removed?: boolean) => void,
