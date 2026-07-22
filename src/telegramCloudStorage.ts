@@ -1,5 +1,6 @@
 import { FinanceData } from "./types";
 import {
+  compressToBase64,
   compressToUTF16,
   decompressFromBase64,
   decompressFromUTF16,
@@ -11,7 +12,7 @@ const META_KEY = "finance_data_meta_v1";
 const LEGACY_CHUNK_PREFIX = "finance_data_v1_";
 const CHUNK_PREFIX = "finance_data_v2_";
 const CHUNK_SIZE = 3800;
-const CLOUD_OPERATION_TIMEOUT_MS = 12000;
+const CLOUD_OPERATION_TIMEOUT_MS = 5000;
 const CLOUD_RETRY_DELAY_MS = 300;
 const CLEANUP_BATCH_SIZE = 100;
 
@@ -19,7 +20,7 @@ type CloudMeta = {
   chunks: number;
   updatedAt: number;
   generation?: string;
-  encoding?: "lz-base64-v1" | "lz-utf16-v1" | "lz-utf16-inline-v1";
+  encoding?: "lz-base64-v1" | "lz-utf16-v1" | "lz-base64-inline-v1" | "lz-utf16-inline-v1";
   data?: string;
 };
 
@@ -110,7 +111,11 @@ const parseMeta = (value: string): CloudMeta | null => {
   if (!value) return null;
   try {
     const meta = JSON.parse(value) as Partial<CloudMeta>;
-    if (meta.encoding === "lz-utf16-inline-v1" && typeof meta.data === "string" && meta.data) {
+    if (
+      (meta.encoding === "lz-base64-inline-v1" || meta.encoding === "lz-utf16-inline-v1") &&
+      typeof meta.data === "string" &&
+      meta.data
+    ) {
       return {
         chunks: 0,
         updatedAt: Number(meta.updatedAt) || 0,
@@ -135,21 +140,24 @@ const parseMeta = (value: string): CloudMeta | null => {
 export const getTelegramCloudStorage = () => {
   const webApp = window.Telegram?.WebApp;
   if (!webApp || webApp.platform === "unknown" || !webApp.initDataUnsafe?.user?.id) return null;
+  if (webApp.isVersionAtLeast && !webApp.isVersionAtLeast("6.9")) return null;
   return webApp.CloudStorage ?? null;
 };
 
 export const readTelegramCloudData = async (storage: CloudStorage): Promise<FinanceData | null> => {
-  const meta = parseMeta(await withRetry(() => getItem(storage, META_KEY)));
+  const meta = parseMeta(await getItem(storage, META_KEY));
   if (!meta) return null;
 
-  if (meta.encoding === "lz-utf16-inline-v1") {
-    const json = decompressFromUTF16(meta.data ?? "");
+  if (meta.encoding === "lz-base64-inline-v1" || meta.encoding === "lz-utf16-inline-v1") {
+    const json = meta.encoding === "lz-base64-inline-v1"
+      ? decompressFromBase64(meta.data ?? "")
+      : decompressFromUTF16(meta.data ?? "");
     if (!json) throw new SyntaxError("Unable to decompress Telegram CloudStorage data");
     return JSON.parse(json) as FinanceData;
   }
 
   const keys = Array.from({ length: meta.chunks }, (_, index) => chunkKey(index, meta.generation));
-  const values = await withRetry(() => getItems(storage, keys));
+  const values = await getItems(storage, keys);
   const serialized = keys.map(key => values[key] ?? "").join("");
   if (!serialized) return null;
   const json = meta.encoding === "lz-base64-v1"
@@ -162,58 +170,69 @@ export const readTelegramCloudData = async (storage: CloudStorage): Promise<Fina
 };
 
 export const writeTelegramCloudData = async (storage: CloudStorage, data: FinanceData): Promise<void> => {
-  const previousMeta = parseMeta(await withRetry(() => getItem(storage, META_KEY)));
-  const serialized = compressToUTF16(JSON.stringify(data));
-  const inlineValue = JSON.stringify({
+  const json = JSON.stringify(data);
+  const base64Serialized = compressToBase64(json);
+  const base64InlineValue = JSON.stringify({
+    chunks: 0,
+    updatedAt: Date.now(),
+    generation: "inline",
+    encoding: "lz-base64-inline-v1",
+    data: base64Serialized,
+  });
+
+  if (base64InlineValue.length <= 4096) {
+    await setItem(storage, META_KEY, base64InlineValue);
+    void cleanupStaleChunks(storage, new Set()).catch(error => {
+      console.warn("Unable to clean up old Telegram CloudStorage chunks:", error);
+    });
+    return;
+  }
+
+  const utf16Serialized = compressToUTF16(json);
+  const utf16InlineValue = JSON.stringify({
     chunks: 0,
     updatedAt: Date.now(),
     generation: "inline",
     encoding: "lz-utf16-inline-v1",
-    data: serialized,
+    data: utf16Serialized,
   });
 
-  if (inlineValue.length <= 4096) {
-    await withRetry(() => setItem(storage, META_KEY, inlineValue));
-    try {
-      await cleanupStaleChunks(storage, new Set());
-    } catch (error) {
+  if (utf16InlineValue.length <= 4096) {
+    await setItem(storage, META_KEY, utf16InlineValue);
+    void cleanupStaleChunks(storage, new Set()).catch(error => {
       console.warn("Unable to clean up old Telegram CloudStorage chunks:", error);
-    }
+    });
     return;
   }
 
+  const serialized = base64Serialized;
   const chunks = Array.from(
     { length: Math.max(1, Math.ceil(serialized.length / CHUNK_SIZE)) },
     (_, index) => serialized.slice(index * CHUNK_SIZE, (index + 1) * CHUNK_SIZE),
   );
-  const generation = previousMeta?.generation === "a" ? "b" : "a";
+  const generation = "stable";
 
   if (chunks.length > 1023) throw new Error("Finance data exceeds Telegram CloudStorage capacity");
 
-  const previousKeys = previousMeta
-    ? new Set(Array.from({ length: previousMeta.chunks }, (_, index) => chunkKey(index, previousMeta.generation)))
-    : new Set<string>();
   try {
-    await cleanupStaleChunks(storage, previousKeys);
+    await cleanupStaleChunks(storage, new Set());
   } catch (error) {
     console.warn("Unable to run Telegram CloudStorage preflight cleanup:", error);
   }
 
   for (let index = 0; index < chunks.length; index += 1) {
-    await withRetry(() => setItem(storage, chunkKey(index, generation), chunks[index]));
+    await setItem(storage, chunkKey(index, generation), chunks[index]);
   }
 
-  await withRetry(() => setItem(storage, META_KEY, JSON.stringify({
+  await setItem(storage, META_KEY, JSON.stringify({
     chunks: chunks.length,
     updatedAt: Date.now(),
     generation,
-    encoding: "lz-utf16-v1",
-  })));
+    encoding: "lz-base64-v1",
+  }));
 
   const currentKeys = new Set(Array.from({ length: chunks.length }, (_, index) => chunkKey(index, generation)));
-  try {
-    await cleanupStaleChunks(storage, currentKeys);
-  } catch (error) {
+  void cleanupStaleChunks(storage, currentKeys).catch(error => {
     console.warn("Unable to clean up old Telegram CloudStorage chunks:", error);
-  }
+  });
 };

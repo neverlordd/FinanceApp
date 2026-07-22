@@ -201,7 +201,7 @@ export default function App() {
       setData(reconciledData);
       setErrorMsg(null);
       const optimizedSerialized = JSON.stringify(reconciledData);
-      if (hadWorkoutData || needsCloudRepair || needsActiveMonthRepair || debtSyncChanged) {
+      if (hadWorkoutData || needsCloudRepair || needsActiveMonthRepair || debtSyncChanged || syncPending) {
         setSyncStatus('syncing');
         saveQueueRef.current = saveQueueRef.current
           .catch(() => undefined)
@@ -215,7 +215,7 @@ export default function App() {
             setStoragePersistent(seedResponse.headers.get("X-Storage-Persistent") !== "false");
             setStorageProvider(seedResponse.headers.get("X-Storage-Provider"));
             lastPersistedDataRef.current = optimizedSerialized;
-            setSyncStatus('synced');
+            setSyncStatus(seedResponse.headers.get("X-Storage-Sync-Pending") === "true" ? 'pending' : 'synced');
           })
           .catch(error => {
             console.error("Unable to finish initial cloud sync:", error);
@@ -310,7 +310,7 @@ export default function App() {
         setStoragePersistent(res.headers.get("X-Storage-Persistent") !== "false");
         setStorageProvider(res.headers.get("X-Storage-Provider"));
         lastPersistedDataRef.current = serialized;
-        setSyncStatus('synced');
+        setSyncStatus(res.headers.get("X-Storage-Sync-Pending") === "true" ? 'pending' : 'synced');
         setErrorMsg(null);
       })
       .catch((err) => {

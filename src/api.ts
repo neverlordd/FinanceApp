@@ -104,14 +104,7 @@ const staticApiFetch = async (input: RequestInfo | URL, init: RequestInit): Prom
       if (!cloudStorage) return staticResponse(localData ?? defaultData());
 
       if (localData && hasPendingCloudSync()) {
-        try {
-          await writeTelegramCloudData(cloudStorage, localData);
-          setPendingCloudSync(false);
-          return staticResponse(localData, 200, "telegram-cloud");
-        } catch (error) {
-          console.error("Pending Telegram cloud sync failed:", error);
-          return staticResponse(localData, 200, "browser", false, true);
-        }
+        return staticResponse(localData, 200, "browser", false, true);
       }
 
       try {
@@ -162,7 +155,7 @@ const staticApiFetch = async (input: RequestInfo | URL, init: RequestInit): Prom
           if (localSaveError) {
             return staticResponse({ error: "Unable to save data on this device or in Telegram cloud" }, 507);
           }
-          return staticResponse({ error: "Saved on this device. Telegram sync is pending; tap refresh to retry." }, 503);
+          return staticResponse({ success: true, data, pending: true }, 200, "browser", false, true);
         }
       }
 
