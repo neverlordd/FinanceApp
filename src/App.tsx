@@ -81,6 +81,7 @@ export default function App() {
   const [storageProvider, setStorageProvider] = useState<string | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const saveQueueRef = useRef<Promise<void>>(Promise.resolve());
+  const saveVersionRef = useRef(0);
   const lastPersistedDataRef = useRef<string | null>(null);
   const previousClosedDebtIdsRef = useRef<Set<string> | null>(null);
   const celebrationTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -288,15 +289,17 @@ export default function App() {
     const serialized = JSON.stringify(updated);
     setData(updated);
     if (serialized === lastPersistedDataRef.current) {
-      setSyncStatus('synced');
+      setSyncStatus(current => current === 'pending' ? 'pending' : 'synced');
       setErrorMsg(null);
       return;
     }
+    const saveVersion = ++saveVersionRef.current;
     setSyncStatus('syncing');
 
     saveQueueRef.current = saveQueueRef.current
       .catch(() => undefined)
       .then(async () => {
+        if (saveVersion !== saveVersionRef.current) return;
         if (serialized === lastPersistedDataRef.current) return;
         const res = await apiFetch("/api/data/sync", {
           method: "POST",
@@ -307,13 +310,15 @@ export default function App() {
           const payload = await res.json().catch(() => null) as { error?: string } | null;
           throw new Error(payload?.error || "Unable to save changes");
         }
+        lastPersistedDataRef.current = serialized;
+        if (saveVersion !== saveVersionRef.current) return;
         setStoragePersistent(res.headers.get("X-Storage-Persistent") !== "false");
         setStorageProvider(res.headers.get("X-Storage-Provider"));
-        lastPersistedDataRef.current = serialized;
         setSyncStatus(res.headers.get("X-Storage-Sync-Pending") === "true" ? 'pending' : 'synced');
         setErrorMsg(null);
       })
       .catch((err) => {
+        if (saveVersion !== saveVersionRef.current) return;
         console.error("Save error:", err);
         const message = err instanceof Error ? err.message : "Unable to save changes. Check your connection.";
         setSyncStatus(message.startsWith("Saved on this device") ? 'pending' : 'offline');
