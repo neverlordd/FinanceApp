@@ -438,6 +438,27 @@ export default function App() {
     saveStateToDB({ ...data, debts });
   };
 
+  const handleEditDebt = (debtId: string, name: string, totalAmount: number) => {
+    const previousDebt = (data.debts ?? []).find(debt => debt.id === debtId);
+    if (!previousDebt) return;
+    const previousName = normalizeDebtTitle(previousDebt.name);
+    const monthlyBudgets = data.monthlyBudgets.map(budget => ({
+      ...budget,
+      expenses: budget.expenses.map(expense =>
+        expense.type !== "income" &&
+        normalizeDebtTitle(expense.category) === "debt" &&
+        normalizeDebtTitle(expense.description) === previousName
+          ? { ...expense, description: name }
+          : expense
+      ),
+    }));
+    const updatedDebts = (data.debts ?? []).map(debt => debt.id === debtId
+      ? { ...debt, name, totalAmount }
+      : debt);
+    const debts = syncDebtPayments(updatedDebts, monthlyBudgets);
+    saveStateToDB({ ...data, monthlyBudgets, debts });
+  };
+
   const handleDeleteDebt = (debtId: string) => {
     saveStateToDB({ ...data, debts: (data.debts ?? []).filter(debt => debt.id !== debtId) });
   };
@@ -765,6 +786,7 @@ export default function App() {
                 <DebtView
                   debts={data.debts ?? []}
                   onAddDebt={handleAddDebt}
+                  onEditDebt={handleEditDebt}
                   onDeleteDebt={handleDeleteDebt}
                   triggerConfirm={triggerConfirm}
                   triggerAlert={triggerAlert}

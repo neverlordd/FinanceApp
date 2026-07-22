@@ -6,6 +6,7 @@ import { FigmaIcon } from "./FigmaIcon";
 interface DebtViewProps {
   debts: DebtItem[];
   onAddDebt: (name: string, totalAmount: number) => void;
+  onEditDebt: (debtId: string, name: string, totalAmount: number) => void;
   onDeleteDebt: (debtId: string) => void;
   triggerConfirm: (title: string, message: string, onConfirm: () => void) => void;
   triggerAlert: (title: string, message: string) => void;
@@ -23,11 +24,13 @@ const normalizeTitle = (value: string) => value.trim().replace(/\s+/g, " ").toLo
 export const DebtView: React.FC<DebtViewProps> = ({
   debts,
   onAddDebt,
+  onEditDebt,
   onDeleteDebt,
   triggerConfirm,
   triggerAlert,
 }) => {
   const [isFormOpen, setIsFormOpen] = useState(false);
+  const [editingDebtId, setEditingDebtId] = useState<string | null>(null);
   const [name, setName] = useState("");
   const [amount, setAmount] = useState("");
 
@@ -46,8 +49,16 @@ export const DebtView: React.FC<DebtViewProps> = ({
   }, [isFormOpen]);
 
   const openForm = () => {
+    setEditingDebtId(null);
     setName("");
     setAmount("");
+    setIsFormOpen(true);
+  };
+
+  const openEditForm = (debt: DebtItem) => {
+    setEditingDebtId(debt.id);
+    setName(debt.name);
+    setAmount(debt.totalAmount.toFixed(2));
     setIsFormOpen(true);
   };
 
@@ -60,7 +71,7 @@ export const DebtView: React.FC<DebtViewProps> = ({
       triggerAlert("Check the name", "Enter the same title you will use for Debt expenses.");
       return;
     }
-    if (debts.some(debt => normalizeTitle(debt.name) === normalizeTitle(cleanName))) {
+    if (debts.some(debt => debt.id !== editingDebtId && normalizeTitle(debt.name) === normalizeTitle(cleanName))) {
       triggerAlert("Debt already exists", "Use a unique title for each debt.");
       return;
     }
@@ -69,7 +80,8 @@ export const DebtView: React.FC<DebtViewProps> = ({
       return;
     }
 
-    onAddDebt(cleanName, totalAmount);
+    if (editingDebtId) onEditDebt(editingDebtId, cleanName, totalAmount);
+    else onAddDebt(cleanName, totalAmount);
     setIsFormOpen(false);
   };
 
@@ -109,17 +121,26 @@ export const DebtView: React.FC<DebtViewProps> = ({
                     <div className="min-w-0">
                       <h3 className="truncate text-base font-normal text-white">{debt.name}</h3>
                     </div>
-                    <button
-                      onClick={() => triggerConfirm(
-                        "Delete debt",
-                        `Delete “${debt.name}” and its linked payment history?`,
-                        () => onDeleteDebt(debt.id)
-                      )}
-                      className="figma-icon-button shrink-0 text-white/45 transition hover:text-[#ff5050]"
-                      aria-label="Delete debt"
-                    >
-                      <FigmaIcon name="trash-muted" size={16} className="opacity-50" />
-                    </button>
+                    <div className="flex shrink-0 items-center gap-1.5">
+                      <button
+                        onClick={() => openEditForm(debt)}
+                        className="figma-icon-button text-white/50 transition hover:text-white"
+                        aria-label={`Edit ${debt.name}`}
+                      >
+                        <FigmaIcon name="edit-2" size={16} className="opacity-65" />
+                      </button>
+                      <button
+                        onClick={() => triggerConfirm(
+                          "Delete debt",
+                          `Delete “${debt.name}” and its linked payment history?`,
+                          () => onDeleteDebt(debt.id)
+                        )}
+                        className="figma-icon-button text-white/45 transition hover:text-[#ff5050]"
+                        aria-label={`Delete ${debt.name}`}
+                      >
+                        <FigmaIcon name="trash-muted" size={16} className="opacity-50" />
+                      </button>
+                    </div>
                   </div>
 
                   <p className={`mt-3 text-2xl font-extrabold ${isPaid ? "text-[#29ff5e]" : "text-[#ff5050]"}`}>{formatCurrency(remaining)}</p>
@@ -151,7 +172,7 @@ export const DebtView: React.FC<DebtViewProps> = ({
         >
           <form onSubmit={handleSubmit} className="debt-modal liquid-glass-strong w-full max-w-sm p-5 shadow-2xl">
             <div className="mb-5 flex items-center justify-between gap-4">
-              <h3 className="text-base font-semibold text-white">Add debt</h3>
+              <h3 className="text-base font-semibold text-white">{editingDebtId ? "Edit debt" : "Add debt"}</h3>
               <button type="button" onClick={() => setIsFormOpen(false)} className="figma-icon-button text-white/50" aria-label="Close">
                 <X size={16} />
               </button>
@@ -159,12 +180,12 @@ export const DebtView: React.FC<DebtViewProps> = ({
 
             <div className="space-y-3.5">
               <div className="space-y-2.5">
-                <label className="text-[11px] text-white/45">Title</label>
-                <input value={name} onChange={event => setName(event.target.value)} className="figma-input h-11 w-full px-4 text-sm text-white outline-none" autoFocus />
+                <label htmlFor="debt-title" className="text-[11px] text-white/45">Title</label>
+                <input id="debt-title" value={name} onChange={event => setName(event.target.value)} className="figma-input h-11 w-full px-4 text-sm text-white outline-none" autoFocus />
               </div>
               <div className="space-y-2.5">
-                <label className="text-[11px] text-white/45">Amount, USD</label>
-                <input type="number" min="0.01" step="0.01" value={amount} onChange={event => setAmount(event.target.value)} className="figma-input h-11 w-full px-4 text-sm font-semibold text-white outline-none" />
+                <label htmlFor="debt-amount" className="text-[11px] text-white/45">Amount, USD</label>
+                <input id="debt-amount" type="number" min="0.01" step="0.01" inputMode="decimal" value={amount} onChange={event => setAmount(event.target.value)} className="figma-input h-11 w-full px-4 text-sm font-semibold text-white outline-none" />
               </div>
             </div>
 
