@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { ArrowLeft, Check, RotateCcw } from "lucide-react";
+import { ArrowLeft, Check, Plus, RotateCcw, X } from "lucide-react";
 import { ExpenseTemplate, ExpenseTemplateOverride } from "../types";
 import { FigmaIcon } from "./FigmaIcon";
 
@@ -9,6 +9,7 @@ interface TemplateSettingsViewProps {
   templates: ExpenseTemplate[];
   overrides: ExpenseTemplateOverride[];
   onBack: () => void;
+  onCreate: (template: Pick<ExpenseTemplate, "title" | "category" | "amount">) => void;
   onSave: (templateId: string, override: ExpenseTemplateOverride) => void;
   onReset: (templateId: string) => void;
   onDelete: (templateId: string) => void;
@@ -50,8 +51,8 @@ const TemplateEditor: React.FC<TemplateEditorProps> = ({ template, hasOverride, 
 
     onSave(template.id, {
       templateId: template.id,
-      title: template.source === "recurring" ? cleanTitle : undefined,
-      category: template.source === "recurring" ? category : undefined,
+      title: !isDebtTemplate ? cleanTitle : undefined,
+      category: !isDebtTemplate ? category : undefined,
       amount: parsedAmount,
     });
     setSaved(true);
@@ -122,10 +123,34 @@ const TemplateEditor: React.FC<TemplateEditorProps> = ({ template, hasOverride, 
   );
 };
 
-export const TemplateSettingsView: React.FC<TemplateSettingsViewProps> = ({ templates, overrides, onBack, onSave, onReset, onDelete, triggerConfirm, triggerAlert }) => {
+export const TemplateSettingsView: React.FC<TemplateSettingsViewProps> = ({ templates, overrides, onBack, onCreate, onSave, onReset, onDelete, triggerConfirm, triggerAlert }) => {
+  const [isCreating, setIsCreating] = useState(false);
+  const [newTitle, setNewTitle] = useState("");
+  const [newCategory, setNewCategory] = useState("Living");
+  const [newAmount, setNewAmount] = useState("");
   const overridesById = new Map<string, ExpenseTemplateOverride>(
     overrides.map(override => [override.templateId, override] as [string, ExpenseTemplateOverride])
   );
+
+  const handleCreate = (event: React.FormEvent) => {
+    event.preventDefault();
+    const cleanTitle = newTitle.trim();
+    const parsedAmount = newAmount.trim() === "" ? undefined : Number(newAmount);
+    const normalizedTitle = cleanTitle.replace(/\s+/g, " ").toLocaleLowerCase();
+    if (!cleanTitle || (parsedAmount !== undefined && (!Number.isFinite(parsedAmount) || parsedAmount <= 0))) {
+      triggerAlert("Check template", "Enter a title and a valid amount.");
+      return;
+    }
+    if (templates.some(template => template.title.trim().replace(/\s+/g, " ").toLocaleLowerCase() === normalizedTitle)) {
+      triggerAlert("Template already exists", "Use a different title or edit the existing template.");
+      return;
+    }
+    onCreate({ title: cleanTitle, category: newCategory, amount: parsedAmount });
+    setNewTitle("");
+    setNewCategory("Living");
+    setNewAmount("");
+    setIsCreating(false);
+  };
 
   return (
     <div className="figma-template-settings mx-auto max-w-3xl space-y-5 md:space-y-6">
@@ -137,7 +162,59 @@ export const TemplateSettingsView: React.FC<TemplateSettingsViewProps> = ({ temp
           <h2 className="truncate text-base font-semibold text-white">Templates</h2>
           <p className="text-[11px] text-white/40">{templates.length} active</p>
         </div>
+        <button
+          type="button"
+          onClick={() => setIsCreating(value => !value)}
+          className="figma-soft-button is-primary flex h-[38px] items-center justify-center gap-1.5 rounded-full px-3.5 text-[11px] font-semibold text-white"
+          aria-expanded={isCreating}
+        >
+          {isCreating ? <X size={14} /> : <Plus size={14} />}
+          {isCreating ? "Cancel" : "New"}
+        </button>
       </div>
+
+      {isCreating && (
+        <form onSubmit={handleCreate} className="figma-surface template-create rounded-[30px] p-3.5 md:p-4">
+          <div className="grid grid-cols-2 gap-2.5 md:grid-cols-3">
+            <label className="col-span-2 space-y-1.5 md:col-span-1">
+              <span className="pl-3 text-[10px] text-white/40">Title</span>
+              <input
+                autoFocus
+                value={newTitle}
+                onChange={event => setNewTitle(event.target.value)}
+                placeholder="Template name"
+                className="figma-input min-h-11 w-full rounded-full px-3.5 text-xs font-semibold text-white outline-none"
+              />
+            </label>
+            <label className="space-y-1.5">
+              <span className="pl-3 text-[10px] text-white/40">Category</span>
+              <select
+                value={newCategory}
+                onChange={event => setNewCategory(event.target.value)}
+                className="figma-input min-h-11 w-full rounded-full px-3.5 text-xs font-semibold text-white outline-none"
+              >
+                {EXPENSE_CATEGORIES.map(option => <option key={option} value={option}>{option}</option>)}
+              </select>
+            </label>
+            <label className="space-y-1.5">
+              <span className="pl-3 text-[10px] text-white/40">Amount, USD</span>
+              <input
+                type="number"
+                min="0.01"
+                step="0.01"
+                inputMode="decimal"
+                value={newAmount}
+                onChange={event => setNewAmount(event.target.value)}
+                placeholder="Optional"
+                className="figma-input min-h-11 w-full rounded-full px-3.5 text-xs font-semibold text-white outline-none"
+              />
+            </label>
+          </div>
+          <button type="submit" className="figma-soft-button is-primary mt-2.5 flex min-h-11 w-full items-center justify-center gap-2 rounded-full px-4 text-[11px] font-semibold text-white">
+            <Plus size={14} /> Create template
+          </button>
+        </form>
+      )}
 
       {templates.length > 0 ? (
         <div className="space-y-3">

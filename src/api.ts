@@ -66,6 +66,7 @@ const readLocalData = (): FinanceData | null => {
         parsed.baselineBalance !== 0 ||
         parsed.monthlyBudgets.length > 0 ||
         parsed.debts?.length ||
+        parsed.customExpenseTemplates?.length ||
         parsed.expenseTemplateOverrides?.length
       ) return parsed;
     } catch (error) {
@@ -92,6 +93,7 @@ const hasUserData = (data: FinanceData) =>
   data.baselineBalance !== 0 ||
   data.monthlyBudgets.length > 0 ||
   Boolean(data.debts?.length) ||
+  Boolean(data.customExpenseTemplates?.length) ||
   Boolean(data.expenseTemplateOverrides?.length);
 
 const staticApiFetch = async (input: RequestInfo | URL, init: RequestInit): Promise<Response> => {

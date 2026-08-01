@@ -69,6 +69,18 @@ const isFinanceData = (value: unknown): value is FinanceData => {
     )
   )) return false;
 
+  if (data.customExpenseTemplates !== undefined && (
+    !Array.isArray(data.customExpenseTemplates) ||
+    data.customExpenseTemplates.some(template =>
+      !template ||
+      typeof template.id !== "string" || !template.id.startsWith("custom:") ||
+      typeof template.title !== "string" || template.title.trim().length === 0 ||
+      typeof template.category !== "string" || template.category.trim().length === 0 ||
+      (template.amount !== undefined && (!isFiniteNumber(template.amount) || template.amount <= 0)) ||
+      template.source !== "custom"
+    )
+  )) return false;
+
   return data.monthlyBudgets.every(budget =>
     budget &&
     /^\d{4}-(0[1-9]|1[0-2])$/.test(budget.monthStr) &&

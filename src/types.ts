@@ -41,7 +41,7 @@ export interface ExpenseTemplate {
   originalAmount?: number;
   originalCurrency?: string;
   originalRate?: number;
-  source: "recurring" | "debt";
+  source: "recurring" | "debt" | "custom";
 }
 
 export interface ExpenseTemplateOverride {
@@ -58,5 +58,6 @@ export interface FinanceData {
   monthlyBudgets: MonthlyBudget[];
   activeMonths?: string[]; // stored in database
   debts?: DebtItem[];
+  customExpenseTemplates?: ExpenseTemplate[];
   expenseTemplateOverrides?: ExpenseTemplateOverride[];
 }

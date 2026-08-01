@@ -55,6 +55,15 @@ export const buildExpenseTemplates = (data: FinanceData, includeHidden = false):
     });
   }
 
+  for (const customTemplate of data.customExpenseTemplates ?? []) {
+    const key = normalizeTitle(customTemplate.title);
+    if (!key) continue;
+    templates.set(key, {
+      ...customTemplate,
+      source: "custom",
+    });
+  }
+
   for (const debt of data.debts ?? []) {
     const paid = debt.payments.reduce((sum, payment) => sum + payment.amount, 0);
     const remaining = Math.max(debt.totalAmount - paid, 0);
@@ -97,7 +106,8 @@ export const buildExpenseTemplates = (data: FinanceData, includeHidden = false):
   });
 
   return resolvedTemplates.sort((a, b) => {
-    if (a.source !== b.source) return a.source === "debt" ? -1 : 1;
+    const sourceOrder: Record<ExpenseTemplate["source"], number> = { debt: 0, custom: 1, recurring: 2 };
+    if (a.source !== b.source) return sourceOrder[a.source] - sourceOrder[b.source];
     return a.title.localeCompare(b.title);
   });
 };

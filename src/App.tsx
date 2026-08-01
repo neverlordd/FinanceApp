@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, useRef } from "react";
-import { FinanceData, ExpenseItem, DebtItem, ExpenseTemplateOverride } from "./types";
+import { FinanceData, ExpenseItem, DebtItem, ExpenseTemplate, ExpenseTemplateOverride } from "./types";
 import { calculateMonthlyStats, CalculatedMonth } from "./utils/calculations";
 import { buildExpenseTemplates } from "./utils/expenseTemplates";
 import { DashboardView } from "./components/DashboardView";
@@ -481,9 +481,42 @@ export default function App() {
   };
 
   const handleSaveExpenseTemplate = (templateId: string, override: ExpenseTemplateOverride) => {
+    const requestedTitle = override.title?.trim();
+    if (requestedTitle && expenseTemplates.some(template =>
+      template.id !== templateId && normalizeDebtTitle(template.title) === normalizeDebtTitle(requestedTitle)
+    )) {
+      triggerAlert("Template already exists", "Use a different title or edit the existing template.");
+      return;
+    }
+    if (templateId.startsWith("custom:")) {
+      const customExpenseTemplates = (data.customExpenseTemplates ?? []).map(template => template.id === templateId
+        ? {
+            ...template,
+            title: override.title?.trim() || template.title,
+            category: override.category?.trim() || template.category,
+            amount: override.amount === null ? undefined : override.amount ?? template.amount,
+          }
+        : template);
+      saveStateToDB({ ...data, customExpenseTemplates });
+      return;
+    }
     const expenseTemplateOverrides = (data.expenseTemplateOverrides ?? []).filter(item => item.templateId !== templateId);
     expenseTemplateOverrides.push(override);
     saveStateToDB({ ...data, expenseTemplateOverrides });
+  };
+
+  const handleCreateExpenseTemplate = (template: Pick<ExpenseTemplate, "title" | "category" | "amount">) => {
+    const customTemplate: ExpenseTemplate = {
+      id: `custom:${generateId()}`,
+      title: template.title.trim(),
+      category: template.category.trim(),
+      amount: template.amount,
+      source: "custom",
+    };
+    saveStateToDB({
+      ...data,
+      customExpenseTemplates: [...(data.customExpenseTemplates ?? []), customTemplate],
+    });
   };
 
   const handleResetExpenseTemplate = (templateId: string) => {
@@ -494,6 +527,14 @@ export default function App() {
   };
 
   const handleSetExpenseTemplateHidden = (templateId: string, hidden: boolean) => {
+    if (templateId.startsWith("custom:")) {
+      saveStateToDB({
+        ...data,
+        customExpenseTemplates: (data.customExpenseTemplates ?? []).filter(template => template.id !== templateId),
+        expenseTemplateOverrides: (data.expenseTemplateOverrides ?? []).filter(item => item.templateId !== templateId),
+      });
+      return;
+    }
     const current = data.expenseTemplateOverrides ?? [];
     const existing = current.find(item => item.templateId === templateId) ?? { templateId };
     const expenseTemplateOverrides = current.filter(item => item.templateId !== templateId);
@@ -775,6 +816,7 @@ export default function App() {
                   templates={expenseTemplates}
                   overrides={data.expenseTemplateOverrides ?? []}
                   onBack={() => setActiveTab("settings")}
+                  onCreate={handleCreateExpenseTemplate}
                   onSave={handleSaveExpenseTemplate}
                   onReset={handleResetExpenseTemplate}
                   onDelete={templateId => handleSetExpenseTemplateHidden(templateId, true)}
