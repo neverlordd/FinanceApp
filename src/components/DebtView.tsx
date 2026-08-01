@@ -145,10 +145,10 @@ export const DebtView: React.FC<DebtViewProps> = ({
 
                   <p className={`mt-3 text-2xl font-extrabold ${isPaid ? "text-[#29ff5e]" : "text-[#ff5050]"}`}>{formatCurrency(remaining)}</p>
 
-                  <div className="mt-3.5 flex items-center justify-between text-[11px]">
-                    <span className="text-white/35">{formatCurrency(paid)}</span>
-                    <span className="text-white">{Math.round(progress)}%</span>
-                    <span className="text-white/35">{formatCurrency(debt.totalAmount)}</span>
+                  <div className="mt-3.5 grid grid-cols-[1fr_auto_1fr] items-center text-[11px]">
+                    <span className="text-left text-white/35">{formatCurrency(paid)}</span>
+                    <span className="text-center text-white">{Math.round(progress)}%</span>
+                    <span className="text-right text-white/35">{formatCurrency(debt.totalAmount)}</span>
                   </div>
 
                   <div className="mt-1.5 h-1 overflow-hidden rounded-full bg-white/10">

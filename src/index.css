@@ -641,7 +641,7 @@ select:focus-visible {
     box-shadow: none;
   }
 
-  .figma-budget .budget-months > .flex > button {
+  .figma-budget .budget-months > .flex > button[aria-label="Add next month"] {
     width: 2.375rem;
     height: 2.375rem;
     min-width: 2.375rem;
@@ -649,6 +649,14 @@ select:focus-visible {
     border-color: rgba(255, 255, 255, 0.18);
     background: rgba(255, 255, 255, 0.05);
     color: rgba(255, 255, 255, 0.72);
+  }
+
+  .figma-budget .budget-months-meta button {
+    width: auto;
+    height: 1.75rem;
+    min-width: 0;
+    min-height: 1.75rem;
+    padding: 0 0.75rem;
   }
 
   .figma-budget .budget-kpi {

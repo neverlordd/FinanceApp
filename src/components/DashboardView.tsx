@@ -318,7 +318,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
   const activeCategories = transactionType === "income" ? INCOME_CATEGORIES : EXPENSE_CATEGORIES;
 
   return (
-    <div className="figma-budget space-y-6">
+    <div className="figma-budget mx-auto max-w-3xl space-y-6">
 
       {/* TWO BLOCK LAYOUT: 1. Left (Selector + Compact KPIs) | 2. Right (Transactions Table) */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
