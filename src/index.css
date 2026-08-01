@@ -525,12 +525,58 @@ select:focus-visible {
 }
 
 @media (min-width: 768px) {
+  .telegram-app-shell {
+    background: #0a0a0e;
+  }
+
+  .telegram-app-shell::before,
+  .telegram-app-shell > .ambient-orb {
+    display: none;
+  }
+
+  .telegram-app-header {
+    position: relative;
+    border: 0;
+    background: transparent;
+    box-shadow: none;
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+
+  .telegram-app-header > div,
+  .app-content {
+    max-width: 67.5rem;
+  }
+
+  .app-content {
+    flex-direction: column;
+    gap: 1rem;
+    padding: 1rem 1.5rem 3rem;
+  }
+
   .telegram-app-header .app-logo-image {
     display: none;
   }
 
   .telegram-app-header .app-figma-logo {
     display: block;
+  }
+
+  .app-content > .liquid-sidebar {
+    position: static;
+    top: auto;
+    display: grid !important;
+    width: 100%;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 0.25rem;
+    padding: 0.25rem;
+    border-radius: 2rem;
+  }
+
+  .app-content > .liquid-sidebar button {
+    min-height: 2.75rem;
+    justify-content: center;
+    padding: 0.625rem 0.875rem;
   }
 
   .liquid-sidebar,
@@ -548,6 +594,65 @@ select:focus-visible {
 
   .figma-budget .budget-kpi-grid {
     gap: 0.625rem;
+  }
+
+  .figma-budget > .grid {
+    grid-template-columns: minmax(0, 1fr) !important;
+    gap: 1.25rem;
+  }
+
+  .figma-budget .budget-overview,
+  .figma-budget .budget-transactions {
+    grid-column: 1 / -1;
+  }
+
+  .figma-budget .budget-overview > * + * {
+    margin-top: 1.25rem;
+  }
+
+  .figma-budget .budget-months {
+    padding: 0;
+    border: 0;
+    background: transparent;
+  }
+
+  .figma-budget .budget-months::after,
+  .figma-budget .budget-months-meta {
+    display: none;
+  }
+
+  .figma-budget .budget-months-scroll {
+    gap: 0.625rem;
+    padding-bottom: 0;
+  }
+
+  .figma-budget .budget-month-pill {
+    min-height: 2.375rem;
+    padding: 0 1rem;
+    border-color: rgba(255, 255, 255, 0.18);
+    background: rgba(255, 255, 255, 0.01);
+    color: #f5f5f7;
+    font-size: 0.75rem;
+    font-weight: 600;
+    box-shadow: none;
+    transform: none;
+  }
+
+  .figma-budget .budget-month-pill[class*="bg-emerald"] {
+    border-color: rgba(255, 255, 255, 0.24);
+    background: rgba(255, 255, 255, 0.2);
+    color: #fff;
+    box-shadow: none;
+  }
+
+  .figma-budget .budget-months > .flex > button {
+    width: 2.375rem;
+    height: 2.375rem;
+    min-width: 2.375rem;
+    min-height: 2.375rem;
+    border-color: rgba(255, 255, 255, 0.18);
+    background: rgba(255, 255, 255, 0.05);
+    color: rgba(255, 255, 255, 0.72);
   }
 
   .figma-budget .budget-kpi {
@@ -584,14 +689,80 @@ select:focus-visible {
     font-weight: 800;
   }
 
+  .figma-budget .budget-kpi-value {
+    position: absolute;
+    right: 1rem;
+    bottom: 1rem;
+    left: 1rem;
+    width: auto;
+    height: 2rem;
+    min-height: 2rem;
+    align-items: flex-end;
+  }
+
+  .figma-budget .budget-transactions {
+    padding: 1rem;
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    border-radius: 2rem;
+    background: rgba(255, 255, 255, 0.025);
+  }
+
+  .figma-budget .budget-transactions > .space-y-5 > * + * {
+    margin-top: 0.625rem;
+  }
+
+  .figma-budget .budget-actions {
+    padding: 0;
+    border: 0;
+    background: transparent;
+  }
+
+  .figma-budget .budget-actions::after {
+    display: none;
+  }
+
+  .figma-budget .budget-actions .grid {
+    gap: 0.625rem;
+  }
+
+  .figma-budget .budget-actions .mobile-primary-action {
+    min-height: 2.75rem;
+    padding: 0 1.25rem;
+    border-color: rgba(255, 255, 255, 0.18);
+    background: rgba(255, 255, 255, 0.05);
+    font-size: 0.75rem;
+    font-weight: 500;
+  }
+
+  .figma-budget .budget-filter-tabs {
+    border-color: rgba(255, 255, 255, 0.14);
+    background: rgba(255, 255, 255, 0.025);
+  }
+
   .figma-budget .budget-templates {
+    padding: 0.875rem;
     border-radius: 1.875rem;
+    background: rgba(255, 255, 255, 0.05);
   }
 
   .figma-budget .budget-templates.is-collapsed {
     padding: 0;
     border-color: transparent;
     background: transparent;
+  }
+
+  .figma-budget .budget-templates.is-collapsed .budget-templates-toggle {
+    min-height: 2.375rem !important;
+    padding: 0 0.875rem;
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    background: rgba(255, 255, 255, 0.05);
+  }
+
+  .figma-budget .budget-templates-toggle > span:first-child {
+    font-size: 0.6875rem;
+    font-weight: 400;
+    letter-spacing: 0;
+    text-transform: none;
   }
 
   .figma-budget .budget-template-chip,
@@ -604,6 +775,21 @@ select:focus-visible {
     background: rgba(255, 255, 255, 0.025);
   }
 
+  .figma-budget .transaction-list > div + div {
+    margin-top: 0.625rem;
+    padding-top: 0.625rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.09);
+  }
+
+  .figma-budget .transaction-list .space-y-2 > * + * {
+    margin-top: 0.625rem;
+  }
+
+  .figma-budget .budget-row {
+    min-height: 3.75rem;
+    padding: 0.75rem 0.875rem;
+  }
+
   .figma-budget .budget-row-income {
     background: radial-gradient(circle at 52% 135%, rgba(41, 255, 94, 0.16), transparent 54%), rgba(255, 255, 255, 0.015);
   }
@@ -614,6 +800,12 @@ select:focus-visible {
 
   .figma-budget .budget-row-completed {
     background: radial-gradient(circle at 52% 135%, rgba(41, 255, 94, 0.1), transparent 54%), rgba(255, 255, 255, 0.015);
+  }
+}
+
+@media (min-width: 1024px) {
+  .figma-budget .budget-kpi-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
   }
 }
 
