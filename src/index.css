@@ -535,23 +535,24 @@ select:focus-visible {
   }
 
   .telegram-app-header {
-    position: relative;
-    border: 0;
-    background: transparent;
-    box-shadow: none;
-    -webkit-backdrop-filter: none;
-    backdrop-filter: none;
+    position: sticky;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    background: rgba(10, 10, 14, 0.88);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.16);
+    -webkit-backdrop-filter: blur(24px) saturate(150%);
+    backdrop-filter: blur(24px) saturate(150%);
   }
 
   .telegram-app-header > div,
   .app-content {
-    max-width: 67.5rem;
+    max-width: 80rem;
   }
 
   .app-content {
-    flex-direction: column;
-    gap: 1rem;
-    padding: 1rem 1.5rem 3rem;
+    flex-direction: row;
+    align-items: flex-start;
+    gap: 1.25rem;
+    padding: 1.25rem 1.5rem 3rem;
   }
 
   .telegram-app-header .app-logo-image {
@@ -563,20 +564,19 @@ select:focus-visible {
   }
 
   .app-content > .liquid-sidebar {
-    position: static;
-    top: auto;
-    display: grid !important;
-    width: 100%;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-    gap: 0.25rem;
-    padding: 0.25rem;
-    border-radius: 2rem;
+    position: sticky;
+    top: 5.25rem;
+    display: block !important;
+    width: 13rem;
+    flex: 0 0 13rem;
+    padding: 0.375rem;
+    border-radius: 1.875rem;
   }
 
   .app-content > .liquid-sidebar button {
     min-height: 2.75rem;
-    justify-content: center;
-    padding: 0.625rem 0.875rem;
+    justify-content: flex-start;
+    padding: 0.625rem 1rem;
   }
 
   .liquid-sidebar,
@@ -611,14 +611,10 @@ select:focus-visible {
   }
 
   .figma-budget .budget-months {
-    padding: 0;
-    border: 0;
-    background: transparent;
-  }
-
-  .figma-budget .budget-months::after,
-  .figma-budget .budget-months-meta {
-    display: none;
+    padding: 0.875rem;
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    border-radius: 1.875rem;
+    background: rgba(255, 255, 255, 0.025);
   }
 
   .figma-budget .budget-months-scroll {
