@@ -153,25 +153,22 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
     setIsFormOpen(true);
   };
 
-  const handleOpenTemplate = (template: ExpenseTemplate) => {
-    setEditingExpense(null);
-    setTransactionType("expense");
-    if (EXPENSE_CATEGORIES.includes(template.category)) {
-      setCategory(template.category);
-      setCustomCategory("");
-      setIsCustomCategory(false);
-    } else {
-      setCategory("Other");
-      setCustomCategory(template.category);
-      setIsCustomCategory(true);
+  const handleApplyTemplate = (template: ExpenseTemplate) => {
+    if (template.amount === undefined || template.amount <= 0) {
+      triggerAlert("Template amount required", "Set an amount for this template in Settings before adding it.");
+      return;
     }
-    setDescription(template.title);
-    setCompleted(false);
-    const templateCurrency = template.originalCurrency || "USD";
-    setCurrency(templateCurrency);
-    setRawAmount((template.originalAmount ?? template.amount)?.toString() ?? "");
-    setExchangeRate((template.originalRate ?? DEFAULT_RATES[templateCurrency] ?? 1).toString());
-    setIsFormOpen(true);
+
+    onAddExpense(selectedMonthStr, {
+      category: template.category,
+      description: template.title,
+      amount: template.amount,
+      completed: false,
+      type: "expense",
+      originalAmount: template.originalAmount ?? template.amount,
+      originalCurrency: template.originalCurrency ?? "USD",
+      originalRate: template.originalRate ?? 1,
+    });
   };
 
   // Handle opening form for editing a row
@@ -589,7 +586,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                     return (
                       <button
                         key={template.id}
-                        onClick={() => handleOpenTemplate(template)}
+                        onClick={() => handleApplyTemplate(template)}
                         disabled={alreadyAdded}
                         className={`budget-template-chip liquid-glass flex min-h-14 min-w-[9.5rem] shrink-0 items-center justify-between gap-3 px-4 py-2.5 text-left transition-all ${
                           alreadyAdded
