@@ -303,7 +303,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
   if (!currentMonth) return null;
 
   // Filter items in the list based on selection
-  const filteredItems = currentMonth.expenses.filter((item) => {
+  const filteredItems = [...currentMonth.expenses].reverse().filter((item) => {
     const itemType = item.type || "expense";
     if (filterType === "all") return true;
     return itemType === filterType;
