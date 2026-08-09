@@ -1,22 +1,29 @@
-import { useState, useEffect } from "react";
-import { FinanceData, ExpenseItem } from "./types";
+import { useState, useEffect, useMemo, useRef } from "react";
+import { FinanceData, ExpenseItem, DebtItem, ExpenseTemplate, ExpenseTemplateOverride } from "./types";
 import { calculateMonthlyStats, CalculatedMonth } from "./utils/calculations";
+import { buildExpenseTemplates } from "./utils/expenseTemplates";
 import { DashboardView } from "./components/DashboardView";
 import { FutureView } from "./components/FutureView";
 import { SettingsView } from "./components/SettingsView";
+import { TemplateSettingsView } from "./components/TemplateSettingsView";
+import { DebtView } from "./components/DebtView";
 import { ConfirmModal } from "./components/ConfirmModal";
+import { FigmaIcon } from "./components/FigmaIcon";
+import { apiFetch } from "./api";
 import {
   Wallet,
   Calendar,
   Settings,
   RefreshCw,
   WifiOff,
-  LineChart
+  Database,
+  HandCoins,
+  PartyPopper,
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 
 // Generate ID helper
-const generateId = () => Math.random().toString(36).substring(2, 11);
+const generateId = () => crypto.randomUUID();
 
 // Get current month YYYY-MM helper
 const getCurrentMonthStr = () => {
@@ -26,6 +33,56 @@ const getCurrentMonthStr = () => {
   return `${year}-${month}`;
 };
 
+const addMonthsToMonthStr = (monthStr: string, amount: number) => {
+  const [year, month] = monthStr.split("-").map(Number);
+  const absoluteMonth = year * 12 + month - 1 + amount;
+  const nextYear = Math.floor(absoluteMonth / 12);
+  const nextMonth = absoluteMonth % 12 + 1;
+  return `${nextYear}-${String(nextMonth).padStart(2, "0")}`;
+};
+
+const formatMonthLabel = (monthStr: string) => {
+  const [year, month] = monthStr.split("-").map(Number);
+  return new Intl.DateTimeFormat("en-US", { month: "long", year: "numeric", timeZone: "UTC" })
+    .format(new Date(Date.UTC(year, month - 1, 1)));
+};
+
+const normalizeDebtTitle = (value: string) => value.trim().replace(/\s+/g, " ").toLocaleLowerCase();
+
+const syncDebtPayments = (debts: DebtItem[], monthlyBudgets: FinanceData["monthlyBudgets"]): DebtItem[] => {
+  const completedDebtExpenses = monthlyBudgets
+    .flatMap(budget => budget.expenses
+      .filter(expense =>
+        expense.type !== "income" &&
+        expense.completed &&
+        normalizeDebtTitle(expense.category) === "debt"
+      )
+      .map(expense => ({ expense, monthStr: budget.monthStr })))
+    .sort((a, b) => a.monthStr.localeCompare(b.monthStr) || a.expense.id.localeCompare(b.expense.id));
+
+  return debts.map(debt => {
+    let paid = 0;
+    const linkedPayments = [] as DebtItem["payments"];
+
+    for (const { expense, monthStr } of completedDebtExpenses) {
+      if (normalizeDebtTitle(expense.description) !== normalizeDebtTitle(debt.name)) continue;
+      const remaining = Number(Math.max(debt.totalAmount - paid, 0).toFixed(2));
+      if (remaining <= 0) break;
+      const amount = Math.min(expense.amount, remaining);
+      linkedPayments.push({
+        id: `expense:${monthStr}:${expense.id}`,
+        amount,
+        createdAt: `${monthStr}-01T00:00:00.000Z`,
+        sourceExpenseId: expense.id,
+        sourceMonthStr: monthStr,
+      });
+      paid += amount;
+    }
+
+    return { ...debt, payments: linkedPayments };
+  });
+};
+
 export default function App() {
   // Navigation State
   const [activeTab, setActiveTab] = useState<string>("budget");
@@ -33,11 +90,47 @@ export default function App() {
   // Finance State
   const [data, setData] = useState<FinanceData | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
-  const [syncStatus, setSyncStatus] = useState<'synced' | 'syncing' | 'offline'>('syncing');
+  const [syncStatus, setSyncStatus] = useState<'synced' | 'syncing' | 'pending' | 'offline'>('syncing');
+  const [storagePersistent, setStoragePersistent] = useState<boolean | null>(null);
+  const [storageProvider, setStorageProvider] = useState<string | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const saveQueueRef = useRef<Promise<void>>(Promise.resolve());
+  const saveVersionRef = useRef(0);
+  const lastPersistedDataRef = useRef<string | null>(null);
+  const previousClosedDebtIdsRef = useRef<Set<string> | null>(null);
+  const celebrationTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [debtCelebration, setDebtCelebration] = useState<string | null>(null);
 
   // Month Selection State
   const [selectedMonthStr, setSelectedMonthStr] = useState<string>(getCurrentMonthStr());
+
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: "auto" });
+  }, [activeTab]);
+
+  useEffect(() => {
+    if (!data) return;
+    const closedDebts = (data.debts ?? []).filter(debt =>
+      debt.payments.reduce((sum, payment) => sum + payment.amount, 0) >= debt.totalAmount - 0.005
+    );
+    const closedIds = new Set(closedDebts.map(debt => debt.id));
+    const previousIds = previousClosedDebtIdsRef.current;
+
+    if (previousIds) {
+      const newlyClosed = closedDebts.find(debt => !previousIds.has(debt.id));
+      if (newlyClosed) {
+        setDebtCelebration(newlyClosed.name);
+        if (celebrationTimerRef.current) clearTimeout(celebrationTimerRef.current);
+        celebrationTimerRef.current = setTimeout(() => setDebtCelebration(null), 2600);
+      }
+    }
+
+    previousClosedDebtIdsRef.current = closedIds;
+  }, [data]);
+
+  useEffect(() => () => {
+    if (celebrationTimerRef.current) clearTimeout(celebrationTimerRef.current);
+  }, []);
 
   // Interactive dialog/modal state
   const [modalConfig, setModalConfig] = useState<{
@@ -56,7 +149,7 @@ export default function App() {
     onConfirm: () => {}
   });
 
-  const triggerConfirm = (title: string, message: string, onConfirm: () => void, confirmText = "Да", cancelText = "Отмена") => {
+  const triggerConfirm = (title: string, message: string, onConfirm: () => void, confirmText = "Yes", cancelText = "Cancel") => {
     setModalConfig({
       isOpen: true,
       title,
@@ -74,7 +167,7 @@ export default function App() {
     });
   };
 
-  const triggerAlert = (title: string, message: string, confirmText = "ОК") => {
+  const triggerAlert = (title: string, message: string, confirmText = "OK") => {
     setModalConfig({
       isOpen: true,
       title,
@@ -92,16 +185,65 @@ export default function App() {
     if (showLoader) setLoading(true);
     setSyncStatus('syncing');
     try {
-      const res = await fetch("/api/data");
-      if (!res.ok) throw new Error("Не удалось загрузить данные с сервера");
-      const json = await res.json() as FinanceData;
-      setData(json);
-      setSyncStatus('synced');
+      const res = await apiFetch("/api/data");
+      if (!res.ok) {
+        const message = res.status === 401
+          ? "Telegram authorization could not be verified. Close and reopen the Mini App."
+          : "Unable to load data from the server.";
+        throw new Error(message);
+      }
+      const rawJson = await res.json() as FinanceData & { workoutWeeks?: unknown };
+      const hadWorkoutData = Object.prototype.hasOwnProperty.call(rawJson, "workoutWeeks");
+      const json = { ...rawJson };
+      delete json.workoutWeeks;
+      const activeMonthSource = json.activeMonths?.length
+        ? json.activeMonths
+        : [getCurrentMonthStr(), ...json.monthlyBudgets.map(budget => budget.monthStr)];
+      const normalizedActiveMonths = [...new Set(activeMonthSource)].sort();
+      const needsActiveMonthRepair = JSON.stringify(json.activeMonths ?? []) !== JSON.stringify(normalizedActiveMonths);
+      const normalizedJson: FinanceData = needsActiveMonthRepair
+        ? { ...json, activeMonths: normalizedActiveMonths }
+        : json;
+      const needsCloudRepair = res.headers.get("X-Storage-Needs-Repair") === "true";
+      const syncPending = res.headers.get("X-Storage-Sync-Pending") === "true";
+      const reconciledData = normalizedJson.debts?.length
+        ? { ...normalizedJson, debts: syncDebtPayments(normalizedJson.debts, normalizedJson.monthlyBudgets) }
+        : normalizedJson;
+      const debtSyncChanged = Boolean(normalizedJson.debts?.length) &&
+        JSON.stringify(normalizedJson.debts) !== JSON.stringify(reconciledData.debts);
+      setStoragePersistent(res.headers.get("X-Storage-Persistent") !== "false");
+      setStorageProvider(res.headers.get("X-Storage-Provider"));
+      setData(reconciledData);
       setErrorMsg(null);
+      const optimizedSerialized = JSON.stringify(reconciledData);
+      if (hadWorkoutData || needsCloudRepair || needsActiveMonthRepair || debtSyncChanged || syncPending) {
+        setSyncStatus('syncing');
+        saveQueueRef.current = saveQueueRef.current
+          .catch(() => undefined)
+          .then(async () => {
+            const seedResponse = await apiFetch("/api/data/sync", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: optimizedSerialized,
+            });
+            if (!seedResponse.ok) throw new Error("Unable to finish initial cloud sync");
+            setStoragePersistent(seedResponse.headers.get("X-Storage-Persistent") !== "false");
+            setStorageProvider(seedResponse.headers.get("X-Storage-Provider"));
+            lastPersistedDataRef.current = optimizedSerialized;
+            setSyncStatus(seedResponse.headers.get("X-Storage-Sync-Pending") === "true" ? 'pending' : 'synced');
+          })
+          .catch(error => {
+            console.error("Unable to finish initial cloud sync:", error);
+            setSyncStatus('pending');
+          });
+      } else {
+        lastPersistedDataRef.current = optimizedSerialized;
+        setSyncStatus(syncPending ? 'pending' : 'synced');
+      }
     } catch (err: any) {
       console.error("Sync error:", err);
       setSyncStatus('offline');
-      setErrorMsg("Связь с сервером потеряна. Проверьте подключение.");
+      setErrorMsg(err instanceof Error ? err.message : "The server connection was lost. Check your connection.");
     } finally {
       if (showLoader) setLoading(false);
     }
@@ -112,15 +254,17 @@ export default function App() {
     fetchData(true);
   }, []);
 
-  // Background active polling sync every 8 seconds
-  useEffect(() => {
-    const timer = setInterval(() => {
-      fetchData(false);
-    }, 8000);
-    return () => clearInterval(timer);
-  }, []);
+  const currentMonth = getCurrentMonthStr();
+  const calculatedMonths = useMemo(
+    () => data ? calculateMonthlyStats(data, currentMonth) : [],
+    [data, currentMonth],
+  );
+  const expenseTemplates = useMemo(
+    () => data ? buildExpenseTemplates(data) : [],
+    [data],
+  );
 
-  if (loading || !data) {
+  if (loading) {
     return (
       <div className="min-h-screen bg-[#06080d] flex flex-col items-center justify-center font-sans">
         <div className="space-y-4 text-center">
@@ -128,33 +272,72 @@ export default function App() {
             <div className="absolute inset-0 rounded-full border-4 border-emerald-500/20" />
             <div className="absolute inset-0 rounded-full border-4 border-emerald-500 border-t-transparent animate-spin" />
           </div>
-          <p className="text-xs font-semibold text-slate-400 tracking-wide uppercase">Синхронизация данных...</p>
+          <p className="text-xs font-semibold text-slate-400 tracking-wide uppercase">Syncing data...</p>
         </div>
       </div>
     );
   }
 
-  // Calculate forward projections and statistics cascading recursively
-  const currentMonth = getCurrentMonthStr();
-  const calculatedMonths = calculateMonthlyStats(data, currentMonth);
+  if (!data) {
+    return (
+      <div className="min-h-screen bg-[#06080d] flex items-center justify-center p-6 font-sans text-center">
+        <div className="w-full max-w-sm rounded-3xl border border-white/[0.08] bg-white/[0.025] p-7 shadow-2xl">
+          <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-2xl border border-rose-500/20 bg-rose-500/10 text-rose-400">
+            <WifiOff size={21} />
+          </div>
+          <h1 className="text-sm font-black uppercase tracking-wider text-white">Unable to open your budget</h1>
+          <p className="mt-2 text-xs leading-relaxed text-white/50">{errorMsg}</p>
+          <button
+            onClick={() => fetchData(true)}
+            className="mt-5 inline-flex items-center gap-2 rounded-2xl bg-emerald-500 px-5 py-2.5 text-xs font-black text-slate-950 transition hover:bg-emerald-400"
+          >
+            <RefreshCw size={13} /> Try again
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   // Helper to save state back to DB via Sync API
-  const saveStateToDB = async (updated: FinanceData) => {
+  const saveStateToDB = (updated: FinanceData) => {
+    const serialized = JSON.stringify(updated);
     setData(updated);
-    setSyncStatus('syncing');
-    try {
-      const res = await fetch("/api/data/sync", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(updated)
-      });
-      if (!res.ok) throw new Error("Не удалось синхронизировать изменения");
-      setSyncStatus('synced');
-    } catch (err) {
-      console.error("Save error:", err);
-      setSyncStatus('offline');
-      triggerAlert("Сбой сохранения", "Ошибка при сохранении на сервере. Изменения сохранятся при восстановлении связи.");
+    if (serialized === lastPersistedDataRef.current) {
+      setSyncStatus(current => current === 'pending' ? 'pending' : 'synced');
+      setErrorMsg(null);
+      return;
     }
+    const saveVersion = ++saveVersionRef.current;
+    setSyncStatus('syncing');
+
+    saveQueueRef.current = saveQueueRef.current
+      .catch(() => undefined)
+      .then(async () => {
+        if (saveVersion !== saveVersionRef.current) return;
+        if (serialized === lastPersistedDataRef.current) return;
+        const res = await apiFetch("/api/data/sync", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: serialized
+        });
+        if (!res.ok) {
+          const payload = await res.json().catch(() => null) as { error?: string } | null;
+          throw new Error(payload?.error || "Unable to save changes");
+        }
+        lastPersistedDataRef.current = serialized;
+        if (saveVersion !== saveVersionRef.current) return;
+        setStoragePersistent(res.headers.get("X-Storage-Persistent") !== "false");
+        setStorageProvider(res.headers.get("X-Storage-Provider"));
+        setSyncStatus(res.headers.get("X-Storage-Sync-Pending") === "true" ? 'pending' : 'synced');
+        setErrorMsg(null);
+      })
+      .catch((err) => {
+        if (saveVersion !== saveVersionRef.current) return;
+        console.error("Save error:", err);
+        const message = err instanceof Error ? err.message : "Unable to save changes. Check your connection.";
+        setSyncStatus(message.startsWith("Saved on this device") ? 'pending' : 'offline');
+        setErrorMsg(message);
+      });
   };
 
   // Helper to ensure a monthly budget object exists for editing
@@ -183,9 +366,21 @@ export default function App() {
     };
     const updated: FinanceData = {
       ...data,
-      monthlyBudgets: budgets
+      monthlyBudgets: budgets,
+      debts: syncDebtPayments(data.debts ?? [], budgets),
     };
     saveStateToDB(updated);
+  };
+
+  const handleUpdateActualBalance = (monthStr: string, actualEndingBalance: number | null) => {
+    const { budgets, index } = getOrCreateMonthlyBudget(data, monthStr);
+    if (actualEndingBalance === null) {
+      const { actualEndingBalance: _removed, ...budgetWithoutActualBalance } = budgets[index];
+      budgets[index] = budgetWithoutActualBalance;
+    } else {
+      budgets[index] = { ...budgets[index], actualEndingBalance };
+    }
+    saveStateToDB({ ...data, monthlyBudgets: budgets });
   };
 
   // Add Expense to specific month
@@ -201,23 +396,50 @@ export default function App() {
     };
     const updated: FinanceData = {
       ...data,
-      monthlyBudgets: budgets
+      monthlyBudgets: budgets,
+      debts: syncDebtPayments(data.debts ?? [], budgets),
     };
     saveStateToDB(updated);
   };
 
   // Edit Expense in specific month
-  const handleEditExpense = (monthStr: string, editedExp: ExpenseItem) => {
-    const { budgets, index } = getOrCreateMonthlyBudget(data, monthStr);
-    budgets[index] = {
-      ...budgets[index],
-      expenses: budgets[index].expenses.map(e => e.id === editedExp.id ? editedExp : e)
-    };
+  const handleEditExpense = (sourceMonthStr: string, destinationMonthStr: string, editedExp: ExpenseItem) => {
+    const { budgets, index: sourceIndex } = getOrCreateMonthlyBudget(data, sourceMonthStr);
+    const sourceHasExpense = budgets[sourceIndex].expenses.some(expense => expense.id === editedExp.id);
+    if (!sourceHasExpense) return;
+
+    if (sourceMonthStr === destinationMonthStr) {
+      budgets[sourceIndex] = {
+        ...budgets[sourceIndex],
+        expenses: budgets[sourceIndex].expenses.map(expense => expense.id === editedExp.id ? editedExp : expense),
+      };
+    } else {
+      budgets[sourceIndex] = {
+        ...budgets[sourceIndex],
+        expenses: budgets[sourceIndex].expenses.filter(expense => expense.id !== editedExp.id),
+      };
+      let destinationIndex = budgets.findIndex(budget => budget.monthStr === destinationMonthStr);
+      if (destinationIndex === -1) {
+        budgets.push({
+          monthStr: destinationMonthStr,
+          income: data.baselineMonthlyIncome,
+          expenses: [],
+        });
+        destinationIndex = budgets.length - 1;
+      }
+      budgets[destinationIndex] = {
+        ...budgets[destinationIndex],
+        expenses: [...budgets[destinationIndex].expenses, editedExp],
+      };
+    }
+
     const updated: FinanceData = {
       ...data,
-      monthlyBudgets: budgets
+      monthlyBudgets: budgets,
+      debts: syncDebtPayments(data.debts ?? [], budgets),
     };
     saveStateToDB(updated);
+    if (sourceMonthStr !== destinationMonthStr) setSelectedMonthStr(destinationMonthStr);
   };
 
   // Delete Expense from specific month
@@ -229,7 +451,8 @@ export default function App() {
     };
     const updated: FinanceData = {
       ...data,
-      monthlyBudgets: budgets
+      monthlyBudgets: budgets,
+      debts: syncDebtPayments(data.debts ?? [], budgets),
     };
     saveStateToDB(updated);
   };
@@ -243,9 +466,47 @@ export default function App() {
     };
     const updated: FinanceData = {
       ...data,
-      monthlyBudgets: budgets
+      monthlyBudgets: budgets,
+      debts: syncDebtPayments(data.debts ?? [], budgets),
     };
     saveStateToDB(updated);
+  };
+
+  const handleAddDebt = (name: string, totalAmount: number) => {
+    const debt: DebtItem = {
+      id: generateId(),
+      name,
+      totalAmount,
+      createdAt: new Date().toISOString(),
+      payments: [],
+    };
+    const debts = syncDebtPayments([...(data.debts ?? []), debt], data.monthlyBudgets);
+    saveStateToDB({ ...data, debts });
+  };
+
+  const handleEditDebt = (debtId: string, name: string, totalAmount: number) => {
+    const previousDebt = (data.debts ?? []).find(debt => debt.id === debtId);
+    if (!previousDebt) return;
+    const previousName = normalizeDebtTitle(previousDebt.name);
+    const monthlyBudgets = data.monthlyBudgets.map(budget => ({
+      ...budget,
+      expenses: budget.expenses.map(expense =>
+        expense.type !== "income" &&
+        normalizeDebtTitle(expense.category) === "debt" &&
+        normalizeDebtTitle(expense.description) === previousName
+          ? { ...expense, description: name }
+          : expense
+      ),
+    }));
+    const updatedDebts = (data.debts ?? []).map(debt => debt.id === debtId
+      ? { ...debt, name, totalAmount }
+      : debt);
+    const debts = syncDebtPayments(updatedDebts, monthlyBudgets);
+    saveStateToDB({ ...data, monthlyBudgets, debts });
+  };
+
+  const handleDeleteDebt = (debtId: string) => {
+    saveStateToDB({ ...data, debts: (data.debts ?? []).filter(debt => debt.id !== debtId) });
   };
 
   // Update Settings Baseline parameters
@@ -258,102 +519,87 @@ export default function App() {
     saveStateToDB(updated);
   };
 
-  // Reset to screenshot Demo Data
-  const handleResetToDemo = async () => {
-    setLoading(true);
-    try {
-      const demoData: FinanceData = {
-        baselineMonthlyIncome: 3000,
-        baselineBalance: 1500,
-        monthlyBudgets: [
-          {
-            monthStr: "2026-08",
-            income: 3000,
-            expenses: [
-              {
-                id: "aug-1",
-                category: "Работа",
-                description: "Вычет за аванс (2-я часть)",
-                amount: 675,
-                completed: true
-              },
-              {
-                id: "aug-2",
-                category: "Долги",
-                description: "Долг Жене",
-                amount: 150,
-                completed: true
-              },
-              {
-                id: "aug-3",
-                category: "Долги",
-                description: "Долг Амалю (остаток)",
-                amount: 175,
-                completed: true
-              },
-              {
-                id: "aug-4",
-                category: "Долги",
-                description: "Долг Андрею",
-                amount: 250,
-                completed: true
-              },
-              {
-                id: "aug-5",
-                category: "Долги",
-                description: "Малому",
-                amount: 50,
-                completed: false
-              },
-              {
-                id: "aug-6",
-                category: "Жилье",
-                description: "Аренда квартиры",
-                amount: 270,
-                completed: false
-              },
-              {
-                id: "aug-7",
-                category: "Жизнь",
-                description: "Еда и быт (Тбилиси)",
-                amount: 189.39,
-                completed: false
-              }
-            ]
-          }
-        ]
-      };
-      const res = await fetch("/api/data/sync", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(demoData)
-      });
-      const json = await res.json();
-      setData(json.data);
-      setSyncStatus('synced');
-      setSelectedMonthStr("2026-08"); // Focus August after reset
-    } catch (e) {
-      triggerAlert("Сбой сброса", "Не удалось восстановить демонстрационный пример.");
-    } finally {
-      setLoading(false);
+  const handleSaveExpenseTemplate = (templateId: string, override: ExpenseTemplateOverride) => {
+    const requestedTitle = override.title?.trim();
+    if (requestedTitle && expenseTemplates.some(template =>
+      template.id !== templateId && normalizeDebtTitle(template.title) === normalizeDebtTitle(requestedTitle)
+    )) {
+      triggerAlert("Template already exists", "Use a different title or edit the existing template.");
+      return;
     }
+    if (templateId.startsWith("custom:")) {
+      const customExpenseTemplates = (data.customExpenseTemplates ?? []).map(template => template.id === templateId
+        ? {
+            ...template,
+            title: override.title?.trim() || template.title,
+            category: override.category?.trim() || template.category,
+            amount: override.amount === null ? undefined : override.amount ?? template.amount,
+          }
+        : template);
+      saveStateToDB({ ...data, customExpenseTemplates });
+      return;
+    }
+    const expenseTemplateOverrides = (data.expenseTemplateOverrides ?? []).filter(item => item.templateId !== templateId);
+    expenseTemplateOverrides.push(override);
+    saveStateToDB({ ...data, expenseTemplateOverrides });
+  };
+
+  const handleCreateExpenseTemplate = (template: Pick<ExpenseTemplate, "title" | "category" | "amount">) => {
+    const customTemplate: ExpenseTemplate = {
+      id: `custom:${generateId()}`,
+      title: template.title.trim(),
+      category: template.category.trim(),
+      amount: template.amount,
+      source: "custom",
+    };
+    saveStateToDB({
+      ...data,
+      customExpenseTemplates: [...(data.customExpenseTemplates ?? []), customTemplate],
+    });
+  };
+
+  const handleResetExpenseTemplate = (templateId: string) => {
+    saveStateToDB({
+      ...data,
+      expenseTemplateOverrides: (data.expenseTemplateOverrides ?? []).filter(item => item.templateId !== templateId),
+    });
+  };
+
+  const handleSetExpenseTemplateHidden = (templateId: string, hidden: boolean) => {
+    if (templateId.startsWith("custom:")) {
+      saveStateToDB({
+        ...data,
+        customExpenseTemplates: (data.customExpenseTemplates ?? []).filter(template => template.id !== templateId),
+        expenseTemplateOverrides: (data.expenseTemplateOverrides ?? []).filter(item => item.templateId !== templateId),
+      });
+      return;
+    }
+    const current = data.expenseTemplateOverrides ?? [];
+    const existing = current.find(item => item.templateId === templateId) ?? { templateId };
+    const expenseTemplateOverrides = current.filter(item => item.templateId !== templateId);
+    expenseTemplateOverrides.push({ ...existing, hidden });
+    saveStateToDB({ ...data, expenseTemplateOverrides });
   };
 
   // Clear All
   const handleClearAll = () => {
     const updated: FinanceData = {
-      baselineMonthlyIncome: 2000,
+      baselineMonthlyIncome: 0,
       baselineBalance: 0,
-      monthlyBudgets: []
+      monthlyBudgets: [],
+      activeMonths: [getCurrentMonthStr()],
     };
     saveStateToDB(updated);
+    setSelectedMonthStr(getCurrentMonthStr());
   };
 
   // Add a new month chronologically (sequential after the latest month)
   const handleAddMonth = () => {
     if (!data) return;
-    const currentSequence = calculatedMonths.map(m => m.monthStr);
-    let maxMonthStr = currentSequence.length > 0 ? currentSequence[currentSequence.length - 1] : getCurrentMonthStr();
+    const existingActive = data.activeMonths?.length
+      ? [...data.activeMonths].sort()
+      : [...new Set([getCurrentMonthStr(), ...data.monthlyBudgets.map(budget => budget.monthStr)])].sort();
+    let maxMonthStr = existingActive[existingActive.length - 1] ?? getCurrentMonthStr();
 
     let [year, month] = maxMonthStr.split('-').map(Number);
     month += 1;
@@ -363,9 +609,8 @@ export default function App() {
     }
     const nextMonthStr = `${year}-${String(month).padStart(2, '0')}`;
 
-    const existingActive = data.activeMonths || currentSequence;
     if (existingActive.includes(nextMonthStr)) {
-      triggerAlert("Ошибка добавления", "Этот месяц уже добавлен!");
+      triggerAlert("Unable to add month", "This month has already been added.");
       return;
     }
 
@@ -388,20 +633,66 @@ export default function App() {
     setSelectedMonthStr(nextMonthStr);
   };
 
-  // Delete a month
-  const handleDeleteMonth = (monthStr: string) => {
+  const handleInsertMonthAfter = (afterMonthStr: string) => {
     if (!data) return;
-    const currentSequence = calculatedMonths.map(m => m.monthStr);
-    const existingActive = data.activeMonths || currentSequence;
+    const insertedMonthStr = addMonthsToMonthStr(afterMonthStr, 1);
+    const existingActive = data.activeMonths?.length
+      ? [...data.activeMonths].sort()
+      : [...new Set([getCurrentMonthStr(), ...data.monthlyBudgets.map(budget => budget.monthStr)])].sort();
+    const monthsToShift = [...new Set([
+      ...existingActive,
+      ...data.monthlyBudgets.map(budget => budget.monthStr),
+    ])].filter(monthStr => monthStr >= insertedMonthStr);
 
-    if (existingActive.length <= 1) {
-      triggerAlert("Deletion Impossible", "Cannot delete the only remaining month!");
+    const insertMonth = () => {
+      const shiftedActiveMonths = existingActive.map(monthStr =>
+        monthStr >= insertedMonthStr ? addMonthsToMonthStr(monthStr, 1) : monthStr
+      );
+      const activeMonths = [...new Set([...shiftedActiveMonths, insertedMonthStr])].sort();
+      const monthlyBudgets = data.monthlyBudgets.map(budget => budget.monthStr >= insertedMonthStr
+        ? { ...budget, monthStr: addMonthsToMonthStr(budget.monthStr, 1) }
+        : budget);
+
+      monthlyBudgets.push({
+        monthStr: insertedMonthStr,
+        income: data.baselineMonthlyIncome,
+        expenses: [],
+      });
+      monthlyBudgets.sort((a, b) => a.monthStr.localeCompare(b.monthStr));
+
+      const debts = syncDebtPayments(data.debts ?? [], monthlyBudgets);
+      saveStateToDB({ ...data, activeMonths, monthlyBudgets, debts });
+      setSelectedMonthStr(insertedMonthStr);
+    };
+
+    if (monthsToShift.length === 0) {
+      insertMonth();
       return;
     }
 
     triggerConfirm(
-      "Delete Month",
-      `Are you sure you want to delete month ${monthStr} and all of its associated transactions?`,
+      "Insert month",
+      `Create ${formatMonthLabel(insertedMonthStr)}? ${monthsToShift.length === 1 ? "The following month" : `${monthsToShift.length} following months`} will move forward by one month.`,
+      insertMonth,
+      "Insert",
+    );
+  };
+
+  // Delete a month
+  const handleDeleteMonth = (monthStr: string) => {
+    if (!data) return;
+    const existingActive = data.activeMonths?.length
+      ? [...data.activeMonths].sort()
+      : [...new Set([getCurrentMonthStr(), ...data.monthlyBudgets.map(budget => budget.monthStr)])].sort();
+
+    if (existingActive.length <= 1) {
+      triggerAlert("Unable to delete month", "At least one month must remain in the list.");
+      return;
+    }
+
+    triggerConfirm(
+      "Delete month",
+      `Delete ${monthStr} and all of its transactions?`,
       () => {
         const newActiveMonths = existingActive.filter(m => m !== monthStr);
         const budgets = data.monthlyBudgets.filter(b => b.monthStr !== monthStr);
@@ -425,12 +716,12 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen bg-[#06080d] text-slate-100 font-sans flex flex-col pb-20 md:pb-0 relative overflow-hidden">
+    <div className={`telegram-app-shell min-h-screen text-slate-100 font-sans flex flex-col pb-20 md:pb-0 relative overflow-hidden ${activeTab === "budget" ? "budget-screen" : ""}`}>
 
       {/* iOS Liquid Glass Background Glowing Orbs */}
-      <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] rounded-full bg-emerald-500/8 blur-[130px] pointer-events-none" />
-      <div className="absolute bottom-[10%] right-[-10%] w-[60%] h-[60%] rounded-full bg-emerald-600/8 blur-[150px] pointer-events-none" />
-      <div className="absolute top-[40%] left-[20%] w-[45%] h-[45%] rounded-full bg-green-500/5 blur-[140px] pointer-events-none" />
+      <div className="ambient-orb top-[-12%] left-[-14%] w-[52%] h-[48%] bg-blue-500/20" />
+      <div className="ambient-orb top-[12%] right-[-18%] w-[48%] h-[52%] bg-violet-500/15 [animation-delay:-5s]" />
+      <div className="ambient-orb bottom-[-12%] left-[22%] w-[58%] h-[50%] bg-emerald-500/14 [animation-delay:-9s]" />
 
       {/* GLOBAL NETWORK WARNING */}
       {errorMsg && (
@@ -440,58 +731,96 @@ export default function App() {
         </div>
       )}
 
+      {storagePersistent === false && !errorMsg && (
+        <div className="relative z-50 bg-amber-400/90 backdrop-blur-md text-amber-950 font-semibold px-4 py-2 text-center text-xs shadow-lg flex items-center justify-center gap-2">
+          <Database size={14} />
+          Development storage is temporary. Configure MySQL or PostgreSQL to keep data after a restart.
+        </div>
+      )}
+
       {/* TOP DESKTOP HEADER */}
-      <header className="relative z-40 bg-white/[0.01] backdrop-blur-xl border-b border-white/[0.06] px-4 py-3 md:px-6">
+      <header className="telegram-app-header liquid-header sticky top-0 z-40 px-4 py-3 md:px-6">
         <div className="max-w-7xl mx-auto flex items-center justify-between">
 
           {/* Logo */}
           <div className="flex items-center gap-2.5">
-            <img src="/logo.png" className="w-8 h-8 object-contain rounded-lg" alt="Logo" referrerPolicy="no-referrer" />
-            <span className="text-xs font-black tracking-widest text-white/95 uppercase font-sans">Finance Tracker</span>
+            <img src={`${import.meta.env.BASE_URL}logo.png`} className="app-logo-image w-9 h-9 object-contain rounded-xl ring-1 ring-white/15 shadow-[0_8px_24px_rgba(16,185,129,0.18)]" alt="Logo" referrerPolicy="no-referrer" />
+            <span
+              className="app-figma-logo hidden h-[38px] w-[38px] p-1"
+              style={{
+                WebkitMaskImage: `url(${import.meta.env.BASE_URL}figma-logo-mask.svg)`,
+                maskImage: `url(${import.meta.env.BASE_URL}figma-logo-mask.svg)`,
+                WebkitMaskRepeat: "no-repeat",
+                maskRepeat: "no-repeat",
+                WebkitMaskPosition: "center",
+                maskPosition: "center",
+                WebkitMaskSize: "30px 30px",
+                maskSize: "30px 30px",
+              }}
+              aria-hidden="true"
+            >
+              <img src={`${import.meta.env.BASE_URL}figma-logo-gradient.svg`} className="h-full w-full" alt="" />
+            </span>
+            <span className="app-brand-name text-xs font-black tracking-widest text-white/95 uppercase font-sans">Finance Tracker</span>
           </div>
 
           {/* Sync status & Manual refresh button */}
           <div className="flex items-center gap-3">
-            <div className="flex items-center gap-1.5 px-2.5 py-1 bg-white/[0.02] border border-white/[0.06] rounded-full text-[10px]">
+            <div className="app-sync-status liquid-glass flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[10px]">
               {syncStatus === 'synced' && (
                 <>
                   <span className="w-1.5 h-1.5 bg-emerald-400 rounded-full shadow-[0_0_8px_#34d399]" />
-                  <span className="text-white/60 font-medium">Synced</span>
+                  <span className="app-sync-label text-white/60 font-medium">
+                    {storagePersistent === false
+                      ? "Saved temporarily"
+                      : storageProvider === "telegram-cloud"
+                        ? "Synced to Telegram"
+                        : storageProvider === "browser"
+                          ? "Saved on device"
+                          : "Saved"}
+                  </span>
                 </>
               )}
               {syncStatus === 'syncing' && (
                 <>
                   <RefreshCw size={10} className="text-emerald-400 animate-spin" />
-                  <span className="text-emerald-400 font-medium">Syncing...</span>
+                  <span className="app-sync-label text-emerald-400 font-medium">Saving...</span>
                 </>
               )}
               {syncStatus === 'offline' && (
                 <>
                   <span className="w-1.5 h-1.5 bg-rose-500 rounded-full" />
-                  <span className="text-rose-400 font-medium">Offline</span>
+                  <span className="app-sync-label text-rose-400 font-medium">Offline</span>
+                </>
+              )}
+              {syncStatus === 'pending' && (
+                <>
+                  <span className="h-1.5 w-1.5 rounded-full bg-amber-400 shadow-[0_0_8px_#fbbf24]" />
+                  <span className="app-sync-label font-medium text-amber-300">Sync pending</span>
                 </>
               )}
             </div>
 
             <button
               onClick={() => fetchData(false)}
-              className="p-1.5 bg-white/[0.02] hover:bg-white/[0.06] border border-white/[0.08] rounded-xl text-white/60 hover:text-white transition duration-200 cursor-pointer"
-              title="Sync now"
+              className="liquid-glass flex items-center justify-center rounded-full p-2 text-white/60 transition duration-200 hover:text-white"
+              aria-label="Refresh data"
             >
-              <RefreshCw size={12} className={syncStatus === 'syncing' ? 'animate-spin' : ''} />
+              <span className="hidden md:block"><RefreshCw size={12} className={syncStatus === 'syncing' ? 'animate-spin' : ''} /></span>
+              <span className={`hidden figma-mobile-icon leading-none ${syncStatus === 'syncing' ? 'animate-spin' : ''}`}><FigmaIcon name="refresh-2" size={14} /></span>
             </button>
           </div>
         </div>
       </header>
 
       {/* CORE CONTENT LAYOUT */}
-      <div className="max-w-7xl w-full mx-auto flex-1 flex flex-col md:flex-row p-4 md:p-6 gap-6 relative z-10">
+      <div className="app-content max-w-7xl w-full mx-auto flex-1 flex flex-col md:flex-row p-4 md:p-6 gap-6 relative z-10">
 
         {/* DESKTOP SIDEBAR NAVIGATION */}
-        <aside className="hidden md:block w-52 shrink-0 space-y-1">
+        <aside className="liquid-sidebar liquid-glass hidden md:block w-52 shrink-0 space-y-1">
           <button
             onClick={() => setActiveTab("budget")}
-            className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-semibold tracking-wide transition duration-150 cursor-pointer ${
+            className={`w-full flex items-center gap-3 px-4 py-3 rounded-full text-xs font-semibold tracking-wide transition duration-150 cursor-pointer ${
               activeTab === "budget"
                 ? "bg-white/[0.06] border border-white/[0.1] text-white shadow-[0_4px_12px_rgba(255,255,255,0.02)]"
                 : "text-white/50 hover:text-white hover:bg-white/[0.03] border border-transparent"
@@ -503,7 +832,7 @@ export default function App() {
 
           <button
             onClick={() => setActiveTab("projections")}
-            className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-semibold tracking-wide transition duration-150 cursor-pointer ${
+            className={`w-full flex items-center gap-3 px-4 py-3 rounded-full text-xs font-semibold tracking-wide transition duration-150 cursor-pointer ${
               activeTab === "projections"
                 ? "bg-white/[0.06] border border-white/[0.1] text-white shadow-[0_4px_12px_rgba(255,255,255,0.02)]"
                 : "text-white/50 hover:text-white hover:bg-white/[0.03] border border-transparent"
@@ -514,9 +843,21 @@ export default function App() {
           </button>
 
           <button
+            onClick={() => setActiveTab("debts")}
+            className={`w-full flex items-center gap-3 px-4 py-3 rounded-full text-xs font-semibold tracking-wide transition duration-150 cursor-pointer ${
+              activeTab === "debts"
+                ? "bg-white/[0.06] border border-white/[0.1] text-white shadow-[0_4px_12px_rgba(255,255,255,0.02)]"
+                : "text-white/50 hover:text-white hover:bg-white/[0.03] border border-transparent"
+            }`}
+          >
+            <HandCoins size={16} />
+            Debts
+          </button>
+
+          <button
             onClick={() => setActiveTab("settings")}
-            className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-semibold tracking-wide transition duration-150 cursor-pointer ${
-              activeTab === "settings"
+            className={`w-full flex items-center gap-3 px-4 py-3 rounded-full text-xs font-semibold tracking-wide transition duration-150 cursor-pointer ${
+              activeTab === "settings" || activeTab === "template-settings"
                 ? "bg-white/[0.06] border border-white/[0.1] text-white shadow-[0_4px_12px_rgba(255,255,255,0.02)]"
                 : "text-white/50 hover:text-white hover:bg-white/[0.03] border border-transparent"
             }`}
@@ -546,8 +887,23 @@ export default function App() {
                   onEditExpense={handleEditExpense}
                   onDeleteExpense={handleDeleteExpense}
                   onToggleExpenseCompleted={handleToggleExpenseCompleted}
+                  expenseTemplates={expenseTemplates}
                   onAddMonth={handleAddMonth}
                   onDeleteMonth={handleDeleteMonth}
+                  triggerConfirm={triggerConfirm}
+                  triggerAlert={triggerAlert}
+                />
+              )}
+
+              {activeTab === "template-settings" && (
+                <TemplateSettingsView
+                  templates={expenseTemplates}
+                  overrides={data.expenseTemplateOverrides ?? []}
+                  onBack={() => setActiveTab("settings")}
+                  onCreate={handleCreateExpenseTemplate}
+                  onSave={handleSaveExpenseTemplate}
+                  onReset={handleResetExpenseTemplate}
+                  onDelete={templateId => handleSetExpenseTemplateHidden(templateId, true)}
                   triggerConfirm={triggerConfirm}
                   triggerAlert={triggerAlert}
                 />
@@ -556,12 +912,22 @@ export default function App() {
               {activeTab === "projections" && (
                 <FutureView
                   calculatedMonths={calculatedMonths}
-                  selectedMonthStr={selectedMonthStr}
                   onSelectMonth={setSelectedMonthStr}
+                  onUpdateActualBalance={handleUpdateActualBalance}
                   onNavigateToEditor={() => setActiveTab("budget")}
                   onAddMonth={handleAddMonth}
+                  onInsertMonthAfter={handleInsertMonthAfter}
                   onDeleteMonth={handleDeleteMonth}
-                  onUpdateMonthIncome={handleUpdateMonthIncome}
+                  triggerAlert={triggerAlert}
+                />
+              )}
+
+              {activeTab === "debts" && (
+                <DebtView
+                  debts={data.debts ?? []}
+                  onAddDebt={handleAddDebt}
+                  onEditDebt={handleEditDebt}
+                  onDeleteDebt={handleDeleteDebt}
                   triggerConfirm={triggerConfirm}
                   triggerAlert={triggerAlert}
                 />
@@ -571,10 +937,11 @@ export default function App() {
                 <SettingsView
                   data={data}
                   onUpdateBaseline={handleUpdateBaseline}
-                  onResetToDemo={handleResetToDemo}
                   onClearAll={handleClearAll}
                   triggerConfirm={triggerConfirm}
                   triggerAlert={triggerAlert}
+                  onOpenTemplates={() => setActiveTab("template-settings")}
+                  templateCount={expenseTemplates.length}
                 />
               )}
             </motion.div>
@@ -583,37 +950,68 @@ export default function App() {
       </div>
 
       {/* MOBILE BOTTOM NAVIGATION BAR */}
-      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-[#070b13]/95 backdrop-blur-md border-t border-slate-800/80 px-2 py-1 shadow-2xl flex items-center justify-around h-14">
+      <nav className="telegram-bottom-nav liquid-tab-bar md:hidden fixed z-40 flex items-center justify-around">
         <button
           onClick={() => setActiveTab("budget")}
+          aria-current={activeTab === "budget" ? "page" : undefined}
           className={`flex flex-col items-center justify-center flex-1 h-full rounded-xl transition cursor-pointer ${
             activeTab === "budget" ? "text-emerald-400" : "text-slate-400 hover:text-slate-200"
           }`}
         >
-          <Wallet size={18} />
-          <span className="text-[9px] font-medium mt-1">Budget</span>
+          <FigmaIcon name={activeTab === "budget" ? "wallet-money" : "wallet"} size={24} />
+          <span className="app-nav-label text-[10px] font-semibold mt-1">Budget</span>
         </button>
 
         <button
           onClick={() => setActiveTab("projections")}
+          aria-current={activeTab === "projections" ? "page" : undefined}
           className={`flex flex-col items-center justify-center flex-1 h-full rounded-xl transition cursor-pointer ${
             activeTab === "projections" ? "text-emerald-400" : "text-slate-400 hover:text-slate-200"
           }`}
         >
-          <Calendar size={18} />
-          <span className="text-[9px] font-medium mt-1">Stats</span>
+          <FigmaIcon name={activeTab === "projections" ? "calendar-edit-bold" : "calendar-edit"} size={24} />
+          <span className="app-nav-label text-[10px] font-semibold mt-1">Plans</span>
+        </button>
+
+        <button
+          onClick={() => setActiveTab("debts")}
+          aria-current={activeTab === "debts" ? "page" : undefined}
+          className={`flex flex-col items-center justify-center flex-1 h-full rounded-xl transition cursor-pointer ${
+            activeTab === "debts" ? "text-emerald-400" : "text-slate-400 hover:text-slate-200"
+          }`}
+        >
+          <FigmaIcon name={activeTab === "debts" ? "money-send-bold" : "money-send"} size={24} />
+          <span className="app-nav-label text-[10px] font-semibold mt-1">Debts</span>
         </button>
 
         <button
           onClick={() => setActiveTab("settings")}
+          aria-current={activeTab === "settings" || activeTab === "template-settings" ? "page" : undefined}
           className={`flex flex-col items-center justify-center flex-1 h-full rounded-xl transition cursor-pointer ${
-            activeTab === "settings" ? "text-emerald-400" : "text-slate-400 hover:text-slate-200"
+            activeTab === "settings" || activeTab === "template-settings" ? "text-emerald-400" : "text-slate-400 hover:text-slate-200"
           }`}
         >
-          <Settings size={18} />
-          <span className="text-[9px] font-medium mt-1">Settings</span>
+          <FigmaIcon name={activeTab === "settings" || activeTab === "template-settings" ? "more-bold" : "more"} size={24} />
+          <span className="app-nav-label text-[10px] font-semibold mt-1">Settings</span>
         </button>
       </nav>
+
+      {debtCelebration && (
+        <div className="debt-celebration pointer-events-none fixed inset-x-0 top-[22%] z-[70] flex justify-center px-4" role="status" aria-live="polite">
+          <div className="debt-confetti" aria-hidden="true">
+            {Array.from({ length: 10 }, (_, index) => <span key={index} />)}
+          </div>
+          <div className="liquid-glass-strong debt-celebration-card flex items-center gap-3 rounded-full border border-emerald-300/25 px-5 py-3.5 shadow-[0_20px_60px_rgba(16,185,129,0.28)]">
+            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-emerald-400 text-slate-950">
+              <PartyPopper size={19} />
+            </div>
+            <div>
+              <p className="text-sm font-black text-white">Debt paid off!</p>
+              <p className="max-w-52 truncate text-[10px] text-emerald-200/65">{debtCelebration}</p>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Glassmorphic Global Confirmation/Alert Modal */}
       <ConfirmModal

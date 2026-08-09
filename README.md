@@ -1,30 +1,76 @@
 # Finance Tracker & Forecaster
 
-Локальное приложение для ведения месячного бюджета и прогноза накоплений.
+A web application and Telegram Mini App for monthly budgeting and savings forecasts.
 
-## Возможности
+## Features
 
-- доход, расходы и статус оплаты по каждому месяцу;
-- добавление, редактирование и удаление операций;
-- последовательный прогноз баланса на будущие месяцы;
-- настройка базового дохода и начального баланса;
-- сохранение данных в локальном `db.json` через Express API;
-- адаптивный интерфейс и PWA-ресурсы.
+- monthly income, expenses, and payment status;
+- balance and savings forecasts;
+- transaction conversion to USD;
+- separate data for every Telegram user;
+- an isolated, secure session when opened in a regular browser;
+- persistent MySQL or PostgreSQL storage.
 
-## Запуск
+## Local Development
 
 ```bash
 npm install
 npm run dev
 ```
 
-Приложение будет доступно по адресу <http://localhost:3000>.
+Without a database configuration, the development server uses temporary in-memory storage and clearly marks it in the interface. This data is cleared after a restart. Configure MySQL or PostgreSQL in `.env.local` if you need persistent development data.
 
-## Production
+## Environment Variables
+
+Copy `.env.example` and configure:
+
+- `DATABASE_URL` — a MySQL or PostgreSQL connection string;
+- `MYSQL_HOST`, `MYSQL_PORT`, `MYSQL_DATABASE`, `MYSQL_USER`, `MYSQL_PASSWORD` — an alternative way to configure Hostinger MySQL;
+- `BOT_TOKEN` — Telegram bot token from `@BotFather`;
+- `SESSION_SECRET` — a long random value used to sign browser sessions;
+- `PORT` — optional HTTP port;
+- `DATABASE_SSL` — set to `true` if your provider requires explicit TLS configuration.
+
+Production startup is blocked unless a persistent database is configured. The `finance_user_data` table is created automatically, and every successful edit is written to it before the interface displays **Saved**.
+
+## Hosting
+
+Standard Node.js configuration:
+
+```text
+Build command: npm ci && npm run build
+Start command: npm start
+Health check: /api/health
+```
+
+A `Dockerfile` is also included. The server must be available over HTTPS and connected to persistent MySQL or PostgreSQL storage. User data is never stored in local files.
+
+### GitHub Pages
+
+GitHub Pages is supported as a static edition. The included workflow builds Vite with the `/FinanceApp/` base path and deploys the generated `dist` artifact. Inside Telegram, the app uses Telegram CloudStorage and synchronizes data across Telegram clients logged into the same account. Existing browser-local data is migrated automatically on the first cloud-enabled launch. Outside Telegram, GitHub Pages falls back to storage on the current device because no verified Telegram identity is available.
+
+In **Settings → Pages → Build and deployment**, select **GitHub Actions** as the source. Pushes to `main` then build and publish automatically.
+
+### Hostinger
+
+1. Create a MySQL database in hPanel.
+2. Add its credentials using either a `mysql://` `DATABASE_URL` or the five `MYSQL_*` variables shown in `.env.example`. On Hostinger managed hosting, the database host is normally `localhost` and the port is `3306`.
+3. Deploy the GitHub repository as a Node.js Web App with `npm ci && npm run build` as the build command and `npm start` as the start command.
+4. Open `/api/health` and confirm that it reports `"persistent": true` before entering real data.
+
+## Telegram Mini App Setup
+
+1. Create or open your bot in `@BotFather`.
+2. Open **Configure Mini App** in the bot settings and enter the public HTTPS application URL.
+3. Add `BOT_TOKEN`, persistent database settings, and `SESSION_SECRET` to your hosting environment.
+4. Open the Mini App from the bot menu or profile.
+
+The client sends `Telegram.WebApp.initData` with every API request. The server validates its HMAC signature and age before identifying the user. `initDataUnsafe` is not used for authorization.
+
+## Verification
 
 ```bash
+npm run lint
 npm run build
 npm start
 ```
-
-Порт можно изменить переменной окружения `PORT`.

@@ -1,153 +1,81 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { FinanceData } from "../types";
-import {
-  Sliders,
-  Trash2,
-  AlertOctagon,
-  CheckCircle,
-  Database
-} from "lucide-react";
+import { FigmaIcon } from "./FigmaIcon";
 
 interface SettingsViewProps {
   data: FinanceData;
   onUpdateBaseline: (baselineMonthlyIncome: number, baselineBalance: number) => void;
-  onResetToDemo: () => void;
   onClearAll: () => void;
   triggerConfirm: (title: string, message: string, onConfirm: () => void) => void;
   triggerAlert: (title: string, message: string) => void;
+  onOpenTemplates: () => void;
+  templateCount: number;
 }
 
 export const SettingsView: React.FC<SettingsViewProps> = ({
   data,
   onUpdateBaseline,
-  onResetToDemo,
   onClearAll,
   triggerConfirm,
-  triggerAlert
+  triggerAlert,
+  onOpenTemplates,
+  templateCount,
 }) => {
-  const [baselineIncome, setBaselineIncome] = useState<string>(data.baselineMonthlyIncome.toString());
-  const [baselineBalance, setBaselineBalance] = useState<string>(data.baselineBalance.toString());
+  const [baselineIncome, setBaselineIncome] = useState(data.baselineMonthlyIncome.toString());
+  const [baselineBalance, setBaselineBalance] = useState(data.baselineBalance.toString());
   const [isSaved, setIsSaved] = useState(false);
 
-  const handleSave = (e: React.FormEvent) => {
-    e.preventDefault();
-    const parsedIncome = parseFloat(baselineIncome);
-    const parsedBalance = parseFloat(baselineBalance);
+  useEffect(() => {
+    setBaselineIncome(data.baselineMonthlyIncome.toString());
+    setBaselineBalance(data.baselineBalance.toString());
+  }, [data.baselineMonthlyIncome, data.baselineBalance]);
 
-    if (isNaN(parsedIncome) || isNaN(parsedBalance)) {
-      triggerAlert("Validation Error", "Please enter valid numeric values.");
+  const handleSave = (event: React.FormEvent) => {
+    event.preventDefault();
+    const income = Number.parseFloat(baselineIncome);
+    const balance = Number.parseFloat(baselineBalance);
+    if (!Number.isFinite(income) || income < 0 || !Number.isFinite(balance)) {
+      triggerAlert("Check your entries", "Income must be zero or greater, and the balance must be a valid number.");
       return;
     }
-
-    onUpdateBaseline(parsedIncome, parsedBalance);
+    onUpdateBaseline(income, balance);
     setIsSaved(true);
-    setTimeout(() => setIsSaved(false), 3000);
+    window.setTimeout(() => setIsSaved(false), 1800);
   };
 
   return (
-    <div className="space-y-6 max-w-2xl">
-      {/* TITLE */}
-      <div>
-        <h2 className="text-xl font-black text-white tracking-tight uppercase">Settings</h2>
-      </div>
+    <div className="figma-settings mx-auto max-w-3xl space-y-3.5">
+      <button type="button" onClick={onOpenTemplates} className="figma-settings-link flex h-[38px] min-h-[38px] w-full items-center rounded-full px-3.5 text-left">
+        <span className="min-w-0 flex-1 text-[11px] font-normal text-white/60">Templates</span>
+        <span className="flex shrink-0 items-center gap-2 text-[9px] font-semibold text-white/35">
+          {templateCount} active
+          <FigmaIcon name="arrow-right-muted" size={16} className="opacity-50" />
+        </span>
+      </button>
 
-      {/* CORE PARAMS CARD */}
-      <div className="bg-white/[0.015] backdrop-blur-xl border border-white/[0.06] rounded-3xl p-5 shadow-[0_8px_32px_0_rgba(0,0,0,0.2)]">
-        <h3 className="text-xs font-bold text-white/95 uppercase tracking-wider flex items-center gap-2 pb-3.5 border-b border-white/[0.06] mb-4">
-          <Sliders size={14} className="text-emerald-400" />
-          Baseline Parameters
-        </h3>
-
-        <form onSubmit={handleSave} className="space-y-4">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div className="space-y-1.5">
-              <label className="text-[10px] font-bold text-white/40 uppercase tracking-wider">Baseline Monthly Income ($) *</label>
-              <input
-                type="number"
-                required
-                value={baselineIncome}
-                onChange={(e) => setBaselineIncome(e.target.value)}
-                className="w-full bg-black/25 border border-white/[0.08] focus:border-emerald-500/50 rounded-xl px-3 py-2.5 text-xs text-white font-mono outline-none transition"
-              />
-            </div>
-
-            <div className="space-y-1.5">
-              <label className="text-[10px] font-bold text-white/40 uppercase tracking-wider">Starting Accumulated Savings ($) *</label>
-              <input
-                type="number"
-                required
-                value={baselineBalance}
-                onChange={(e) => setBaselineBalance(e.target.value)}
-                className="w-full bg-black/25 border border-white/[0.08] focus:border-emerald-500/50 rounded-xl px-3 py-2.5 text-xs text-white font-mono outline-none transition"
-              />
-            </div>
-          </div>
-
-          <div className="flex items-center justify-between pt-2">
-            <div className="flex items-center gap-1.5 text-[10px] text-white/30 font-medium font-mono">
-              <Database size={11} className="text-emerald-400" />
-              <span>Database synced to cloud</span>
-            </div>
-
-            <button
-              type="submit"
-              className="px-4 py-2 bg-white/[0.06] hover:bg-white/[0.12] border border-white/[0.1] text-white font-semibold text-xs rounded-xl transition cursor-pointer flex items-center gap-1.5"
-            >
-              {isSaved ? (
-                <>
-                  <CheckCircle size={13} className="text-emerald-400" /> Saved
-                </>
-              ) : (
-                "Save Parameters"
-              )}
-            </button>
-          </div>
+      <section className="figma-surface figma-settings-baseline rounded-[30px] p-3.5">
+        <h3 className="border-b border-white/[0.09] pb-3.5 text-base font-semibold leading-5 text-white">Baseline</h3>
+        <form onSubmit={handleSave} className="mt-3.5 space-y-3.5">
+          <label className="block space-y-2.5">
+            <span className="block text-[11px] leading-[15px] text-white/40">Monthly Income</span>
+            <input type="number" required min="0" step="0.01" value={baselineIncome} onChange={event => setBaselineIncome(event.target.value)} className="figma-input h-11 w-full rounded-full px-3.5 text-[13px] font-semibold text-white outline-none" />
+          </label>
+          <label className="block space-y-2.5">
+            <span className="block text-[11px] leading-[15px] text-white/40">Starting Balance</span>
+            <input type="number" required step="0.01" value={baselineBalance} onChange={event => setBaselineBalance(event.target.value)} className="figma-input h-11 w-full rounded-full px-3.5 text-[13px] font-semibold text-white outline-none" />
+          </label>
+          <button type="submit" className="figma-soft-button h-11 w-full rounded-full text-[13px] font-semibold text-white">{isSaved ? "Saved" : "Save"}</button>
         </form>
-      </div>
+      </section>
 
-      {/* DANGEROUS ZONE - Minimal design */}
-      <div className="bg-white/[0.015] backdrop-blur-xl border border-white/[0.06] rounded-3xl p-5 shadow-[0_8px_32px_0_rgba(0,0,0,0.2)] space-y-4">
-        <h3 className="text-xs font-bold text-rose-400/90 uppercase tracking-wider flex items-center gap-2 pb-3.5 border-b border-white/[0.06]">
-          <AlertOctagon size={14} />
-          Reset & Clear Data
-        </h3>
-
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
-          <div className="space-y-0.5">
-            <h4 className="font-semibold text-white/85">Restore Demo Template</h4>
-          </div>
-          <button
-            onClick={() => {
-              triggerConfirm(
-                "Restore Demo Template",
-                "Are you sure you want to restore the demo template data? All of your current records will be overwritten.",
-                onResetToDemo
-              );
-            }}
-            className="px-3 py-1.5 border border-white/[0.08] hover:border-white/[0.2] hover:bg-white/[0.04] rounded-xl text-white/70 hover:text-white font-semibold transition cursor-pointer text-center shrink-0"
-          >
-            Restore Demo
-          </button>
-        </div>
-
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs pt-3 border-t border-white/[0.06]">
-          <div className="space-y-0.5">
-            <h4 className="font-semibold text-white/85">Clear Entire Database</h4>
-          </div>
-          <button
-            onClick={() => {
-              triggerConfirm(
-                "Reset Database",
-                "WARNING! Are you absolutely sure you want to completely clear the database? This action is irreversible.",
-                onClearAll
-              );
-            }}
-            className="px-3 py-1.5 bg-rose-500/10 hover:bg-rose-500 border border-rose-500/20 hover:border-transparent text-rose-400 hover:text-slate-950 font-bold rounded-xl transition cursor-pointer text-center shrink-0 flex items-center gap-1"
-          >
-            <Trash2 size={12} /> Clear Database
-          </button>
-        </div>
-      </div>
+      <section className="figma-surface rounded-[30px] p-3.5">
+        <h3 className="text-base font-semibold leading-5 text-white">Reset Data</h3>
+        <button
+          type="button"
+          onClick={() => triggerConfirm("Clear data", "Delete all income, expenses, and baseline values? This action cannot be undone.", onClearAll)}
+          className="figma-danger-button mt-3.5 h-11 w-full rounded-full text-[13px] font-semibold text-[#ff5050]"
+        >Clear</button>
+      </section>
     </div>
   );
 };

@@ -1,9 +1,426 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
 @import "tailwindcss";
 
 @theme {
-  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
-  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+  --font-sans: "Manrope Variable", Manrope, ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "Manrope Variable", Manrope, ui-sans-serif, system-ui, sans-serif;
+}
+
+:root {
+  color-scheme: dark;
+  background: #0a0a0e;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+}
+
+html {
+  min-width: 320px;
+  background: #0a0a0e;
+}
+
+body {
+  min-width: 320px;
+  min-height: 100vh;
+  margin: 0;
+  background: #0a0a0e;
+  -webkit-font-smoothing: antialiased;
+  font-family: "Manrope Variable", Manrope, ui-sans-serif, system-ui, sans-serif;
+}
+
+button {
+  border-radius: 9999px;
+}
+
+input[type="number"] {
+  appearance: textfield;
+  -moz-appearance: textfield;
+}
+
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+  margin: 0;
+  appearance: none;
+  -webkit-appearance: none;
+}
+
+.figma-surface,
+.figma-month-card,
+.figma-debt-card {
+  position: relative;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  background: rgba(255, 255, 255, 0.01);
+  box-shadow: 0 16px 24px rgba(0, 0, 0, 0.16);
+}
+
+.figma-month-card {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.figma-month-card.is-expanded {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.figma-soft-button,
+.figma-settings-link,
+.figma-danger-button,
+.figma-input,
+.figma-icon-button {
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  background: rgba(255, 255, 255, 0.05);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.035);
+}
+
+.figma-settings-link {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.figma-input {
+  background: rgba(255, 255, 255, 0.05) !important;
+}
+
+.figma-icon-button {
+  display: inline-flex;
+  width: 2.375rem;
+  height: 2.375rem;
+  min-width: 2.375rem;
+  min-height: 2.375rem;
+  flex: 0 0 2.375rem;
+  align-items: center;
+  justify-content: center;
+  border-radius: 9999px;
+}
+
+.figma-icon-button.is-primary {
+  border-color: rgba(255, 255, 255, 0.22);
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.figma-soft-button.is-primary {
+  border-color: rgba(255, 255, 255, 0.22);
+  background: rgba(255, 255, 255, 0.16);
+}
+
+.budget-kpi-value {
+  height: 2.65rem;
+  min-height: 2.65rem;
+  display: flex;
+  align-items: center;
+}
+
+.budget-kpi-value > * {
+  width: 100%;
+}
+
+.figma-budget .budget-templates.is-collapsed {
+  padding: 0;
+  border-color: transparent;
+  background: transparent;
+}
+
+.figma-budget .budget-templates.is-collapsed .budget-templates-toggle {
+  min-height: 2.375rem !important;
+  padding: 0 0.875rem;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.figma-settings .figma-settings-link {
+  height: 2.375rem;
+  min-height: 2.375rem;
+}
+
+.transaction-modal,
+.debt-modal,
+.confirm-modal {
+  border-radius: 1.875rem;
+}
+
+.transaction-status-checkbox {
+  position: relative;
+  width: 2.375rem;
+  height: 2.375rem;
+  min-width: 2.375rem;
+  min-height: 2.375rem;
+  flex: 0 0 2.375rem;
+  appearance: none !important;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 9999px !important;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.transaction-status-checkbox::after {
+  content: "";
+  position: absolute;
+  left: 0.84rem;
+  top: 0.58rem;
+  width: 0.48rem;
+  height: 0.85rem;
+  border-right: 2px solid #fff;
+  border-bottom: 2px solid #fff;
+  opacity: 0;
+  transform: rotate(45deg) scale(0.7);
+  transition: opacity 150ms ease, transform 150ms ease;
+}
+
+.transaction-status-checkbox:checked {
+  border-color: rgba(41, 255, 94, 0.35);
+  background: rgba(41, 255, 94, 0.16);
+}
+
+.transaction-status-checkbox:checked::after {
+  opacity: 1;
+  transform: rotate(45deg) scale(1);
+}
+
+.figma-danger-button {
+  background: radial-gradient(circle at 50% 140%, rgba(255, 80, 80, 0.2), transparent 58%), rgba(255, 255, 255, 0.05);
+}
+
+#root {
+  min-height: 100vh;
+}
+
+.telegram-app-shell {
+  min-height: var(--tg-viewport-stable-height, 100vh);
+  padding-left: max(env(safe-area-inset-left), var(--tg-safe-area-inset-left, 0px));
+  padding-right: max(env(safe-area-inset-right), var(--tg-safe-area-inset-right, 0px));
+  isolation: isolate;
+  scroll-padding-bottom: 6rem;
+  background: #0a0a0e;
+}
+
+.telegram-app-shell::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  opacity: 0.16;
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.018) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.018) 1px, transparent 1px);
+  background-size: 48px 48px;
+  mask-image: linear-gradient(to bottom, black, transparent 82%);
+}
+
+.ambient-orb {
+  position: absolute;
+  border-radius: 999px;
+  pointer-events: none;
+  filter: blur(90px);
+  opacity: 0.16;
+  animation: ambient-drift 16s ease-in-out infinite alternate;
+}
+
+.liquid-glass,
+.liquid-glass-strong {
+  position: relative;
+  border-radius: 2rem;
+  background: rgba(255, 255, 255, 0.035);
+  border: 1px solid rgba(255, 255, 255, 0.13);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.16),
+    inset 0 -1px 0 rgba(255, 255, 255, 0.025),
+    0 18px 48px rgba(0, 0, 0, 0.28);
+  -webkit-backdrop-filter: blur(26px) saturate(155%);
+  backdrop-filter: blur(26px) saturate(155%);
+}
+
+.liquid-glass-strong {
+  border-radius: 2.25rem;
+  background: #151519;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.19),
+    0 28px 70px rgba(0, 0, 0, 0.42);
+}
+
+.liquid-glass::after,
+.liquid-glass-strong::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  background: linear-gradient(120deg, rgba(255, 255, 255, 0.1), transparent 25%, transparent 72%, rgba(94, 234, 212, 0.035));
+  mask-image: linear-gradient(#000, transparent 45%);
+}
+
+.liquid-header {
+  background: rgba(10, 10, 14, 0.82);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.09);
+  box-shadow: 0 10px 32px rgba(0, 0, 0, 0.18), inset 0 -1px 0 rgba(255, 255, 255, 0.025);
+  -webkit-backdrop-filter: blur(30px) saturate(170%);
+  backdrop-filter: blur(30px) saturate(170%);
+}
+
+.liquid-sidebar {
+  padding: 0.45rem;
+  border-radius: 1.8rem;
+  height: fit-content;
+  position: sticky;
+  top: 5.8rem;
+}
+
+.liquid-input {
+  border-radius: 1.15rem !important;
+  background: rgba(0, 0, 0, 0.24) !important;
+  border-color: rgba(255, 255, 255, 0.11) !important;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.28), 0 1px 0 rgba(255, 255, 255, 0.035);
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
+}
+
+.telegram-app-shell button {
+  transform: translateZ(0);
+}
+
+.telegram-app-shell button:not(.rounded-full) {
+  border-radius: 9999px;
+}
+
+.telegram-app-shell button:hover {
+  filter: brightness(1.08);
+}
+
+.telegram-app-shell button:active {
+  transform: scale(0.97);
+}
+
+.telegram-app-shell input,
+.telegram-app-shell select {
+  -webkit-appearance: none;
+  border-radius: 1.05rem;
+}
+
+@keyframes ambient-drift {
+  from { transform: translate3d(-2%, -2%, 0) scale(0.98); }
+  to { transform: translate3d(3%, 3%, 0) scale(1.06); }
+}
+
+.telegram-app-header {
+  padding-top: max(0.75rem, env(safe-area-inset-top), var(--tg-content-safe-area-inset-top, 0px));
+}
+
+.telegram-mini-app .telegram-app-header {
+  padding-top: max(
+    1rem,
+    env(safe-area-inset-top),
+    var(--tg-safe-area-inset-top, 0px),
+    var(--tg-content-safe-area-inset-top, 0px)
+  );
+}
+
+.telegram-mini-app .app-modal-overlay {
+  padding-top: max(
+    1rem,
+    env(safe-area-inset-top),
+    var(--tg-safe-area-inset-top, 0px),
+    var(--tg-content-safe-area-inset-top, 0px)
+  );
+  padding-bottom: max(
+    1rem,
+    env(safe-area-inset-bottom),
+    var(--tg-safe-area-inset-bottom, 0px),
+    var(--tg-content-safe-area-inset-bottom, 0px)
+  );
+}
+
+.telegram-bottom-nav {
+  height: calc(3.5rem + max(env(safe-area-inset-bottom), var(--tg-content-safe-area-inset-bottom, 0px)));
+  padding-bottom: max(env(safe-area-inset-bottom), var(--tg-content-safe-area-inset-bottom, 0px));
+}
+
+.liquid-tab-bar {
+  left: 0.75rem !important;
+  right: 0.75rem !important;
+  bottom: max(0.55rem, env(safe-area-inset-bottom), var(--tg-content-safe-area-inset-bottom, 0px)) !important;
+  width: auto;
+  height: 4rem;
+  padding: 0.35rem;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 2rem;
+  background: rgba(10, 14, 23, 0.72);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.14), 0 18px 45px rgba(0, 0, 0, 0.48);
+  -webkit-backdrop-filter: blur(28px) saturate(170%);
+  backdrop-filter: blur(28px) saturate(170%);
+}
+
+.liquid-tab-bar button {
+  border: 1px solid transparent;
+}
+
+.liquid-tab-bar button[aria-current="page"] {
+  color: #f7fffc;
+  border-radius: 9999px !important;
+  border-color: rgba(110, 231, 183, 0.2);
+  background: linear-gradient(145deg, rgba(52, 211, 153, 0.22), rgba(16, 185, 129, 0.08));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.13), 0 5px 18px rgba(16, 185, 129, 0.11);
+}
+
+.transaction-tabs {
+  gap: 0.2rem;
+  border-radius: 1.35rem;
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.42), 0 1px 0 rgba(255, 255, 255, 0.035);
+}
+
+.transaction-tab {
+  border-radius: 9999px !important;
+  min-height: 2.75rem;
+  white-space: nowrap;
+}
+
+.font-mono {
+  font-variant-numeric: tabular-nums;
+}
+
+.transaction-row-action,
+.plan-icon-button {
+  display: inline-flex;
+  width: 2.25rem;
+  height: 2.25rem;
+  flex: 0 0 2.25rem;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+}
+
+.transaction-row-action > svg,
+.plan-icon-button > svg {
+  width: 0.95rem;
+  height: 0.95rem;
+}
+
+.transaction-check-button {
+  display: inline-flex;
+  width: 2.5rem;
+  height: 2.5rem;
+  flex: 0 0 2.5rem;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+}
+
+.transaction-check-button > div {
+  width: 1.45rem;
+  height: 1.45rem;
+  border-radius: 9999px;
+}
+
+button,
+input,
+select {
+  -webkit-tap-highlight-color: transparent;
+}
+
+button:focus-visible,
+input:focus-visible,
+select:focus-visible {
+  outline: 2px solid rgba(52, 211, 153, 0.75);
+  outline-offset: 2px;
+}
+
+::selection {
+  color: #ecfdf5;
+  background: rgba(16, 185, 129, 0.35);
 }
 
 /* Custom scrollbar styling */
@@ -12,12 +429,957 @@
   height: 6px;
 }
 ::-webkit-scrollbar-track {
-  background: rgba(0, 0, 0, 0.05);
+  background: rgba(255, 255, 255, 0.02);
 }
 ::-webkit-scrollbar-thumb {
-  background: rgba(0, 0, 0, 0.2);
+  background: rgba(148, 163, 184, 0.2);
   border-radius: 4px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(0, 0, 0, 0.3);
+  background: rgba(148, 163, 184, 0.35);
+}
+
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes scale-up {
+  from { opacity: 0; transform: translateY(8px) scale(0.98); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.animate-fadeIn {
+  animation: fade-in 160ms ease-out;
+}
+
+.animate-scaleUp {
+  animation: scale-up 180ms ease-out;
+}
+
+.debt-celebration {
+  animation: celebration-fade 2.6s ease both;
+}
+
+.debt-celebration-card {
+  animation: celebration-pop 520ms cubic-bezier(0.2, 0.9, 0.25, 1.25) both;
+}
+
+.debt-confetti {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 1px;
+  height: 1px;
+}
+
+.debt-confetti span {
+  --confetti-x: 0px;
+  --confetti-y: -70px;
+  position: absolute;
+  width: 7px;
+  height: 7px;
+  border-radius: 9999px;
+  background: #34d399;
+  animation: confetti-burst 900ms cubic-bezier(0.2, 0.75, 0.3, 1) both;
+}
+
+.debt-confetti span:nth-child(2n) { background: #fbbf24; }
+.debt-confetti span:nth-child(3n) { background: #60a5fa; }
+.debt-confetti span:nth-child(1) { --confetti-x: -116px; --confetti-y: -72px; }
+.debt-confetti span:nth-child(2) { --confetti-x: -92px; --confetti-y: 42px; }
+.debt-confetti span:nth-child(3) { --confetti-x: -58px; --confetti-y: -98px; }
+.debt-confetti span:nth-child(4) { --confetti-x: -24px; --confetti-y: 68px; }
+.debt-confetti span:nth-child(5) { --confetti-x: 12px; --confetti-y: -108px; }
+.debt-confetti span:nth-child(6) { --confetti-x: 42px; --confetti-y: 70px; }
+.debt-confetti span:nth-child(7) { --confetti-x: 70px; --confetti-y: -94px; }
+.debt-confetti span:nth-child(8) { --confetti-x: 98px; --confetti-y: 48px; }
+.debt-confetti span:nth-child(9) { --confetti-x: 122px; --confetti-y: -54px; }
+.debt-confetti span:nth-child(10) { --confetti-x: 18px; --confetti-y: 88px; }
+
+@keyframes celebration-pop {
+  from { opacity: 0; transform: translateY(18px) scale(0.78); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@keyframes celebration-fade {
+  0%, 82% { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+@keyframes confetti-burst {
+  from { opacity: 0; transform: translate(0, 0) scale(0.3); }
+  15% { opacity: 1; }
+  to { opacity: 0; transform: translate(var(--confetti-x), var(--confetti-y)) scale(1); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+@media (min-width: 768px) {
+  .telegram-app-shell {
+    background: #0a0a0e;
+  }
+
+  .telegram-app-shell::before,
+  .telegram-app-shell > .ambient-orb {
+    display: none;
+  }
+
+  .telegram-app-header {
+    position: sticky;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    background: rgba(10, 10, 14, 0.88);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.16);
+    -webkit-backdrop-filter: blur(24px) saturate(150%);
+    backdrop-filter: blur(24px) saturate(150%);
+  }
+
+  .telegram-app-header > div,
+  .app-content {
+    max-width: 80rem;
+  }
+
+  .app-content {
+    flex-direction: row;
+    align-items: flex-start;
+    gap: 1.25rem;
+    padding: 1.25rem 1.5rem 3rem;
+  }
+
+  .telegram-app-header .app-logo-image {
+    display: none;
+  }
+
+  .telegram-app-header .app-figma-logo {
+    display: block;
+  }
+
+  .app-content > .liquid-sidebar {
+    position: sticky;
+    top: 5.25rem;
+    display: block !important;
+    width: 13rem;
+    flex: 0 0 13rem;
+    padding: 0.375rem;
+    border-radius: 1.875rem;
+  }
+
+  .app-content > .liquid-sidebar button {
+    min-height: 2.75rem;
+    justify-content: flex-start;
+    padding: 0.625rem 1rem;
+  }
+
+  .liquid-sidebar,
+  .budget-months,
+  .budget-actions,
+  .figma-budget .budget-kpi,
+  .figma-budget .budget-row,
+  .figma-budget .budget-templates {
+    border-color: rgba(255, 255, 255, 0.18);
+    background: rgba(255, 255, 255, 0.025);
+    box-shadow: none;
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+
+  .figma-budget .budget-kpi-grid {
+    gap: 0.625rem;
+  }
+
+  .figma-budget > .grid {
+    grid-template-columns: minmax(0, 1fr) !important;
+    gap: 1.25rem;
+  }
+
+  .figma-budget .budget-overview,
+  .figma-budget .budget-transactions {
+    grid-column: 1 / -1;
+  }
+
+  .figma-budget .budget-overview > * + * {
+    margin-top: 1.25rem;
+  }
+
+  .figma-budget .budget-months {
+    padding: 0.875rem;
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    border-radius: 1.875rem;
+    background: rgba(255, 255, 255, 0.025);
+  }
+
+  .figma-budget .budget-months-scroll {
+    gap: 0.625rem;
+    padding-bottom: 0;
+  }
+
+  .figma-budget .budget-month-pill {
+    min-height: 2.375rem;
+    padding: 0 1rem;
+    border-color: rgba(255, 255, 255, 0.18);
+    background: rgba(255, 255, 255, 0.01);
+    color: #f5f5f7;
+    font-size: 0.75rem;
+    font-weight: 600;
+    box-shadow: none;
+    transform: none;
+  }
+
+  .figma-budget .budget-month-pill[class*="bg-emerald"] {
+    border-color: rgba(255, 255, 255, 0.24);
+    background: rgba(255, 255, 255, 0.2);
+    color: #fff;
+    box-shadow: none;
+  }
+
+  .figma-budget .budget-months > .flex > button[aria-label="Add next month"] {
+    width: 2.375rem;
+    height: 2.375rem;
+    min-width: 2.375rem;
+    min-height: 2.375rem;
+    border-color: rgba(255, 255, 255, 0.18);
+    background: rgba(255, 255, 255, 0.05);
+    color: rgba(255, 255, 255, 0.72);
+  }
+
+  .figma-budget .budget-months-meta button {
+    width: auto;
+    height: 1.75rem;
+    min-width: 0;
+    min-height: 1.75rem;
+    padding: 0 0.75rem;
+  }
+
+  .figma-budget .budget-kpi {
+    min-height: 7.5rem;
+    padding: 1rem;
+    border-radius: 1.875rem;
+  }
+
+  .figma-budget .budget-kpi-income { order: 2; }
+  .figma-budget .budget-kpi-planned { order: 1; }
+  .figma-budget .budget-kpi-paid { order: 3; }
+  .figma-budget .budget-kpi-leftover { order: 4; }
+
+  .figma-budget .budget-kpi > div:first-child {
+    opacity: 0.45;
+  }
+
+  .figma-budget .budget-kpi .budget-kpi-icon {
+    padding: 0;
+    border: 0;
+    background: transparent;
+  }
+
+  .figma-budget .budget-kpi span {
+    font-family: "Manrope Variable", Manrope, ui-sans-serif, system-ui, sans-serif;
+    font-size: 0.6875rem;
+    font-weight: 400;
+    letter-spacing: 0;
+    text-transform: none;
+  }
+
+  .figma-budget .budget-kpi h3 {
+    font-size: 1.35rem;
+    font-weight: 800;
+  }
+
+  .figma-budget .budget-kpi-value {
+    position: absolute;
+    right: 1rem;
+    bottom: 1rem;
+    left: 1rem;
+    width: auto;
+    height: 2rem;
+    min-height: 2rem;
+    align-items: flex-end;
+  }
+
+  .figma-budget .budget-transactions {
+    padding: 1rem;
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    border-radius: 2rem;
+    background: rgba(255, 255, 255, 0.025);
+  }
+
+  .figma-budget .budget-transactions > .space-y-5 > * + * {
+    margin-top: 0.625rem;
+  }
+
+  .figma-budget .budget-actions {
+    padding: 0;
+    border: 0;
+    background: transparent;
+  }
+
+  .figma-budget .budget-actions::after {
+    display: none;
+  }
+
+  .figma-budget .budget-actions .grid {
+    gap: 0.625rem;
+  }
+
+  .figma-budget .budget-actions .mobile-primary-action {
+    min-height: 2.75rem;
+    padding: 0 1.25rem;
+    border-color: rgba(255, 255, 255, 0.18);
+    background: rgba(255, 255, 255, 0.05);
+    font-size: 0.75rem;
+    font-weight: 500;
+  }
+
+  .figma-budget .budget-filter-tabs {
+    border-color: rgba(255, 255, 255, 0.14);
+    background: rgba(255, 255, 255, 0.025);
+  }
+
+  .figma-budget .budget-templates {
+    padding: 0.875rem;
+    border-radius: 1.875rem;
+    background: rgba(255, 255, 255, 0.05);
+  }
+
+  .figma-budget .budget-templates.is-collapsed {
+    padding: 0;
+    border-color: transparent;
+    background: transparent;
+  }
+
+  .figma-budget .budget-templates.is-collapsed .budget-templates-toggle {
+    min-height: 2.375rem !important;
+    padding: 0 0.875rem;
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    background: rgba(255, 255, 255, 0.05);
+  }
+
+  .figma-budget .budget-templates-toggle > span:first-child {
+    font-size: 0.6875rem;
+    font-weight: 400;
+    letter-spacing: 0;
+    text-transform: none;
+  }
+
+  .figma-budget .budget-template-chip,
+  .figma-budget .budget-row {
+    border-radius: 1.875rem;
+  }
+
+  .figma-budget .budget-template-chip {
+    min-height: 2.75rem;
+    background: rgba(255, 255, 255, 0.025);
+  }
+
+  .figma-budget .transaction-list > div + div {
+    margin-top: 0.625rem;
+    padding-top: 0.625rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.09);
+  }
+
+  .figma-budget .transaction-list .space-y-2 > * + * {
+    margin-top: 0.625rem;
+  }
+
+  .figma-budget .budget-row {
+    min-height: 3.75rem;
+    padding: 0.75rem 0.875rem;
+  }
+
+  .figma-budget .budget-row-income {
+    background: radial-gradient(circle at 52% 135%, rgba(41, 255, 94, 0.16), transparent 54%), rgba(255, 255, 255, 0.015);
+  }
+
+  .figma-budget .budget-row-expense {
+    background: radial-gradient(circle at 52% 135%, rgba(255, 80, 80, 0.16), transparent 54%), rgba(255, 255, 255, 0.015);
+  }
+
+  .figma-budget .budget-row-completed {
+    background: radial-gradient(circle at 52% 135%, rgba(41, 255, 94, 0.1), transparent 54%), rgba(255, 255, 255, 0.015);
+  }
+}
+
+@media (min-width: 1024px) {
+  .figma-budget .budget-kpi-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 767px) {
+  .telegram-app-shell {
+    padding-top: max(
+      5.625rem,
+      env(safe-area-inset-top),
+      var(--tg-safe-area-inset-top, 0px),
+      var(--tg-content-safe-area-inset-top, 0px)
+    );
+  }
+
+  .telegram-app-header,
+  .telegram-mini-app .telegram-app-header {
+    padding-top: 0.75rem;
+  }
+
+  .telegram-mini-app .telegram-app-header {
+    padding-top: 1rem;
+  }
+
+  .telegram-app-shell {
+    padding-bottom: calc(5rem + max(env(safe-area-inset-bottom), var(--tg-content-safe-area-inset-bottom, 0px)));
+    background: #0a0a0e;
+  }
+
+  .telegram-app-shell::before,
+  .telegram-app-shell > .ambient-orb {
+    display: none;
+  }
+
+  .liquid-glass,
+  .liquid-glass-strong {
+    -webkit-backdrop-filter: blur(18px) saturate(145%);
+    backdrop-filter: blur(18px) saturate(145%);
+  }
+
+  .app-content {
+    padding-bottom: 6.25rem;
+  }
+
+  .app-content button {
+    min-height: 2.65rem;
+  }
+
+  .app-content input,
+  .app-content select {
+    min-height: 2.85rem;
+    font-size: 0.8125rem;
+  }
+
+  .app-content button[aria-label] {
+    min-width: 2.65rem;
+  }
+
+  .telegram-app-header button {
+    width: 2.375rem;
+    height: 2.375rem;
+    min-width: 2.375rem;
+    min-height: 2.375rem;
+    border-radius: 9999px;
+  }
+
+  .transaction-row-action,
+  .plan-icon-button {
+    width: 2.65rem;
+    height: 2.65rem;
+    flex-basis: 2.65rem;
+  }
+
+  .transaction-row-action > svg,
+  .plan-icon-button > svg {
+    width: 1.05rem;
+    height: 1.05rem;
+  }
+
+  .mobile-primary-action {
+    min-height: 2.85rem !important;
+    font-size: 0.75rem;
+  }
+
+  .app-content .figma-icon-button {
+    width: 2.375rem;
+    height: 2.375rem;
+    min-width: 2.375rem;
+    min-height: 2.375rem !important;
+    flex-basis: 2.375rem;
+  }
+
+  .app-content .figma-soft-button {
+    min-height: 2.375rem !important;
+  }
+
+  .figma-plans .figma-input {
+    min-height: 2.375rem !important;
+  }
+
+  .figma-settings .figma-input {
+    min-height: 2.75rem !important;
+  }
+
+  .figma-month-card:not(.is-expanded) {
+    padding: 0.8125rem;
+  }
+
+  .figma-month-card > .flex > button {
+    min-height: 2.375rem !important;
+  }
+
+  .figma-month-card,
+  .figma-debt-card,
+  .figma-settings .figma-surface,
+  .figma-template-settings .figma-surface {
+    box-shadow: 0 14px 22px rgba(0, 0, 0, 0.18);
+  }
+
+  .figma-debt-card {
+    min-height: 9.5rem;
+  }
+
+  .figma-settings-link,
+  .figma-settings .figma-surface,
+  .figma-debts .figma-debt-card,
+  .figma-plans .figma-month-card {
+    border-radius: 1.875rem;
+  }
+
+  .app-modal-overlay .liquid-glass-strong {
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    border-radius: 1.875rem;
+    background: #151519;
+    box-shadow: 0 24px 80px rgba(0, 0, 0, 0.55);
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+
+  .app-modal-overlay input,
+  .app-modal-overlay select {
+    border-color: rgba(255, 255, 255, 0.16) !important;
+    border-radius: 9999px !important;
+    background: rgba(255, 255, 255, 0.05) !important;
+  }
+
+  .app-modal-overlay .figma-input {
+    min-height: 2.75rem !important;
+  }
+
+  .app-modal-overlay .transaction-status-checkbox {
+    width: 2.375rem;
+    height: 2.375rem;
+    min-width: 2.375rem;
+    min-height: 2.375rem !important;
+    background: rgba(255, 255, 255, 0.05) !important;
+  }
+
+  .app-modal-overlay .transaction-status-checkbox:checked {
+    background: rgba(41, 255, 94, 0.16) !important;
+  }
+
+  .app-modal-overlay button {
+    border-radius: 9999px !important;
+  }
+
+  /* Figma Budget screen */
+  .budget-screen {
+    background: #0a0a0e;
+  }
+
+  .budget-screen::before,
+  .budget-screen > .ambient-orb {
+    display: none;
+  }
+
+  .telegram-app-header {
+    position: relative;
+    border: 0;
+    background: transparent;
+    box-shadow: none;
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+
+  .telegram-app-header > div {
+    max-width: none;
+  }
+
+  .telegram-app-header .app-logo-image {
+    width: 2.375rem;
+    height: 2.375rem;
+    border-radius: 0;
+    box-shadow: none;
+    --tw-ring-color: transparent;
+  }
+
+  .telegram-app-header .app-logo-image {
+    display: none;
+  }
+
+  .telegram-app-header .app-figma-logo {
+    display: block;
+  }
+
+  .app-brand-name,
+  .app-sync-label {
+    display: none;
+  }
+
+  .app-sync-status {
+    min-height: 0;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    box-shadow: none;
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+
+  .app-sync-status::after {
+    display: none;
+  }
+
+  .app-sync-status span:first-child {
+    width: 0.5rem;
+    height: 0.5rem;
+    background: #29ff5e;
+    box-shadow: 0 0 10px rgba(41, 255, 94, 0.85);
+  }
+
+  .figma-mobile-icon {
+    display: block;
+    line-height: 0;
+  }
+
+  .budget-screen .app-content {
+    padding: 0.5rem 1rem 6.5rem;
+  }
+
+  .figma-budget > .grid {
+    gap: 1.25rem;
+  }
+
+  .figma-budget .budget-overview > * + * {
+    margin-top: 1.25rem;
+  }
+
+  .figma-budget .budget-months {
+    padding: 0;
+    border: 0;
+    background: transparent;
+    box-shadow: none;
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+
+  .figma-budget .budget-months::after,
+  .figma-budget .budget-months-meta,
+  .figma-budget .budget-months > .flex > button {
+    display: none;
+  }
+
+  .figma-budget .budget-months-scroll {
+    gap: 0.625rem;
+    padding-bottom: 0;
+  }
+
+  .figma-budget .budget-month-pill {
+    min-height: 2.375rem;
+    padding: 0 1rem;
+    border-color: rgba(255, 255, 255, 0.18);
+    background: rgba(255, 255, 255, 0.01);
+    color: #f5f5f7;
+    font-size: 0.75rem;
+    font-weight: 600;
+    box-shadow: none;
+    transform: none;
+  }
+
+  .figma-budget .budget-month-pill[class*="bg-emerald"] {
+    border-color: rgba(255, 255, 255, 0.24);
+    background: rgba(255, 255, 255, 0.2);
+    color: #fff;
+    box-shadow: none;
+  }
+
+  .figma-budget .budget-kpi-grid {
+    gap: 0.625rem;
+  }
+
+  .figma-budget .budget-kpi {
+    min-height: 5.95rem;
+    padding: 0.875rem;
+    border-radius: 1.875rem;
+    border-color: rgba(255, 255, 255, 0.18);
+    background: rgba(255, 255, 255, 0.01);
+    box-shadow: none;
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+
+  .figma-budget .budget-kpi-value {
+    position: absolute;
+    right: 0.875rem;
+    bottom: 0.875rem;
+    left: 0.875rem;
+    width: auto;
+    height: 2rem;
+    min-height: 2rem;
+    align-items: flex-end;
+  }
+
+  .figma-budget .budget-kpi-value > div {
+    align-items: flex-end;
+  }
+
+  .figma-budget .budget-kpi-value button {
+    width: 2rem;
+    min-width: 2rem !important;
+    height: 2rem;
+    min-height: 2rem !important;
+  }
+
+  .figma-budget .budget-kpi::after {
+    opacity: 0.35;
+  }
+
+  .figma-budget .budget-kpi-income { order: 2; }
+  .figma-budget .budget-kpi-planned { order: 1; }
+  .figma-budget .budget-kpi-paid { order: 3; }
+  .figma-budget .budget-kpi-leftover { order: 4; }
+
+  .figma-budget .budget-kpi > div:first-child {
+    width: 7rem;
+    height: 7rem;
+    right: -1.5rem;
+    top: -4.75rem;
+    transform: none;
+    filter: blur(24px);
+    opacity: 0.75;
+  }
+
+  .figma-budget .budget-kpi > .flex {
+    margin-bottom: 0;
+  }
+
+  .figma-budget .budget-kpi .budget-kpi-icon {
+    padding: 0;
+    border: 0;
+    background: transparent;
+  }
+
+  .figma-budget .budget-kpi span {
+    font-size: 0.6875rem;
+    font-weight: 400;
+    letter-spacing: 0;
+    text-transform: none;
+  }
+
+  .figma-budget .budget-kpi h3 {
+    font-size: 1.25rem;
+    font-weight: 800;
+  }
+
+  .figma-budget .budget-actions {
+    padding: 0;
+    border: 0;
+    background: transparent;
+    box-shadow: none;
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+
+  .figma-budget .budget-actions::after,
+  .figma-budget .budget-filter-tabs {
+    display: none;
+  }
+
+  .figma-budget .budget-actions .grid {
+    gap: 0.625rem;
+  }
+
+  .figma-budget .budget-actions .mobile-primary-action {
+    min-height: 2.75rem !important;
+    padding: 0 1.25rem;
+    border-color: rgba(255, 255, 255, 0.18);
+    background: rgba(255, 255, 255, 0.05);
+    font-size: 0.6875rem;
+    font-weight: 400;
+  }
+
+  .figma-budget .budget-transactions > .space-y-5 > * + * {
+    margin-top: 0.625rem;
+  }
+
+  .figma-budget .budget-templates {
+    padding: 0.875rem;
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    border-radius: 1.875rem;
+    background: rgba(255, 255, 255, 0.05);
+  }
+
+  .figma-budget .budget-templates-toggle {
+    min-height: 2.75rem !important;
+    padding: 0;
+    border: 0;
+    background: transparent;
+  }
+
+  .figma-budget .budget-templates.is-collapsed {
+    padding: 0;
+    border-color: transparent;
+    background: transparent;
+  }
+
+  .figma-budget .budget-templates.is-collapsed .budget-templates-toggle {
+    min-height: 2.375rem !important;
+    padding: 0 0.875rem;
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    background: rgba(255, 255, 255, 0.05);
+  }
+
+  .figma-budget .budget-templates-toggle > span:first-child {
+    font-size: 0.6875rem;
+    font-weight: 400;
+    letter-spacing: 0;
+    text-transform: none;
+  }
+
+  .figma-budget .budget-template-list {
+    gap: 0.625rem;
+    margin-top: 0.625rem;
+    padding-bottom: 0;
+  }
+
+  .figma-budget .budget-template-chip {
+    min-width: 0;
+    min-height: 2.75rem;
+    padding: 0 0.875rem;
+    border-radius: 1.875rem;
+    border-color: rgba(255, 255, 255, 0.16);
+    background: rgba(255, 255, 255, 0.01);
+    box-shadow: none;
+    gap: 1.25rem;
+  }
+
+  .figma-budget .budget-template-chip::after {
+    opacity: 0.25;
+  }
+
+  .figma-budget .transaction-list {
+    gap: 0;
+  }
+
+  .figma-budget .transaction-list > div + div {
+    margin-top: 0.625rem;
+    padding-top: 0.625rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.09);
+  }
+
+  .figma-budget .transaction-list .space-y-2 > * + * {
+    margin-top: 0.625rem;
+  }
+
+  .figma-budget .budget-group-heading,
+  .figma-budget .budget-row-category {
+    display: none;
+  }
+
+  .figma-budget .budget-row {
+    min-height: 3.5rem;
+    padding: 0.625rem 0.75rem;
+    border-radius: 1.625rem;
+    border-color: rgba(255, 255, 255, 0.16);
+    background: rgba(255, 255, 255, 0.01);
+    box-shadow: none;
+    overflow: hidden;
+  }
+
+  .figma-budget .budget-row::after {
+    opacity: 0.2;
+  }
+
+  .figma-budget .budget-row-income {
+    background: radial-gradient(circle at 52% 130%, rgba(41, 255, 94, 0.24), transparent 52%), rgba(255, 255, 255, 0.01);
+  }
+
+  .figma-budget .budget-row-expense {
+    background: radial-gradient(circle at 52% 130%, rgba(255, 80, 80, 0.24), transparent 52%), rgba(255, 255, 255, 0.01);
+  }
+
+  .figma-budget .budget-row-completed {
+    background: radial-gradient(circle at 52% 130%, rgba(41, 255, 94, 0.14), transparent 52%), rgba(255, 255, 255, 0.01);
+  }
+
+  .figma-budget .budget-row-income .transaction-check-button {
+    display: none;
+  }
+
+  .figma-budget .budget-row .transaction-check-button,
+  .figma-budget .budget-row .transaction-check-button > div,
+  .figma-budget .budget-row .transaction-row-action {
+    width: 2.125rem;
+    height: 2.125rem;
+    min-width: 2.125rem;
+    min-height: 2.125rem;
+    flex-basis: 2.125rem;
+    border-radius: 9999px;
+  }
+
+  .figma-budget .budget-row > div:first-child,
+  .figma-budget .budget-row > div:last-child {
+    gap: 0.625rem;
+  }
+
+  .figma-budget .budget-row .transaction-check-button > div {
+    background: rgba(255, 255, 255, 0.04);
+    border-color: rgba(255, 255, 255, 0.16);
+  }
+
+  .figma-budget .budget-row p {
+    font-size: 0.8125rem;
+    font-weight: 500;
+  }
+
+  .liquid-tab-bar {
+    left: 1rem !important;
+    right: 1rem !important;
+    height: 3.5rem;
+    padding: 0.25rem;
+    border-color: rgba(255, 255, 255, 0.2);
+    background: rgba(0, 0, 0, 0.45);
+    box-shadow: none;
+  }
+
+  .liquid-tab-bar .app-nav-label {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+  }
+
+  .liquid-tab-bar button {
+    min-height: 2.75rem;
+    color: #f5f5f7;
+  }
+
+  .liquid-tab-bar button[aria-current="page"] {
+    border-color: rgba(255, 255, 255, 0.2);
+    background: rgba(255, 255, 255, 0.24);
+    box-shadow: none;
+  }
+
+  .liquid-tab-bar svg {
+    width: 1.5rem;
+    height: 1.5rem;
+  }
+}
+
+@media (max-width: 359px) {
+  .app-brand-name {
+    display: none;
+  }
+}
+
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .liquid-glass,
+  .liquid-glass-strong,
+  .liquid-header,
+  .liquid-tab-bar {
+    background-color: rgba(10, 14, 23, 0.96);
+  }
 }
