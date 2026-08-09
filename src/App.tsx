@@ -33,6 +33,20 @@ const getCurrentMonthStr = () => {
   return `${year}-${month}`;
 };
 
+const addMonthsToMonthStr = (monthStr: string, amount: number) => {
+  const [year, month] = monthStr.split("-").map(Number);
+  const absoluteMonth = year * 12 + month - 1 + amount;
+  const nextYear = Math.floor(absoluteMonth / 12);
+  const nextMonth = absoluteMonth % 12 + 1;
+  return `${nextYear}-${String(nextMonth).padStart(2, "0")}`;
+};
+
+const formatMonthLabel = (monthStr: string) => {
+  const [year, month] = monthStr.split("-").map(Number);
+  return new Intl.DateTimeFormat("en-US", { month: "long", year: "numeric", timeZone: "UTC" })
+    .format(new Date(Date.UTC(year, month - 1, 1)));
+};
+
 const normalizeDebtTitle = (value: string) => value.trim().replace(/\s+/g, " ").toLocaleLowerCase();
 
 const syncDebtPayments = (debts: DebtItem[], monthlyBudgets: FinanceData["monthlyBudgets"]): DebtItem[] => {
@@ -389,18 +403,43 @@ export default function App() {
   };
 
   // Edit Expense in specific month
-  const handleEditExpense = (monthStr: string, editedExp: ExpenseItem) => {
-    const { budgets, index } = getOrCreateMonthlyBudget(data, monthStr);
-    budgets[index] = {
-      ...budgets[index],
-      expenses: budgets[index].expenses.map(e => e.id === editedExp.id ? editedExp : e)
-    };
+  const handleEditExpense = (sourceMonthStr: string, destinationMonthStr: string, editedExp: ExpenseItem) => {
+    const { budgets, index: sourceIndex } = getOrCreateMonthlyBudget(data, sourceMonthStr);
+    const sourceHasExpense = budgets[sourceIndex].expenses.some(expense => expense.id === editedExp.id);
+    if (!sourceHasExpense) return;
+
+    if (sourceMonthStr === destinationMonthStr) {
+      budgets[sourceIndex] = {
+        ...budgets[sourceIndex],
+        expenses: budgets[sourceIndex].expenses.map(expense => expense.id === editedExp.id ? editedExp : expense),
+      };
+    } else {
+      budgets[sourceIndex] = {
+        ...budgets[sourceIndex],
+        expenses: budgets[sourceIndex].expenses.filter(expense => expense.id !== editedExp.id),
+      };
+      let destinationIndex = budgets.findIndex(budget => budget.monthStr === destinationMonthStr);
+      if (destinationIndex === -1) {
+        budgets.push({
+          monthStr: destinationMonthStr,
+          income: data.baselineMonthlyIncome,
+          expenses: [],
+        });
+        destinationIndex = budgets.length - 1;
+      }
+      budgets[destinationIndex] = {
+        ...budgets[destinationIndex],
+        expenses: [...budgets[destinationIndex].expenses, editedExp],
+      };
+    }
+
     const updated: FinanceData = {
       ...data,
       monthlyBudgets: budgets,
       debts: syncDebtPayments(data.debts ?? [], budgets),
     };
     saveStateToDB(updated);
+    if (sourceMonthStr !== destinationMonthStr) setSelectedMonthStr(destinationMonthStr);
   };
 
   // Delete Expense from specific month
@@ -592,6 +631,51 @@ export default function App() {
     };
     saveStateToDB(updated);
     setSelectedMonthStr(nextMonthStr);
+  };
+
+  const handleInsertMonthAfter = (afterMonthStr: string) => {
+    if (!data) return;
+    const insertedMonthStr = addMonthsToMonthStr(afterMonthStr, 1);
+    const existingActive = data.activeMonths?.length
+      ? [...data.activeMonths].sort()
+      : [...new Set([getCurrentMonthStr(), ...data.monthlyBudgets.map(budget => budget.monthStr)])].sort();
+    const monthsToShift = [...new Set([
+      ...existingActive,
+      ...data.monthlyBudgets.map(budget => budget.monthStr),
+    ])].filter(monthStr => monthStr >= insertedMonthStr);
+
+    const insertMonth = () => {
+      const shiftedActiveMonths = existingActive.map(monthStr =>
+        monthStr >= insertedMonthStr ? addMonthsToMonthStr(monthStr, 1) : monthStr
+      );
+      const activeMonths = [...new Set([...shiftedActiveMonths, insertedMonthStr])].sort();
+      const monthlyBudgets = data.monthlyBudgets.map(budget => budget.monthStr >= insertedMonthStr
+        ? { ...budget, monthStr: addMonthsToMonthStr(budget.monthStr, 1) }
+        : budget);
+
+      monthlyBudgets.push({
+        monthStr: insertedMonthStr,
+        income: data.baselineMonthlyIncome,
+        expenses: [],
+      });
+      monthlyBudgets.sort((a, b) => a.monthStr.localeCompare(b.monthStr));
+
+      const debts = syncDebtPayments(data.debts ?? [], monthlyBudgets);
+      saveStateToDB({ ...data, activeMonths, monthlyBudgets, debts });
+      setSelectedMonthStr(insertedMonthStr);
+    };
+
+    if (monthsToShift.length === 0) {
+      insertMonth();
+      return;
+    }
+
+    triggerConfirm(
+      "Insert month",
+      `Create ${formatMonthLabel(insertedMonthStr)}? ${monthsToShift.length === 1 ? "The following month" : `${monthsToShift.length} following months`} will move forward by one month.`,
+      insertMonth,
+      "Insert",
+    );
   };
 
   // Delete a month
@@ -832,6 +916,7 @@ export default function App() {
                   onUpdateActualBalance={handleUpdateActualBalance}
                   onNavigateToEditor={() => setActiveTab("budget")}
                   onAddMonth={handleAddMonth}
+                  onInsertMonthAfter={handleInsertMonthAfter}
                   onDeleteMonth={handleDeleteMonth}
                   triggerAlert={triggerAlert}
                 />

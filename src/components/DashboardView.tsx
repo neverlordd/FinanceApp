@@ -18,7 +18,7 @@ interface DashboardViewProps {
   onSetSelectedMonthStr: (month: string) => void;
   onUpdateMonthIncome: (monthStr: string, income: number) => void;
   onAddExpense: (monthStr: string, expense: Omit<ExpenseItem, 'id'> & { originalAmount?: number; originalCurrency?: string; originalRate?: number }) => void;
-  onEditExpense: (monthStr: string, expense: ExpenseItem & { originalAmount?: number; originalCurrency?: string; originalRate?: number }) => void;
+  onEditExpense: (sourceMonthStr: string, destinationMonthStr: string, expense: ExpenseItem & { originalAmount?: number; originalCurrency?: string; originalRate?: number }) => void;
   onDeleteExpense: (monthStr: string, expenseId: string) => void;
   onToggleExpenseCompleted: (monthStr: string, expenseId: string) => void;
   expenseTemplates: ExpenseTemplate[];
@@ -119,6 +119,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
   const [isCustomCategory, setIsCustomCategory] = useState(false);
   const [description, setDescription] = useState("");
   const [completed, setCompleted] = useState(false);
+  const [expenseMonthStr, setExpenseMonthStr] = useState(selectedMonthStr);
 
   // Converter sub-state
   const [currency, setCurrency] = useState("USD");
@@ -147,6 +148,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
     setIsCustomCategory(false);
     setDescription("");
     setCompleted(false);
+    setExpenseMonthStr(selectedMonthStr);
     setCurrency("USD");
     setRawAmount("");
     setExchangeRate("1.0");
@@ -189,6 +191,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
 
     setDescription(item.description);
     setCompleted(item.completed);
+    setExpenseMonthStr(selectedMonthStr);
 
     // Original currency state restore
     const originalCur = item.originalCurrency || "USD";
@@ -250,7 +253,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
     };
 
     if (editingExpense) {
-      onEditExpense(selectedMonthStr, {
+      onEditExpense(selectedMonthStr, expenseMonthStr, {
         ...payload,
         id: editingExpense.id
       });
@@ -979,6 +982,24 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                 </div>
               </div>
 
+              {editingExpense && calculatedMonths.length > 1 && (
+                <div className="space-y-1.5">
+                  <label htmlFor="transaction-month" className="text-[11px] text-white/45">Move to month</label>
+                  <select
+                    id="transaction-month"
+                    value={expenseMonthStr}
+                    onChange={(event) => setExpenseMonthStr(event.target.value)}
+                    className="figma-input min-h-11 w-full rounded-full px-4 text-xs font-semibold text-white outline-none"
+                  >
+                    {calculatedMonths.map(month => (
+                      <option key={month.monthStr} value={month.monthStr}>
+                        {month.monthName[0]}{month.monthName.slice(1).toLowerCase()} ‘{month.monthYear.slice(2)}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
+
               {/* Category selector */}
               <div className="space-y-1.5">
                 <label className="text-[11px] text-white/45">Category</label>
@@ -1137,7 +1158,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                   type="submit"
                   className="figma-soft-button is-primary min-h-11 px-5 text-xs font-semibold text-white transition active:scale-95"
                 >
-                  {editingExpense ? "Save" : "Add"}
+                  {editingExpense ? (expenseMonthStr === selectedMonthStr ? "Save" : "Move") : "Add"}
                 </button>
               </div>
             </form>

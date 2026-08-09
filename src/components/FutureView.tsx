@@ -9,6 +9,7 @@ interface FutureViewProps {
   onUpdateActualBalance: (monthStr: string, actualEndingBalance: number | null) => void;
   onNavigateToEditor: () => void;
   onAddMonth?: () => void;
+  onInsertMonthAfter?: (monthStr: string) => void;
   onDeleteMonth?: (monthStr: string) => void;
   triggerAlert: (title: string, message: string) => void;
 }
@@ -26,6 +27,7 @@ export const FutureView: React.FC<FutureViewProps> = ({
   onUpdateActualBalance,
   onNavigateToEditor,
   onAddMonth,
+  onInsertMonthAfter,
   onDeleteMonth,
   triggerAlert,
 }) => {
@@ -119,6 +121,16 @@ export const FutureView: React.FC<FutureViewProps> = ({
                       <div className="flex justify-between"><span className="text-white/45">Expenses</span><strong className="text-[13px] font-semibold text-[#ff5050]">-{formatCurrency(month.totalExpenses)}</strong></div>
                       <div className="flex justify-between"><span className="text-white/45">Net</span><strong className={`text-[13px] font-semibold ${positive ? "text-[#29ff5e]" : "text-[#ff5050]"}`}>{positive ? "+" : ""}{formatCurrency(month.net)}</strong></div>
                     </div>
+
+                    {onInsertMonthAfter && (
+                      <button
+                        type="button"
+                        onClick={() => { onInsertMonthAfter(month.monthStr); setExpandedMonthStr(null); }}
+                        className="figma-soft-button flex h-[38px] w-full items-center justify-center gap-1.5 rounded-full px-3.5 text-[11px] font-semibold text-white/70 transition hover:text-white"
+                      >
+                        <FigmaIcon name="add" size={14} /> Insert next month
+                      </button>
+                    )}
 
                     <form
                       onSubmit={event => { event.preventDefault(); saveActualBalance(month.monthStr); }}
