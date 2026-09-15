@@ -1,27 +1,14 @@
 import React, { useState, useEffect } from "react";
 import { CalculatedMonth } from "../utils/calculations";
-import { ExpenseItem } from "../types";
+import { ExpenseItem, ExpenseTemplate } from "../types";
+import { FigmaIcon } from "./FigmaIcon";
 import {
-  Wallet,
-  ChevronLeft,
-  ChevronRight,
   Plus,
   X,
   Edit3,
   Trash2,
   Check,
-  Coins,
-  ArrowUpRight,
-  ArrowDownRight,
-  TrendingUp,
-  TrendingDown,
-  Sparkles,
-  CheckCircle2,
   HelpCircle,
-  PiggyBank,
-  DollarSign,
-  Briefcase,
-  AlertCircle,
   Calendar
 } from "lucide-react";
 
@@ -31,9 +18,10 @@ interface DashboardViewProps {
   onSetSelectedMonthStr: (month: string) => void;
   onUpdateMonthIncome: (monthStr: string, income: number) => void;
   onAddExpense: (monthStr: string, expense: Omit<ExpenseItem, 'id'> & { originalAmount?: number; originalCurrency?: string; originalRate?: number }) => void;
-  onEditExpense: (monthStr: string, expense: ExpenseItem & { originalAmount?: number; originalCurrency?: string; originalRate?: number }) => void;
+  onEditExpense: (sourceMonthStr: string, destinationMonthStr: string, expense: ExpenseItem & { originalAmount?: number; originalCurrency?: string; originalRate?: number }) => void;
   onDeleteExpense: (monthStr: string, expenseId: string) => void;
   onToggleExpenseCompleted: (monthStr: string, expenseId: string) => void;
+  expenseTemplates: ExpenseTemplate[];
   onAddMonth?: () => void;
   onDeleteMonth?: (monthStr: string) => void;
   triggerConfirm: (title: string, message: string, onConfirm: () => void) => void;
@@ -76,6 +64,17 @@ const INCOME_CATEGORIES = [
   "Other"
 ];
 
+const normalizeTemplateTitle = (value: string) => value.trim().replace(/\s+/g, " ").toLocaleLowerCase();
+
+const USD_FORMATTER = new Intl.NumberFormat("en-US", {
+  style: "currency",
+  currency: "USD",
+  minimumFractionDigits: 2,
+  maximumFractionDigits: 2,
+});
+
+const formatCurrency = (value: number) => USD_FORMATTER.format(value);
+
 export const DashboardView: React.FC<DashboardViewProps> = ({
   calculatedMonths,
   selectedMonthStr,
@@ -85,6 +84,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
   onEditExpense,
   onDeleteExpense,
   onToggleExpenseCompleted,
+  expenseTemplates,
   onAddMonth,
   onDeleteMonth,
   triggerConfirm,
@@ -103,6 +103,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
   // Income inline edit state
   const [isEditingIncome, setIsEditingIncome] = useState(false);
   const [incomeInput, setIncomeInput] = useState("");
+  const [templatesExpanded, setTemplatesExpanded] = useState(false);
 
   // Table filter state
   const [filterType, setFilterType] = useState<"all" | "expense" | "income">("all");
@@ -113,11 +114,12 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
 
   // Expense Form fields
   const [transactionType, setTransactionType] = useState<"expense" | "income">("expense");
-  const [category, setCategory] = useState("Жизнь");
+  const [category, setCategory] = useState("Living");
   const [customCategory, setCustomCategory] = useState("");
   const [isCustomCategory, setIsCustomCategory] = useState(false);
   const [description, setDescription] = useState("");
   const [completed, setCompleted] = useState(false);
+  const [expenseMonthStr, setExpenseMonthStr] = useState(selectedMonthStr);
 
   // Converter sub-state
   const [currency, setCurrency] = useState("USD");
@@ -137,29 +139,6 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
     }
   }, [transactionType, editingExpense]);
 
-  // Format currency for display
-  const formatCurrency = (val: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2
-    }).format(val);
-  };
-
-  // Switch month helpers
-  const handlePrevMonth = () => {
-    if (activeIndex > 0) {
-      onSetSelectedMonthStr(calculatedMonths[activeIndex - 1].monthStr);
-    }
-  };
-
-  const handleNextMonth = () => {
-    if (activeIndex < calculatedMonths.length - 1) {
-      onSetSelectedMonthStr(calculatedMonths[activeIndex + 1].monthStr);
-    }
-  };
-
   // Handle opening form for adding a new row
   const handleOpenAddForm = (type: "expense" | "income" = "expense") => {
     setEditingExpense(null);
@@ -169,10 +148,29 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
     setIsCustomCategory(false);
     setDescription("");
     setCompleted(false);
+    setExpenseMonthStr(selectedMonthStr);
     setCurrency("USD");
     setRawAmount("");
     setExchangeRate("1.0");
     setIsFormOpen(true);
+  };
+
+  const handleApplyTemplate = (template: ExpenseTemplate) => {
+    if (template.amount === undefined || template.amount <= 0) {
+      triggerAlert("Template amount required", "Set an amount for this template in Settings before adding it.");
+      return;
+    }
+
+    onAddExpense(selectedMonthStr, {
+      category: template.category,
+      description: template.title,
+      amount: template.amount,
+      completed: false,
+      type: "expense",
+      originalAmount: template.originalAmount ?? template.amount,
+      originalCurrency: template.originalCurrency ?? "USD",
+      originalRate: template.originalRate ?? 1,
+    });
   };
 
   // Handle opening form for editing a row
@@ -193,6 +191,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
 
     setDescription(item.description);
     setCompleted(item.completed);
+    setExpenseMonthStr(selectedMonthStr);
 
     // Original currency state restore
     const originalCur = item.originalCurrency || "USD";
@@ -212,25 +211,33 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
   }, [currency, editingExpense]);
 
   // Calculate equivalent USD for preview
-  const parsedRawAmount = parseFloat(rawAmount) || 0;
-  const parsedRate = parseFloat(exchangeRate) || 1.0;
-  const calculatedUsdAmount = currency === "USD" ? parsedRawAmount : Number((parsedRawAmount / parsedRate).toFixed(2));
+  const parsedRawAmount = parseFloat(rawAmount);
+  const parsedRate = parseFloat(exchangeRate);
+  const calculatedUsdAmount = currency === "USD"
+    ? (Number.isFinite(parsedRawAmount) ? parsedRawAmount : 0)
+    : Number.isFinite(parsedRawAmount) && Number.isFinite(parsedRate) && parsedRate > 0
+      ? Number((parsedRawAmount / parsedRate).toFixed(2))
+      : 0;
 
   // Handle Form Submit
   const handleFormSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!description.trim()) {
-      triggerAlert("Validation Error", "Please enter a description");
+      triggerAlert("Check your entries", "Add a transaction description.");
       return;
     }
-    if (parsedRawAmount <= 0) {
-      triggerAlert("Validation Error", "Amount must be greater than zero");
+    if (!Number.isFinite(parsedRawAmount) || parsedRawAmount <= 0) {
+      triggerAlert("Check your entries", "The amount must be greater than zero.");
+      return;
+    }
+    if (currency !== "USD" && (!Number.isFinite(parsedRate) || parsedRate <= 0)) {
+      triggerAlert("Check your entries", "The exchange rate must be greater than zero.");
       return;
     }
 
     const finalCategory = isCustomCategory ? customCategory.trim() : category;
     if (!finalCategory) {
-      triggerAlert("Validation Error", "Please select or specify a category");
+      triggerAlert("Check your entries", "Select or enter a category.");
       return;
     }
 
@@ -246,7 +253,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
     };
 
     if (editingExpense) {
-      onEditExpense(selectedMonthStr, {
+      onEditExpense(selectedMonthStr, expenseMonthStr, {
         ...payload,
         id: editingExpense.id
       });
@@ -270,7 +277,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
       onUpdateMonthIncome(selectedMonthStr, val);
       setIsEditingIncome(false);
     } else {
-      triggerAlert("Invalid Amount", "Please enter a valid positive number for income.");
+      triggerAlert("Invalid amount", "Enter an income amount of zero or greater.");
     }
   };
 
@@ -280,12 +287,26 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
     if (currentMonth) {
       setIncomeInput(currentMonth.baseIncome !== undefined ? currentMonth.baseIncome.toString() : currentMonth.income.toString());
     }
-  }, [selectedMonthStr, currentMonth]);
+  }, [selectedMonthStr, currentMonth?.monthStr, currentMonth?.baseIncome]);
+
+  useEffect(() => {
+    if (!isFormOpen) return;
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setIsFormOpen(false);
+    };
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    window.addEventListener("keydown", closeOnEscape);
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      window.removeEventListener("keydown", closeOnEscape);
+    };
+  }, [isFormOpen]);
 
   if (!currentMonth) return null;
 
   // Filter items in the list based on selection
-  const filteredItems = currentMonth.expenses.filter((item) => {
+  const filteredItems = [...currentMonth.expenses].reverse().filter((item) => {
     const itemType = item.type || "expense";
     if (filterType === "all") return true;
     return itemType === filterType;
@@ -299,27 +320,18 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
   // Calculate stats for current view
   const activeCategories = transactionType === "income" ? INCOME_CATEGORIES : EXPENSE_CATEGORIES;
 
-  // Let's compute local totals for itemized entries
-  const localIncomesTotal = currentMonth.expenses.filter(e => e.type === "income").reduce((sum, e) => sum + e.amount, 0);
-  const localExpensesTotal = currentMonth.expenses.filter(e => e.type !== "income").reduce((sum, e) => sum + e.amount, 0);
-
-  // Compute progress of paid expenses
-  const expensePercentage = currentMonth.totalExpenses > 0
-    ? Math.min(Math.round((currentMonth.completedExpenses / currentMonth.totalExpenses) * 100), 100)
-    : 0;
-
   return (
-    <div className="space-y-6">
+    <div className="figma-budget mx-auto max-w-3xl space-y-6">
 
       {/* TWO BLOCK LAYOUT: 1. Left (Selector + Compact KPIs) | 2. Right (Transactions Table) */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
 
-        {/* Left Column (Selector + KPIs) - Spans 4 columns on large screens */}
-        <div className="lg:col-span-5 xl:col-span-4 space-y-6">
+        {/* Left Column (Selector + KPIs) */}
+        <div className="budget-overview space-y-6 lg:col-span-5">
 
           {/* 1. COMPACT HORIZONTAL MONTH PILLS */}
-          <div className="bg-gradient-to-b from-white/[0.02] to-white/[0.005] backdrop-blur-xl border border-white/[0.06] p-4 rounded-3xl shadow-[0_12px_40px_rgba(0,0,0,0.3)] space-y-3">
-            <div className="flex items-center justify-between">
+          <div className="budget-months liquid-glass p-4 rounded-3xl space-y-3">
+            <div className="budget-months-meta flex items-center justify-between">
               <span className="text-[9px] font-bold text-white/40 tracking-wider uppercase font-mono flex items-center gap-1.5">
                 <Calendar size={11} className="text-emerald-400" /> Period
               </span>
@@ -334,58 +346,64 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
               )}
             </div>
 
-            <div className="overflow-x-auto scrollbar-none flex gap-1.5 pb-1 scroll-smooth snap-x">
-              {calculatedMonths.map((m) => {
-                const isActive = m.monthStr === selectedMonthStr;
-                return (
-                  <button
-                    key={m.monthStr}
-                    onClick={() => onSetSelectedMonthStr(m.monthStr)}
-                    className={`snap-start shrink-0 px-3.5 py-2 rounded-2xl text-[11px] font-bold transition-all duration-300 cursor-pointer border flex items-center gap-1.5 ${
-                      isActive
-                        ? "bg-emerald-500 text-slate-950 border-emerald-400/30 shadow-[0_4px_12px_rgba(16,185,129,0.25)] scale-[1.01]"
-                        : "bg-white/[0.02] text-white/50 hover:text-white hover:bg-white/[0.05] border-white/[0.04] hover:border-white/[0.1]"
-                    }`}
-                  >
-                    <span>{m.monthName} '{m.monthYear.slice(2)}</span>
-                  </button>
-                );
-              })}
-
+            <div className="flex items-stretch gap-2">
+              <div className="budget-months-scroll min-w-0 flex-1 overflow-x-auto scrollbar-none flex gap-1.5 pb-1 scroll-smooth snap-x">
+                {calculatedMonths.map((m) => {
+                  const isActive = m.monthStr === selectedMonthStr;
+                  return (
+                    <button
+                      key={m.monthStr}
+                      onClick={() => onSetSelectedMonthStr(m.monthStr)}
+                      className={`budget-month-pill snap-start shrink-0 px-3.5 py-2 rounded-full text-[11px] font-bold transition-all duration-300 cursor-pointer border flex items-center gap-1.5 ${
+                        isActive
+                          ? "bg-emerald-500 text-slate-950 border-emerald-400/30 shadow-[0_4px_12px_rgba(16,185,129,0.25)] scale-[1.01]"
+                          : "bg-white/[0.02] text-white/50 hover:text-white hover:bg-white/[0.05] border-white/[0.04] hover:border-white/[0.1]"
+                      }`}
+                    >
+                      <span>{m.monthName[0]}{m.monthName.slice(1).toLowerCase()} ‘{m.monthYear.slice(2)}</span>
+                    </button>
+                  );
+                })}
+              </div>
               {onAddMonth && (
                 <button
                   onClick={onAddMonth}
-                  className="snap-start shrink-0 px-3 py-2 rounded-2xl text-[11px] font-bold bg-emerald-500/10 text-emerald-400 hover:text-emerald-300 hover:bg-emerald-500/20 border border-emerald-500/20 hover:border-emerald-500/30 transition-all duration-300 flex items-center gap-1 cursor-pointer active:scale-95"
-                  title="Add Next Month"
+                  className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-emerald-500/20 bg-emerald-500/10 text-emerald-400 transition-all duration-300 hover:border-emerald-500/30 hover:bg-emerald-500/20 hover:text-emerald-300 active:scale-95"
+                  aria-label="Add next month"
                 >
-                  <Plus size={11} strokeWidth={3} />
-                  <span>Add</span>
+                  <Plus size={14} strokeWidth={3} />
                 </button>
               )}
             </div>
           </div>
 
           {/* 2. DYNAMIC BUDGET KPIS (Income, Planned Spend, Spent with progress bar, Leftover) */}
-          <div className="grid grid-cols-2 gap-4">
+          <div className="budget-kpi-grid grid grid-cols-2 gap-4">
 
             {/* KPI 1: Income */}
-            <div className="bg-gradient-to-b from-white/[0.02] to-transparent backdrop-blur-xl border border-white/[0.06] rounded-3xl p-4 shadow-[0_12px_32px_rgba(0,0,0,0.4)] relative overflow-hidden flex flex-col justify-between group hover:border-emerald-500/20 transition-all duration-300 col-span-1">
+            <div className="budget-kpi budget-kpi-income liquid-glass rounded-3xl p-4 relative overflow-hidden flex flex-col justify-between group hover:border-emerald-500/30 transition-all duration-300 col-span-1">
               <div className="absolute right-0 top-0 translate-x-4 -translate-y-4 w-16 h-16 bg-emerald-500/5 rounded-full blur-xl pointer-events-none group-hover:bg-emerald-500/10 transition-all duration-300" />
 
               <div className="flex items-center justify-between mb-2">
                 <span className="text-[9px] font-bold text-white/40 tracking-wider uppercase">Income</span>
-                <div className="p-1.5 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 rounded-lg">
-                  <ArrowUpRight size={12} strokeWidth={2.5} />
+                <div className="budget-kpi-icon p-1.5 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 rounded-lg">
+                  <FigmaIcon name="arrow-right-green" size={16} />
                 </div>
               </div>
 
-              <div className="space-y-1 mt-1">
+              <div className="budget-kpi-value space-y-1 mt-1">
                 {isEditingIncome ? (
                   <div className="flex items-center gap-1">
                     <input
                       type="number"
                       value={incomeInput}
                       onChange={(e) => setIncomeInput(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") handleSaveIncome();
+                        if (e.key === "Escape") setIsEditingIncome(false);
+                      }}
+                      min="0"
+                      step="0.01"
                       className="w-full bg-slate-950/80 border border-white/[0.15] text-xs font-mono rounded-lg px-2 py-1 text-white outline-none focus:border-emerald-500/50 transition-all"
                       autoFocus
                     />
@@ -406,14 +424,14 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                     </button>
                   </div>
                 ) : (
-                  <div className="flex items-baseline justify-between group/edit">
+                  <div className="flex items-center justify-between group/edit">
                     <h3 className="text-lg font-black text-white tracking-tight font-sans">
                       {formatCurrency(currentMonth.income)}
                     </h3>
                     <button
                       onClick={() => setIsEditingIncome(true)}
-                      className="p-0.5 text-white/30 hover:text-emerald-400 rounded transition duration-150 opacity-0 group-hover/edit:opacity-100 sm:opacity-100 cursor-pointer"
-                      title="Edit baseline income"
+                      className="flex h-8 w-8 items-center justify-center rounded-full text-white/30 transition duration-150 hover:bg-white/[0.05] hover:text-emerald-400 sm:opacity-100"
+                      aria-label="Edit baseline income"
                     >
                       <Edit3 size={11} />
                     </button>
@@ -423,17 +441,17 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
             </div>
 
             {/* KPI 2: Planned Spend */}
-            <div className="bg-gradient-to-b from-white/[0.02] to-transparent backdrop-blur-xl border border-white/[0.06] rounded-3xl p-4 shadow-[0_12px_32px_rgba(0,0,0,0.4)] relative overflow-hidden flex flex-col justify-between group hover:border-rose-500/20 transition-all duration-300 col-span-1">
+            <div className="budget-kpi budget-kpi-planned liquid-glass rounded-3xl p-4 relative overflow-hidden flex flex-col justify-between group hover:border-rose-500/30 transition-all duration-300 col-span-1">
               <div className="absolute right-0 top-0 translate-x-4 -translate-y-4 w-16 h-16 bg-rose-500/5 rounded-full blur-xl pointer-events-none group-hover:bg-rose-500/10 transition-all duration-300" />
 
               <div className="flex items-center justify-between mb-2">
                 <span className="text-[9px] font-bold text-white/40 tracking-wider uppercase">Planned Spend</span>
-                <div className="p-1.5 bg-rose-500/10 border border-rose-500/20 text-rose-400 rounded-lg">
-                  <Coins size={12} strokeWidth={2.2} />
+                <div className="budget-kpi-icon p-1.5 bg-rose-500/10 border border-rose-500/20 text-rose-400 rounded-lg">
+                  <FigmaIcon name="arrow-right-red" size={16} />
                 </div>
               </div>
 
-              <div className="space-y-1 mt-1">
+              <div className="budget-kpi-value space-y-1 mt-1">
                 <h3 className="text-lg font-black text-white tracking-tight font-sans">
                   {formatCurrency(currentMonth.totalExpenses)}
                 </h3>
@@ -441,80 +459,71 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
             </div>
 
             {/* KPI 3: Spent */}
-            <div className="bg-gradient-to-b from-white/[0.02] to-transparent backdrop-blur-xl border border-white/[0.06] rounded-3xl p-4 shadow-[0_12px_32px_rgba(0,0,0,0.4)] relative overflow-hidden flex flex-col justify-between group hover:border-emerald-500/20 transition-all duration-300 col-span-1">
+            <div className="budget-kpi budget-kpi-paid liquid-glass rounded-3xl p-4 relative overflow-hidden flex flex-col justify-between group hover:border-emerald-500/30 transition-all duration-300 col-span-1">
               <div className="absolute right-0 top-0 translate-x-4 -translate-y-4 w-16 h-16 bg-emerald-500/5 rounded-full blur-xl pointer-events-none group-hover:bg-emerald-500/10 transition-all duration-300" />
 
               <div className="flex items-center justify-between mb-2">
-                <span className="text-[9px] font-bold text-white/40 tracking-wider uppercase">Spent</span>
-                <div className="p-1.5 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 rounded-lg">
-                  <CheckCircle2 size={12} strokeWidth={2.2} />
+                <span className="text-[9px] font-bold text-white/40 tracking-wider uppercase">Paid</span>
+                <div className="budget-kpi-icon p-1.5 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 rounded-lg">
+                  <FigmaIcon name="money-send-small" size={16} />
                 </div>
               </div>
 
-              <div className="space-y-2 mt-1">
-                <h3 className="text-lg font-black text-emerald-400 tracking-tight font-sans">
+              <div className="budget-kpi-value mt-1">
+                <h3 className="text-lg font-black text-white tracking-tight font-sans">
                   {formatCurrency(currentMonth.completedExpenses)}
                 </h3>
-
-                {/* Embedded Progress Bar */}
-                <div className="space-y-1">
-                  <div className="flex items-center justify-between text-[7px] text-white/30 font-medium">
-                    <span>Paid {expensePercentage}%</span>
-                  </div>
-                  <div className="w-full h-1 bg-white/[0.05] rounded-full overflow-hidden">
-                    <div
-                      className="h-full bg-gradient-to-r from-emerald-500 to-emerald-400 rounded-full transition-all duration-500"
-                      style={{ width: `${expensePercentage}%` }}
-                    />
-                  </div>
-                </div>
               </div>
+
             </div>
 
             {/* KPI 4: Leftover */}
-            <div className="bg-gradient-to-b from-white/[0.02] to-transparent backdrop-blur-xl border border-white/[0.06] rounded-3xl p-4 shadow-[0_12px_32px_rgba(0,0,0,0.4)] relative overflow-hidden flex flex-col justify-between group hover:border-emerald-500/20 transition-all duration-300 col-span-1">
+            <div className="budget-kpi budget-kpi-leftover liquid-glass rounded-3xl p-4 relative overflow-hidden flex flex-col justify-between group hover:border-emerald-500/30 transition-all duration-300 col-span-1">
               <div className="absolute right-0 top-0 translate-x-4 -translate-y-4 w-16 h-16 bg-emerald-500/5 rounded-full blur-xl pointer-events-none group-hover:bg-emerald-500/10 transition-all duration-300" />
 
               <div className="flex items-center justify-between mb-2">
                 <span className="text-[9px] font-bold text-white/40 tracking-wider uppercase">Leftover</span>
-                <div className={`p-1.5 rounded-lg border ${currentMonth.net >= 0 ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-400" : "bg-rose-500/10 border-rose-500/20 text-rose-400"}`}>
-                  {currentMonth.net >= 0 ? <TrendingUp size={12} strokeWidth={2.2} /> : <TrendingDown size={12} strokeWidth={2.2} />}
+                <div className={`budget-kpi-icon p-1.5 rounded-lg border ${currentMonth.net >= 0 ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-400" : "bg-rose-500/10 border-rose-500/20 text-rose-400"}`}>
+                  <FigmaIcon name="coin" size={16} />
                 </div>
               </div>
 
-              <div className="space-y-1 mt-1">
+              <div className="budget-kpi-value space-y-1 mt-1">
                 <h3 className={`text-lg font-black tracking-tight font-sans ${currentMonth.net >= 0 ? "text-emerald-400" : "text-rose-400"}`}>
                   {currentMonth.net >= 0 ? "+" : ""}{formatCurrency(currentMonth.net)}
                 </h3>
               </div>
             </div>
           </div>
+
         </div>
 
-        {/* Right Column (Transactions Table Card) - Spans 8 columns on large screens */}
-        <div className="lg:col-span-7 xl:col-span-8">
+        {/* Right Column (Transactions) */}
+        <div className="budget-transactions lg:col-span-7">
 
-          {/* 3. CORE TABLE CONTAINER */}
-          <div className="bg-gradient-to-b from-white/[0.03] to-white/[0.005] backdrop-blur-2xl border border-white/[0.08] rounded-3xl overflow-hidden shadow-[0_24px_50px_rgba(0,0,0,0.55)]">
+          <div className="space-y-5">
 
             {/* Filter controls */}
-            <div className="p-4 border-b border-white/[0.06] bg-black/10 flex justify-start items-center">
+            <div className="budget-actions liquid-glass rounded-[2rem] p-3.5 space-y-3">
 
               {/* Segmented Filter Tab */}
-              <div className="flex bg-slate-950 p-1 rounded-2xl border border-white/[0.04] w-full md:w-auto">
+              <div className="budget-filter-tabs transaction-tabs flex bg-slate-950/80 p-1 border border-white/[0.06] w-full" role="tablist" aria-label="Transaction filter">
                 <button
                   onClick={() => setFilterType("all")}
-                  className={`px-3.5 py-1.5 text-[11px] font-semibold rounded-xl transition-all duration-150 flex-1 md:flex-none cursor-pointer text-center ${
+                  aria-pressed={filterType === "all"}
+                  className={`transaction-tab min-w-0 px-2.5 py-2 text-[11px] font-semibold transition-all duration-150 flex-1 cursor-pointer text-center ${
                     filterType === "all"
                       ? "bg-white/[0.06] text-white shadow"
                       : "text-white/40 hover:text-white"
                   }`}
                 >
-                  All Transactions
+                  <span className="sm:hidden">All</span>
+                  <span className="hidden sm:inline">All Transactions</span>
                 </button>
                 <button
                   onClick={() => setFilterType("expense")}
-                  className={`px-3.5 py-1.5 text-[11px] font-semibold rounded-xl transition-all duration-150 flex-1 md:flex-none cursor-pointer text-center flex items-center justify-center gap-1 ${
+                  aria-pressed={filterType === "expense"}
+                  className={`transaction-tab min-w-0 px-2.5 py-2 text-[11px] font-semibold transition-all duration-150 flex-1 cursor-pointer text-center flex items-center justify-center gap-1.5 ${
                     filterType === "expense"
                       ? "bg-rose-500/10 text-rose-300 border border-rose-500/20"
                       : "text-white/40 hover:text-white"
@@ -525,7 +534,8 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                 </button>
                 <button
                   onClick={() => setFilterType("income")}
-                  className={`px-3.5 py-1.5 text-[11px] font-semibold rounded-xl transition-all duration-150 flex-1 md:flex-none cursor-pointer text-center flex items-center justify-center gap-1 ${
+                  aria-pressed={filterType === "income"}
+                  className={`transaction-tab min-w-0 px-2.5 py-2 text-[11px] font-semibold transition-all duration-150 flex-1 cursor-pointer text-center flex items-center justify-center gap-1.5 ${
                     filterType === "income"
                       ? "bg-emerald-500/10 text-emerald-300 border border-emerald-500/20"
                       : "text-white/40 hover:text-white"
@@ -535,45 +545,109 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                   Income
                 </button>
               </div>
+
+              {/* Add transaction controls */}
+              <div className="grid grid-cols-2 gap-2">
+                <button
+                  onClick={() => handleOpenAddForm("expense")}
+                  className="mobile-primary-action flex min-w-0 items-center justify-center gap-2 px-3 py-3 bg-rose-500/10 hover:bg-rose-500/15 border border-rose-500/20 hover:border-rose-500/30 text-rose-300 hover:text-rose-200 text-xs font-bold tracking-wide transition-all duration-200 cursor-pointer active:scale-95"
+                >
+                  <FigmaIcon name="add-red" size={14} />
+                  <span className="truncate">Expense</span>
+                </button>
+
+                <button
+                  onClick={() => handleOpenAddForm("income")}
+                  className="mobile-primary-action flex min-w-0 items-center justify-center gap-2 px-3 py-3 bg-emerald-500/10 hover:bg-emerald-500/15 border border-emerald-500/20 hover:border-emerald-500/30 text-emerald-300 hover:text-emerald-200 text-xs font-bold tracking-wide transition-all duration-200 cursor-pointer active:scale-95"
+                >
+                  <FigmaIcon name="add-green" size={14} />
+                  <span className="truncate">Income</span>
+                </button>
+              </div>
             </div>
 
-            {/* The Core Transaction List (Highly polished, compact, and fully mobile responsive) */}
-            <div className="divide-y divide-white/[0.04] bg-slate-950/20 max-h-[500px] overflow-y-auto scrollbar-thin">
+            {expenseTemplates.length > 0 && (
+              <section className={`budget-templates space-y-2 ${templatesExpanded ? "is-expanded" : "is-collapsed"}`} aria-label="Expense templates">
+                <button
+                  type="button"
+                  onClick={() => setTemplatesExpanded(value => !value)}
+                  aria-expanded={templatesExpanded}
+                  className="budget-templates-toggle flex min-h-11 w-full items-center justify-between rounded-full border border-white/[0.08] bg-white/[0.025] px-4 text-left transition hover:bg-white/[0.05]"
+                >
+                  <span className="text-[10px] font-black uppercase tracking-widest text-white/55">Templates</span>
+                  <span className="flex items-center gap-2 text-[9px] font-bold text-white/30">
+                    {expenseTemplates.length}
+                    <FigmaIcon name="arrow-down" size={16} className={`transition-transform duration-200 ${templatesExpanded ? "rotate-180" : ""}`} />
+                  </span>
+                </button>
+                {templatesExpanded && <div className="budget-template-list scrollbar-none flex gap-2 overflow-x-auto pb-1">
+                  {expenseTemplates.map(template => {
+                    const alreadyAdded = template.source === "recurring" && currentMonth.expenses.some(item =>
+                      item.type !== "income" && normalizeTemplateTitle(item.description) === normalizeTemplateTitle(template.title)
+                    );
+
+                    return (
+                      <button
+                        key={template.id}
+                        onClick={() => handleApplyTemplate(template)}
+                        disabled={alreadyAdded}
+                        className={`budget-template-chip liquid-glass flex min-h-14 min-w-[9.5rem] shrink-0 items-center justify-between gap-3 px-4 py-2.5 text-left transition-all ${
+                          alreadyAdded
+                            ? "cursor-default opacity-45"
+                            : template.source === "debt"
+                              ? "border-rose-500/15 bg-rose-500/[0.05] hover:border-rose-400/30"
+                              : "border-cyan-400/15 bg-cyan-500/[0.04] hover:border-cyan-300/30"
+                        }`}
+                      >
+                        <span className="block max-w-32 truncate text-[11px] font-medium text-white/90">{template.title}</span>
+                        {alreadyAdded ? (
+                          <Check size={14} className="shrink-0 text-emerald-400" />
+                        ) : template.amount !== undefined ? (
+                          <span className="shrink-0 text-[10px] font-black text-white/60">{formatCurrency(template.amount)}</span>
+                        ) : (
+                          <Plus size={14} className="shrink-0 text-white/35" />
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>}
+              </section>
+            )}
+
+            {/* Transactions remain on the page instead of inside a nested scroll container. */}
+            <div className="transaction-list space-y-6">
               {filteredItems.length === 0 ? (
-                <div className="py-12 text-center px-4">
+                <div className="liquid-glass rounded-[2rem] py-12 text-center px-4">
                   <div className="w-10 h-10 rounded-2xl bg-white/[0.02] border border-white/[0.04] flex items-center justify-center mx-auto mb-2 text-white/30">
                     <HelpCircle size={18} />
                   </div>
-                  <p className="text-xs text-white/40 font-bold tracking-wide">No transactions found</p>
-                  <p className="text-[10px] text-white/20 mt-1 max-w-[200px] mx-auto">
-                    Add income or expense items for this month using the buttons below
-                  </p>
+                  <p className="text-xs text-white/40 font-bold tracking-wide">No transactions yet</p>
                 </div>
               ) : (
                 <>
                   {/* 1. INCOME GROUP */}
                   {incomeItems.length > 0 && (
-                    <div>
-                      <div className="bg-white/[0.02] border-b border-white/[0.04] py-1.5 px-4 flex items-center justify-between">
+                    <div className="space-y-2">
+                      <div className="budget-group-heading px-1 flex items-center justify-between">
                         <span className="text-[9px] uppercase font-black tracking-widest text-emerald-400 font-mono">Income Received</span>
                         <span className="text-[9px] font-mono font-bold text-white/30">+{formatCurrency(incomeItems.reduce((sum, item) => sum + item.amount, 0))}</span>
                       </div>
-                      <div className="divide-y divide-white/[0.02]">
+                      <div className="space-y-2">
                         {incomeItems.map((item) => {
                           return (
                             <div
                               key={item.id}
-                              className={`flex items-center justify-between p-3.5 sm:p-4 hover:bg-white/[0.02] transition-all duration-150 border-b border-white/[0.02] last:border-b-0 group ${item.completed ? "opacity-60 bg-white/[0.002]" : "bg-transparent"}`}
+                              className="budget-row budget-row-income liquid-glass flex items-center justify-between rounded-[1.65rem] p-3.5 sm:p-4 transition-all duration-150 group hover:border-emerald-500/15"
                             >
                               <div className="flex items-center gap-3 min-w-0 flex-1">
                                 {/* Checkbox with custom padding for easy click */}
                                 <button
                                   onClick={(e) => handleToggleStatus(item.id, e)}
-                                  className="p-1 -m-1 cursor-pointer outline-none shrink-0"
-                                  title={item.completed ? "Mark as unpaid" : "Mark as paid"}
+                                  className="transaction-check-button p-1 -m-1 cursor-pointer outline-none shrink-0"
+                                  aria-label={item.completed ? "Mark as not received" : "Mark as received"}
                                 >
                                   <div
-                                    className={`w-5 h-5 rounded-md border flex items-center justify-center transition-all duration-200 ${
+                                    className={`w-5 h-5 rounded-full border flex items-center justify-center transition-all duration-200 ${
                                       item.completed
                                         ? "bg-emerald-500/20 border-emerald-500/50 text-emerald-400 shadow-[0_0_8px_rgba(16,185,129,0.2)]"
                                         : "border-white/20 bg-white/5 hover:border-emerald-500 hover:bg-emerald-500/10 text-transparent"
@@ -583,21 +657,18 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                                   </div>
                                 </button>
 
-                                {/* Category & Description Stacked */}
+                                {/* Title & Category Stacked */}
                                 <div
                                   className="min-w-0 flex-1 cursor-pointer"
                                   onClick={() => handleOpenEditForm(item)}
                                 >
-                                  <div className="flex items-center gap-2">
-                                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shrink-0" />
-                                    <span className={`text-[12px] font-bold text-white/90 truncate ${item.completed ? "line-through text-white/40" : ""}`}>
+                                  <p className="text-[13px] font-bold text-white/90 truncate">
+                                    {item.description || item.category}
+                                  </p>
+                                  {item.description && (
+                                    <span className="budget-row-category inline-flex max-w-[160px] sm:max-w-xs truncate mt-1 rounded-lg border border-emerald-500/15 bg-emerald-500/[0.08] px-2 py-0.5 text-[9px] font-semibold text-emerald-300/70">
                                       {item.category}
                                     </span>
-                                  </div>
-                                  {item.description && (
-                                    <p className={`text-[10px] text-white/40 truncate mt-0.5 max-w-[160px] sm:max-w-xs ${item.completed ? "line-through text-white/20" : ""}`}>
-                                      {item.description}
-                                    </p>
                                   )}
                                 </div>
                               </div>
@@ -618,30 +689,30 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                                   )}
                                 </div>
 
-                                <div className="flex items-center gap-1 opacity-100 sm:opacity-0 group-hover:opacity-100 transition-opacity duration-150">
+                                <div className="flex items-center gap-2.5 opacity-100 sm:opacity-0 group-hover:opacity-100 transition-opacity duration-150">
                                   <button
                                     onClick={(e) => {
                                       e.stopPropagation();
                                       handleOpenEditForm(item);
                                     }}
-                                    className="p-1 bg-white/[0.03] hover:bg-white/[0.08] border border-white/[0.06] hover:border-white/[0.12] text-white/40 hover:text-white rounded-md transition-all cursor-pointer"
-                                    title="Edit"
+                                    className="transaction-row-action rounded-full border border-white/[0.06] bg-white/[0.03] p-1 text-white/40 transition-all hover:border-white/[0.12] hover:bg-white/[0.08] hover:text-white"
+                                    aria-label="Edit"
                                   >
-                                    <Edit3 size={11} />
+                                    <FigmaIcon name="edit-2" size={16} />
                                   </button>
                                   <button
                                     onClick={(e) => {
                                       e.stopPropagation();
                                       triggerConfirm(
-                                        "Delete Item",
-                                        `Are you sure you want to delete "${item.description || item.category}"?`,
+                                        "Delete transaction",
+                                        `Delete “${item.description || item.category}”?`,
                                         () => onDeleteExpense(selectedMonthStr, item.id)
                                       );
                                     }}
-                                    className="p-1 bg-rose-500/5 hover:bg-rose-500/20 border border-rose-500/10 text-rose-400 hover:text-rose-300 rounded-md transition-all cursor-pointer"
-                                    title="Delete"
+                                    className="transaction-row-action rounded-full border border-rose-500/10 bg-rose-500/5 p-1 text-rose-400 transition-all hover:bg-rose-500/20 hover:text-rose-300"
+                                    aria-label="Delete"
                                   >
-                                    <Trash2 size={11} />
+                                    <FigmaIcon name="trash" size={16} />
                                   </button>
                                 </div>
                               </div>
@@ -653,53 +724,45 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                   )}
 
                   {/* 2. TO SPEND GROUP */}
-                  {filterType !== "income" && (
-                    <div>
-                      <div className="bg-white/[0.02] border-b border-white/[0.04] py-1.5 px-4 flex items-center justify-between">
-                        <span className="text-[9px] uppercase font-black tracking-widest text-rose-400 font-mono">To Spend</span>
+                  {filterType !== "income" && toSpendItems.length > 0 && (
+                    <div className="space-y-2">
+                      <div className="budget-group-heading px-1 flex items-center justify-between">
+                        <span className="text-[9px] uppercase font-black tracking-widest text-rose-400 font-mono">To Pay</span>
                         <span className="text-[9px] font-mono font-bold text-white/30">-{formatCurrency(toSpendItems.reduce((sum, item) => sum + item.amount, 0))}</span>
                       </div>
-                      <div className="divide-y divide-white/[0.02]">
-                        {toSpendItems.length === 0 ? (
-                          <div className="py-4 text-center text-[10px] text-white/30 italic">
-                            No expenses remaining to spend
-                          </div>
-                        ) : (
-                          toSpendItems.map((item) => {
+                      <div className="space-y-2">
+                        {toSpendItems.map((item) => {
                             return (
                               <div
                                 key={item.id}
-                                className="flex items-center justify-between p-3.5 sm:p-4 hover:bg-white/[0.02] transition-all duration-150 border-b border-white/[0.02] last:border-b-0 group bg-transparent"
+                                className="budget-row budget-row-expense liquid-glass flex items-center justify-between rounded-[1.65rem] p-3.5 sm:p-4 transition-all duration-150 group hover:border-rose-500/15"
                               >
                                 <div className="flex items-center gap-3 min-w-0 flex-1">
                                   {/* Checkbox */}
                                   <button
                                     onClick={(e) => handleToggleStatus(item.id, e)}
-                                    className="p-1 -m-1 cursor-pointer outline-none shrink-0"
-                                    title="Mark as paid"
+                                    className="transaction-check-button p-1 -m-1 cursor-pointer outline-none shrink-0"
+                                    aria-label="Mark as paid"
                                   >
                                     <div
-                                      className="w-5 h-5 rounded-md border flex items-center justify-center transition-all duration-200 border-white/20 bg-white/5 hover:border-emerald-500 hover:bg-emerald-500/10 text-transparent"
+                                      className="w-5 h-5 rounded-full border flex items-center justify-center transition-all duration-200 border-white/20 bg-white/5 hover:border-emerald-500 hover:bg-emerald-500/10 text-transparent"
                                     >
                                       <Check size={11} className="scale-50 opacity-0" strokeWidth={3} />
                                     </div>
                                   </button>
 
-                                  {/* Category & Description Stacked */}
+                                  {/* Title & Category Stacked */}
                                   <div
                                     className="min-w-0 flex-1 cursor-pointer"
                                     onClick={() => handleOpenEditForm(item)}
                                   >
-                                    <div className="flex items-center gap-2">
-                                      <span className="w-1.5 h-1.5 rounded-full bg-rose-400 shrink-0" />
-                                      <span className="text-[12px] font-bold text-white/90 truncate">
+                                    <p className="text-[13px] font-bold text-white/90 truncate">
+                                      {item.description || item.category}
+                                    </p>
+                                    {item.description && (
+                                      <span className="budget-row-category inline-flex max-w-[160px] sm:max-w-xs truncate mt-1 rounded-lg border border-rose-500/15 bg-rose-500/[0.08] px-2 py-0.5 text-[9px] font-semibold text-rose-300/70">
                                         {item.category}
                                       </span>
-                                    </div>
-                                    {item.description && (
-                                      <p className="text-[10px] text-white/40 truncate mt-0.5 max-w-[160px] sm:max-w-xs">
-                                        {item.description}
-                                      </p>
                                     )}
                                   </div>
                                 </div>
@@ -711,7 +774,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                                     onClick={() => handleOpenEditForm(item)}
                                   >
                                     <p className="text-[12px] font-bold font-mono tracking-tight text-white/90">
-                                      -{formatCurrency(item.amount)}
+                                      {formatCurrency(item.amount)}
                                     </p>
                                     {item.originalCurrency && item.originalCurrency !== "USD" && item.originalAmount && (
                                       <p className="text-[8px] text-white/20 font-sans mt-0.5 font-medium">
@@ -720,89 +783,80 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                                     )}
                                   </div>
 
-                                  <div className="flex items-center gap-1 opacity-100 sm:opacity-0 group-hover:opacity-100 transition-opacity duration-150">
+                                  <div className="flex items-center gap-2.5 opacity-100 sm:opacity-0 group-hover:opacity-100 transition-opacity duration-150">
                                     <button
                                       onClick={(e) => {
                                         e.stopPropagation();
                                         handleOpenEditForm(item);
                                       }}
-                                      className="p-1 bg-white/[0.03] hover:bg-white/[0.08] border border-white/[0.06] hover:border-white/[0.12] text-white/40 hover:text-white rounded-md transition-all cursor-pointer"
-                                      title="Edit"
+                                      className="transaction-row-action rounded-full border border-white/[0.06] bg-white/[0.03] p-1 text-white/40 transition-all hover:border-white/[0.12] hover:bg-white/[0.08] hover:text-white"
+                                      aria-label="Edit"
                                     >
-                                      <Edit3 size={11} />
+                                      <FigmaIcon name="edit-2" size={16} />
                                     </button>
                                     <button
                                       onClick={(e) => {
                                         e.stopPropagation();
                                         triggerConfirm(
-                                          "Delete Item",
-                                          `Are you sure you want to delete "${item.description || item.category}"?`,
+                                          "Delete transaction",
+                                          `Delete “${item.description || item.category}”?`,
                                           () => onDeleteExpense(selectedMonthStr, item.id)
                                         );
                                       }}
-                                      className="p-1 bg-rose-500/5 hover:bg-rose-500/20 border border-rose-500/10 text-rose-400 hover:text-rose-300 rounded-md transition-all cursor-pointer"
-                                      title="Delete"
+                                      className="transaction-row-action rounded-full border border-rose-500/10 bg-rose-500/5 p-1 text-rose-400 transition-all hover:bg-rose-500/20 hover:text-rose-300"
+                                      aria-label="Delete"
                                     >
-                                      <Trash2 size={11} />
+                                      <FigmaIcon name="trash" size={16} />
                                     </button>
                                   </div>
                                 </div>
                               </div>
                             );
-                          })
-                        )}
+                          })}
                       </div>
                     </div>
                   )}
 
                   {/* 3. SPENT GROUP */}
-                  {filterType !== "income" && (
-                    <div>
-                      <div className="bg-white/[0.02] border-b border-white/[0.04] py-1.5 px-4 flex items-center justify-between">
-                        <span className="text-[9px] uppercase font-black tracking-widest text-emerald-400 font-mono">Spent / Paid</span>
+                  {filterType !== "income" && spentItems.length > 0 && (
+                    <div className="space-y-2">
+                      <div className="budget-group-heading px-1 flex items-center justify-between">
+                        <span className="text-[9px] uppercase font-black tracking-widest text-emerald-400 font-mono">Paid</span>
                         <span className="text-[9px] font-mono font-bold text-white/30">-{formatCurrency(spentItems.reduce((sum, item) => sum + item.amount, 0))}</span>
                       </div>
-                      <div className="divide-y divide-white/[0.02]">
-                        {spentItems.length === 0 ? (
-                          <div className="py-4 text-center text-[10px] text-white/30 italic">
-                            No expenses paid yet
-                          </div>
-                        ) : (
-                          spentItems.map((item) => {
+                      <div className="space-y-2">
+                        {spentItems.map((item) => {
                             return (
                               <div
                                 key={item.id}
-                                className="flex items-center justify-between p-3.5 sm:p-4 hover:bg-white/[0.02] transition-all duration-150 border-b border-white/[0.02] last:border-b-0 group opacity-60 bg-white/[0.002]"
+                                className="budget-row budget-row-completed liquid-glass flex items-center justify-between rounded-[1.65rem] p-3.5 sm:p-4 transition-all duration-150 group opacity-60 hover:border-emerald-500/15"
                               >
                                 <div className="flex items-center gap-3 min-w-0 flex-1">
                                   {/* Checkbox */}
                                   <button
                                     onClick={(e) => handleToggleStatus(item.id, e)}
-                                    className="p-1 -m-1 cursor-pointer outline-none shrink-0"
-                                    title="Mark as unpaid"
+                                    className="transaction-check-button p-1 -m-1 cursor-pointer outline-none shrink-0"
+                                    aria-label="Mark as unpaid"
                                   >
                                     <div
-                                      className="w-5 h-5 rounded-md border flex items-center justify-center transition-all duration-200 bg-emerald-500/20 border-emerald-500/50 text-emerald-400 shadow-[0_0_8px_rgba(16,185,129,0.2)]"
+                                      className="w-5 h-5 rounded-full border flex items-center justify-center transition-all duration-200 bg-emerald-500/20 border-emerald-500/50 text-emerald-400 shadow-[0_0_8px_rgba(16,185,129,0.2)]"
                                     >
-                                      <Check size={11} className="scale-100 opacity-100" strokeWidth={3} />
+                                      <FigmaIcon name="tick-circle" size={24} />
                                     </div>
                                   </button>
 
-                                  {/* Category & Description Stacked */}
+                                  {/* Title & Category Stacked */}
                                   <div
                                     className="min-w-0 flex-1 cursor-pointer"
                                     onClick={() => handleOpenEditForm(item)}
                                   >
-                                    <div className="flex items-center gap-2">
-                                      <span className="w-1.5 h-1.5 rounded-full bg-rose-400/50 shrink-0" />
-                                      <span className="text-[12px] font-bold text-white/50 line-through truncate">
+                                    <p className="text-[13px] font-bold text-white/50 line-through truncate">
+                                      {item.description || item.category}
+                                    </p>
+                                    {item.description && (
+                                      <span className="budget-row-category inline-flex max-w-[160px] sm:max-w-xs truncate mt-1 rounded-lg border border-rose-500/10 bg-rose-500/[0.06] px-2 py-0.5 text-[9px] font-semibold text-rose-300/40 line-through">
                                         {item.category}
                                       </span>
-                                    </div>
-                                    {item.description && (
-                                      <p className="text-[10px] text-white/30 line-through truncate mt-0.5 max-w-[160px] sm:max-w-xs">
-                                        {item.description}
-                                      </p>
                                     )}
                                   </div>
                                 </div>
@@ -814,7 +868,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                                     onClick={() => handleOpenEditForm(item)}
                                   >
                                     <p className="text-[12px] font-normal font-mono text-white/40 line-through">
-                                      -{formatCurrency(item.amount)}
+                                      {formatCurrency(item.amount)}
                                     </p>
                                     {item.originalCurrency && item.originalCurrency !== "USD" && item.originalAmount && (
                                       <p className="text-[8px] text-white/10 font-sans mt-0.5 font-medium">
@@ -823,37 +877,36 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                                     )}
                                   </div>
 
-                                  <div className="flex items-center gap-1 opacity-100 sm:opacity-0 group-hover:opacity-100 transition-opacity duration-150">
+                                  <div className="flex items-center gap-2.5 opacity-100 sm:opacity-0 group-hover:opacity-100 transition-opacity duration-150">
                                     <button
                                       onClick={(e) => {
                                         e.stopPropagation();
                                         handleOpenEditForm(item);
                                       }}
-                                      className="p-1 bg-white/[0.03] hover:bg-white/[0.08] border border-white/[0.06] hover:border-white/[0.12] text-white/40 hover:text-white rounded-md transition-all cursor-pointer"
-                                      title="Edit"
+                                      className="transaction-row-action rounded-full border border-white/[0.06] bg-white/[0.03] p-1 text-white/40 transition-all hover:border-white/[0.12] hover:bg-white/[0.08] hover:text-white"
+                                      aria-label="Edit"
                                     >
-                                      <Edit3 size={11} />
+                                      <FigmaIcon name="edit-2" size={16} />
                                     </button>
                                     <button
                                       onClick={(e) => {
                                         e.stopPropagation();
                                         triggerConfirm(
-                                          "Delete Item",
-                                          `Are you sure you want to delete "${item.description || item.category}"?`,
+                                          "Delete transaction",
+                                          `Delete “${item.description || item.category}”?`,
                                           () => onDeleteExpense(selectedMonthStr, item.id)
                                         );
                                       }}
-                                      className="p-1 bg-rose-500/5 hover:bg-rose-500/20 border border-rose-500/10 text-rose-400 hover:text-rose-300 rounded-md transition-all cursor-pointer"
-                                      title="Delete"
+                                      className="transaction-row-action rounded-full border border-rose-500/10 bg-rose-500/5 p-1 text-rose-400 transition-all hover:bg-rose-500/20 hover:text-rose-300"
+                                      aria-label="Delete"
                                     >
-                                      <Trash2 size={11} />
+                                      <FigmaIcon name="trash" size={16} />
                                     </button>
                                   </div>
                                 </div>
                               </div>
                             );
-                          })
-                        )}
+                          })}
                       </div>
                     </div>
                   )}
@@ -861,55 +914,49 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
               )}
             </div>
 
-            {/* ADD ROW CONTROLLER */}
-            <div className="p-3 border-t border-white/[0.06] bg-black/20 flex flex-col sm:flex-row gap-2 justify-center items-center">
-              <button
-                onClick={() => handleOpenAddForm("expense")}
-                className="w-full sm:w-auto flex items-center justify-center gap-1.5 px-4 py-2 bg-rose-500/10 hover:bg-rose-500/15 border border-rose-500/20 hover:border-rose-500/30 text-rose-300 hover:text-rose-200 rounded-2xl text-[11px] font-bold tracking-wide transition-all duration-200 cursor-pointer active:scale-95"
-              >
-                <Plus size={13} strokeWidth={2.5} /> Add Expense
-              </button>
-
-              <button
-                onClick={() => handleOpenAddForm("income")}
-                className="w-full sm:w-auto flex items-center justify-center gap-1.5 px-4 py-2 bg-emerald-500/10 hover:bg-emerald-500/15 border border-emerald-500/20 hover:border-emerald-500/30 text-emerald-300 hover:text-emerald-200 rounded-2xl text-[11px] font-bold tracking-wide transition-all duration-200 cursor-pointer active:scale-95"
-              >
-                <Plus size={13} strokeWidth={2.5} /> Add Income
-              </button>
-            </div>
           </div>
         </div>
       </div>
 
       {/* 4. MODAL/POPUP DIALOG (Extremely gorgeous, glassmorphic card with sliding type controllers and editable converter) */}
       {isFormOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-md p-4 animate-fadeIn">
-          <div className="bg-[#0a0d15] border border-white/[0.08] rounded-[32px] w-full max-w-md overflow-hidden shadow-2xl relative animate-scaleUp">
+        <div
+          className="app-modal-overlay fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-md p-4 animate-fadeIn"
+          onMouseDown={(event) => {
+            if (event.target === event.currentTarget) setIsFormOpen(false);
+          }}
+          role="presentation"
+        >
+          <div className="transaction-modal liquid-glass-strong w-full max-w-md max-h-[calc(100dvh-2rem)] overflow-y-auto relative animate-scaleUp" role="dialog" aria-modal="true" aria-label={editingExpense ? "Edit transaction" : "New transaction"}>
 
             {/* Modal header */}
-            <div className="px-6 py-5 border-b border-white/[0.06] flex items-center justify-between bg-black/30">
-              <h3 className="text-sm font-black text-white uppercase tracking-wider flex items-center gap-2">
-                <Sparkles size={16} className={transactionType === "income" ? "text-emerald-400" : "text-rose-400"} />
-                {editingExpense ? "Edit Transaction" : "New Transaction"}
+            <div className="transaction-modal-header flex items-center justify-between border-b border-white/[0.09] px-5 py-4">
+              <h3 className="text-base font-semibold text-white">
+                {editingExpense ? "Edit transaction" : "New transaction"}
               </h3>
               <button
                 onClick={() => setIsFormOpen(false)}
-                className="p-1.5 text-white/40 hover:text-white hover:bg-white/[0.04] rounded-xl transition duration-150 cursor-pointer"
+                className="figma-icon-button text-white/45 transition hover:text-white"
+                aria-label="Close"
               >
                 <X size={18} />
               </button>
             </div>
 
-            <form onSubmit={handleFormSubmit} className="p-6 space-y-5">
+            <form onSubmit={handleFormSubmit} className="transaction-modal-form space-y-4 p-5">
 
               {/* Type Switcher Segmented Control */}
               <div className="space-y-1.5">
-                <label className="text-[10px] font-bold text-white/40 uppercase tracking-widest font-mono">Transaction Type</label>
-                <div className="grid grid-cols-2 bg-black/40 p-1 rounded-2xl border border-white/[0.04]">
+                <label className="text-[11px] text-white/45">Transaction type</label>
+                <div className="grid grid-cols-2 rounded-full border border-white/[0.04] bg-black/40 p-1">
                   <button
                     type="button"
-                    onClick={() => setTransactionType("expense")}
-                    className={`py-2 text-xs font-bold rounded-xl transition-all duration-200 cursor-pointer text-center ${
+                    onClick={() => {
+                      setTransactionType("expense");
+                      setCategory("Living");
+                      setIsCustomCategory(false);
+                    }}
+                    className={`rounded-full py-2 text-center text-xs font-bold transition-all duration-200 ${
                       transactionType === "expense"
                         ? "bg-rose-500/15 text-rose-300 border border-rose-500/20"
                         : "text-white/40 hover:text-white"
@@ -919,8 +966,12 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                   </button>
                   <button
                     type="button"
-                    onClick={() => setTransactionType("income")}
-                    className={`py-2 text-xs font-bold rounded-xl transition-all duration-200 cursor-pointer text-center ${
+                    onClick={() => {
+                      setTransactionType("income");
+                      setCategory("Salary");
+                      setIsCustomCategory(false);
+                    }}
+                    className={`rounded-full py-2 text-center text-xs font-bold transition-all duration-200 ${
                       transactionType === "income"
                         ? "bg-emerald-500/15 text-emerald-300 border border-emerald-500/20"
                         : "text-white/40 hover:text-white"
@@ -931,16 +982,33 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                 </div>
               </div>
 
+              {editingExpense && calculatedMonths.length > 1 && (
+                <div className="space-y-1.5">
+                  <label htmlFor="transaction-month" className="text-[11px] text-white/45">Move to month</label>
+                  <select
+                    id="transaction-month"
+                    value={expenseMonthStr}
+                    onChange={(event) => setExpenseMonthStr(event.target.value)}
+                    className="figma-input min-h-11 w-full rounded-full px-4 text-xs font-semibold text-white outline-none"
+                  >
+                    {calculatedMonths.map(month => (
+                      <option key={month.monthStr} value={month.monthStr}>
+                        {month.monthName[0]}{month.monthName.slice(1).toLowerCase()} ‘{month.monthYear.slice(2)}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
+
               {/* Category selector */}
               <div className="space-y-1.5">
-                <label className="text-[10px] font-bold text-white/40 uppercase tracking-widest font-mono">Category</label>
+                <label className="text-[11px] text-white/45">Category</label>
 
                 {isCustomCategory ? (
                   <div className="flex gap-2 animate-fadeIn">
                     <input
                       type="text"
                       required
-                      placeholder="e.g. Subscriptions"
                       value={customCategory}
                       onChange={(e) => setCustomCategory(e.target.value)}
                       className="flex-1 bg-black/40 border border-white/[0.08] focus:border-emerald-500/50 rounded-2xl px-4 py-2.5 text-xs text-white outline-none focus:ring-0 transition-all"
@@ -976,13 +1044,12 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                 )}
               </div>
 
-              {/* Description Input */}
+              {/* Title Input */}
               <div className="space-y-1.5">
-                <label className="text-[10px] font-bold text-white/40 uppercase tracking-widest font-mono">Description *</label>
+                <label className="text-[11px] text-white/45">Title</label>
                 <input
                   type="text"
                   required
-                  placeholder={transactionType === "income" ? "e.g. Project bonus" : "e.g. Apartment Rent"}
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
                   className="w-full bg-black/40 border border-white/[0.08] focus:border-emerald-500/50 rounded-2xl px-4 py-3 text-xs text-white outline-none focus:ring-0 transition-all placeholder-white/20"
@@ -990,39 +1057,39 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
               </div>
 
               {/* CURRENCY CONVERTER SECTION (Pristine visual component) */}
-              <div className="bg-white/[0.01] border border-white/[0.06] p-4 rounded-2xl space-y-3">
+              <div className="space-y-3 border-t border-white/[0.09] pt-4">
                 <div className="flex items-center justify-between">
-                  <span className="text-[10px] font-bold text-white/40 uppercase tracking-widest font-mono flex items-center gap-1">
-                    Multi-Currency Converter
+                  <span className="text-[11px] text-white/45">
+                    Currency
                   </span>
-                  <span className="text-[10px] font-mono text-emerald-400 font-bold">⇒ USD ($)</span>
+                  <span className="text-[11px] font-semibold text-[#29ff5e]">to USD</span>
                 </div>
 
                 <div className="grid grid-cols-2 gap-3">
                   {/* Currency Select */}
                   <div className="space-y-1">
-                    <label className="text-[8px] text-white/40 font-bold uppercase tracking-wider">Currency</label>
+                    <label className="text-[10px] text-white/40">Currency</label>
                     <select
                       value={currency}
                       onChange={(e) => setCurrency(e.target.value)}
                       className="w-full bg-black/45 border border-white/[0.08] rounded-xl px-2.5 py-2 text-xs text-white outline-none cursor-pointer font-mono focus:ring-0"
                     >
-                      <option value="USD" className="bg-slate-950 text-slate-100">USD ($) — Dollar</option>
-                      <option value="RUB" className="bg-slate-950 text-slate-100">RUB (₽) — Ruble</option>
-                      <option value="GEL" className="bg-slate-950 text-slate-100">GEL (₾) — Lari</option>
-                      <option value="EUR" className="bg-slate-950 text-slate-100">EUR (€) — Euro</option>
-                      <option value="KZT" className="bg-slate-950 text-slate-100">KZT (₸) — Tenge</option>
+                      <option value="USD" className="bg-slate-950 text-slate-100">USD ($)</option>
+                      <option value="RUB" className="bg-slate-950 text-slate-100">RUB (₽)</option>
+                      <option value="GEL" className="bg-slate-950 text-slate-100">GEL (₾)</option>
+                      <option value="EUR" className="bg-slate-950 text-slate-100">EUR (€)</option>
+                      <option value="KZT" className="bg-slate-950 text-slate-100">KZT (₸)</option>
                     </select>
                   </div>
 
                   {/* Amount in Selected Currency */}
                   <div className="space-y-1">
-                    <label className="text-[8px] text-white/40 font-bold uppercase tracking-wider">Amount ({CURRENCY_SYMBOLS[currency]})</label>
+                    <label className="text-[10px] text-white/40">Amount ({CURRENCY_SYMBOLS[currency]})</label>
                     <input
                       type="number"
                       step="any"
+                      min="0.01"
                       required
-                      placeholder="0.00"
                       value={rawAmount}
                       onChange={(e) => setRawAmount(e.target.value)}
                       className="w-full bg-black/45 border border-white/[0.08] rounded-xl px-2.5 py-2 text-xs text-white font-mono outline-none focus:border-emerald-500/30 focus:ring-0 transition-all placeholder-white/20"
@@ -1042,6 +1109,8 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                       <input
                         type="number"
                         step="any"
+                        min="0.000001"
+                        required
                         value={exchangeRate}
                         onChange={(e) => setExchangeRate(e.target.value)}
                         className="w-full bg-transparent text-right text-xs font-mono text-white outline-none"
@@ -1069,27 +1138,27 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                   id="modal-completed"
                   checked={completed}
                   onChange={(e) => setCompleted(e.target.checked)}
-                  className="w-4.5 h-4.5 rounded-lg border-white/10 bg-black/40 text-emerald-500 focus:ring-0 focus:ring-offset-0 cursor-pointer transition-all"
+                  className="transaction-status-checkbox cursor-pointer transition-all"
                 />
                 <label htmlFor="modal-completed" className="text-xs text-white/60 select-none cursor-pointer hover:text-white/80 transition-colors">
-                  {transactionType === "income" ? "Mark as received" : "Mark as paid"}
+                  {transactionType === "income" ? "Income received" : "Expense paid"}
                 </label>
               </div>
 
               {/* Action Buttons */}
-              <div className="flex justify-end gap-2.5 pt-4 border-t border-white/[0.06]">
+              <div className="flex justify-end gap-2.5 border-t border-white/[0.09] pt-4">
                 <button
                   type="button"
                   onClick={() => setIsFormOpen(false)}
-                  className="px-5 py-2.5 text-xs font-bold hover:bg-white/[0.03] border border-transparent hover:border-white/[0.08] text-white/60 hover:text-white rounded-2xl transition duration-150 cursor-pointer"
+                  className="figma-soft-button min-h-11 px-5 text-xs font-semibold text-white/60 transition hover:text-white"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2.5 text-xs font-bold bg-white/[0.08] hover:bg-white/[0.12] border border-white/[0.1] text-white rounded-2xl transition duration-150 cursor-pointer active:scale-95"
+                  className="figma-soft-button is-primary min-h-11 px-5 text-xs font-semibold text-white transition active:scale-95"
                 >
-                  {editingExpense ? "Save" : "Add"}
+                  {editingExpense ? (expenseMonthStr === selectedMonthStr ? "Save" : "Move") : "Add"}
                 </button>
               </div>
             </form>
