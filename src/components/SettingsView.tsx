@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { FinanceData } from "../types";
+import { Moon, Sun } from "lucide-react";
 import { FigmaIcon } from "./FigmaIcon";
 
 interface SettingsViewProps {
@@ -10,6 +11,8 @@ interface SettingsViewProps {
   triggerAlert: (title: string, message: string) => void;
   onOpenTemplates: () => void;
   templateCount: number;
+  theme: "light" | "dark";
+  onThemeChange: (theme: "light" | "dark") => void;
 }
 
 export const SettingsView: React.FC<SettingsViewProps> = ({
@@ -20,6 +23,8 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
   triggerAlert,
   onOpenTemplates,
   templateCount,
+  theme,
+  onThemeChange,
 }) => {
   const [baselineIncome, setBaselineIncome] = useState(data.baselineMonthlyIncome.toString());
   const [baselineBalance, setBaselineBalance] = useState(data.baselineBalance.toString());
@@ -52,6 +57,36 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
           <FigmaIcon name="arrow-right-muted" size={16} className="opacity-50" />
         </span>
       </button>
+
+      <section className="figma-surface appearance-card rounded-[30px] p-3.5">
+        <div className="mb-3 flex items-center justify-between px-1">
+          <div>
+            <h3 className="text-base font-semibold leading-5 text-white">Appearance</h3>
+            <p className="mt-1 text-[11px] text-white/40">Choose how the app looks</p>
+          </div>
+          <span className="appearance-icon flex h-9 w-9 items-center justify-center rounded-full text-white/60">
+            {theme === "light" ? <Sun size={16} /> : <Moon size={16} />}
+          </span>
+        </div>
+        <div className="theme-segmented grid grid-cols-2 gap-1 rounded-full p-1" role="group" aria-label="Color theme">
+          <button
+            type="button"
+            onClick={() => onThemeChange("light")}
+            aria-pressed={theme === "light"}
+            className="flex h-10 items-center justify-center gap-2 rounded-full text-[12px] font-semibold"
+          >
+            <Sun size={15} /> Light
+          </button>
+          <button
+            type="button"
+            onClick={() => onThemeChange("dark")}
+            aria-pressed={theme === "dark"}
+            className="flex h-10 items-center justify-center gap-2 rounded-full text-[12px] font-semibold"
+          >
+            <Moon size={15} /> Dark
+          </button>
+        </div>
+      </section>
 
       <section className="figma-surface figma-settings-baseline rounded-[30px] p-3.5">
         <h3 className="border-b border-white/[0.09] pb-3.5 text-base font-semibold leading-5 text-white">Baseline</h3>

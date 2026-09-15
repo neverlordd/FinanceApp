@@ -19,6 +19,8 @@ import {
   Database,
   HandCoins,
   PartyPopper,
+  Sun,
+  Moon,
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 
@@ -84,6 +86,19 @@ const syncDebtPayments = (debts: DebtItem[], monthlyBudgets: FinanceData["monthl
 };
 
 export default function App() {
+  const [theme, setTheme] = useState<"light" | "dark">(
+    () => document.documentElement.dataset.theme === "light" ? "light" : "dark"
+  );
+
+  useEffect(() => {
+    document.documentElement.dataset.theme = theme;
+    localStorage.setItem("finance-app-theme", theme);
+    document.querySelector('meta[name="theme-color"]')?.setAttribute(
+      "content",
+      theme === "light" ? "#eef2f8" : "#08090d",
+    );
+  }, [theme]);
+
   // Navigation State
   const [activeTab, setActiveTab] = useState<string>("budget");
 
@@ -802,6 +817,16 @@ export default function App() {
             </div>
 
             <button
+              type="button"
+              onClick={() => setTheme(current => current === "dark" ? "light" : "dark")}
+              className="theme-toggle liquid-glass flex items-center justify-center rounded-full p-2 text-white/60 transition duration-200 hover:text-white"
+              aria-label={`Switch to ${theme === "dark" ? "light" : "dark"} theme`}
+              title={`Switch to ${theme === "dark" ? "light" : "dark"} theme`}
+            >
+              {theme === "dark" ? <Sun size={15} /> : <Moon size={15} />}
+            </button>
+
+            <button
               onClick={() => fetchData(false)}
               className="liquid-glass flex items-center justify-center rounded-full p-2 text-white/60 transition duration-200 hover:text-white"
               aria-label="Refresh data"
@@ -942,6 +967,8 @@ export default function App() {
                   triggerAlert={triggerAlert}
                   onOpenTemplates={() => setActiveTab("template-settings")}
                   templateCount={expenseTemplates.length}
+                  theme={theme}
+                  onThemeChange={setTheme}
                 />
               )}
             </motion.div>

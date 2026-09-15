@@ -39,7 +39,7 @@ export const FigmaIcon: React.FC<FigmaIconProps> = ({ name, size = 16, className
     src={`${import.meta.env.BASE_URL}figma-icons/${name}.svg`}
     width={size}
     height={size}
-    className={`block shrink-0 ${className}`}
+    className={`figma-icon block shrink-0 ${className}`}
     alt=""
     aria-hidden="true"
   />
