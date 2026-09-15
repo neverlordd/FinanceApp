@@ -50,10 +50,6 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
 
   return (
     <div className="figma-settings mx-auto max-w-3xl space-y-3.5">
-      <div className="ios-page-heading">
-        <span>Preferences</span>
-        <h1>Settings</h1>
-      </div>
       <button type="button" onClick={onOpenTemplates} className="figma-settings-link flex h-[38px] min-h-[38px] w-full items-center rounded-full px-3.5 text-left">
         <span className="min-w-0 flex-1 text-[11px] font-normal text-white/60">Templates</span>
         <span className="flex shrink-0 items-center gap-2 text-[9px] font-semibold text-white/35">

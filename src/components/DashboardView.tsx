@@ -323,11 +323,6 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
   return (
     <div className="figma-budget mx-auto max-w-3xl space-y-6">
 
-      <div className="ios-page-heading">
-        <span>Overview</span>
-        <h1>Budget</h1>
-      </div>
-
       {/* TWO BLOCK LAYOUT: 1. Left (Selector + Compact KPIs) | 2. Right (Transactions Table) */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
 

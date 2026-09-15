@@ -281,8 +281,8 @@ export default function App() {
 
   if (loading) {
     return (
-      <div className="app-loading min-h-screen flex flex-col items-center justify-center p-6 font-sans">
-        <div className="liquid-glass-strong space-y-4 rounded-[32px] px-10 py-8 text-center">
+      <div className="min-h-screen bg-[#06080d] flex flex-col items-center justify-center font-sans">
+        <div className="space-y-4 text-center">
           <div className="relative w-12 h-12 mx-auto">
             <div className="absolute inset-0 rounded-full border-4 border-emerald-500/20" />
             <div className="absolute inset-0 rounded-full border-4 border-emerald-500 border-t-transparent animate-spin" />
@@ -295,8 +295,8 @@ export default function App() {
 
   if (!data) {
     return (
-      <div className="app-loading min-h-screen flex items-center justify-center p-6 font-sans text-center">
-        <div className="liquid-glass-strong w-full max-w-sm rounded-[32px] p-7">
+      <div className="min-h-screen bg-[#06080d] flex items-center justify-center p-6 font-sans text-center">
+        <div className="w-full max-w-sm rounded-3xl border border-white/[0.08] bg-white/[0.025] p-7 shadow-2xl">
           <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-2xl border border-rose-500/20 bg-rose-500/10 text-rose-400">
             <WifiOff size={21} />
           </div>
@@ -731,7 +731,7 @@ export default function App() {
   };
 
   return (
-    <div className={`telegram-app-shell min-h-screen text-slate-100 font-sans flex flex-col pb-20 md:pb-0 relative overflow-x-hidden ${activeTab === "budget" ? "budget-screen" : ""}`}>
+    <div className={`telegram-app-shell min-h-screen text-slate-100 font-sans flex flex-col pb-20 md:pb-0 relative overflow-hidden ${activeTab === "budget" ? "budget-screen" : ""}`}>
 
       {/* iOS Liquid Glass Background Glowing Orbs */}
       <div className="ambient-orb top-[-12%] left-[-14%] w-[52%] h-[48%] bg-blue-500/20" />
