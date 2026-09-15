@@ -845,6 +845,7 @@ export default function App() {
         <aside className="liquid-sidebar liquid-glass hidden md:block w-52 shrink-0 space-y-1">
           <button
             onClick={() => setActiveTab("budget")}
+            aria-current={activeTab === "budget" ? "page" : undefined}
             className={`w-full flex items-center gap-3 px-4 py-3 rounded-full text-xs font-semibold tracking-wide transition duration-150 cursor-pointer ${
               activeTab === "budget"
                 ? "bg-white/[0.06] border border-white/[0.1] text-white shadow-[0_4px_12px_rgba(255,255,255,0.02)]"
@@ -857,6 +858,7 @@ export default function App() {
 
           <button
             onClick={() => setActiveTab("projections")}
+            aria-current={activeTab === "projections" ? "page" : undefined}
             className={`w-full flex items-center gap-3 px-4 py-3 rounded-full text-xs font-semibold tracking-wide transition duration-150 cursor-pointer ${
               activeTab === "projections"
                 ? "bg-white/[0.06] border border-white/[0.1] text-white shadow-[0_4px_12px_rgba(255,255,255,0.02)]"
@@ -869,6 +871,7 @@ export default function App() {
 
           <button
             onClick={() => setActiveTab("debts")}
+            aria-current={activeTab === "debts" ? "page" : undefined}
             className={`w-full flex items-center gap-3 px-4 py-3 rounded-full text-xs font-semibold tracking-wide transition duration-150 cursor-pointer ${
               activeTab === "debts"
                 ? "bg-white/[0.06] border border-white/[0.1] text-white shadow-[0_4px_12px_rgba(255,255,255,0.02)]"
@@ -881,6 +884,7 @@ export default function App() {
 
           <button
             onClick={() => setActiveTab("settings")}
+            aria-current={activeTab === "settings" || activeTab === "template-settings" ? "page" : undefined}
             className={`w-full flex items-center gap-3 px-4 py-3 rounded-full text-xs font-semibold tracking-wide transition duration-150 cursor-pointer ${
               activeTab === "settings" || activeTab === "template-settings"
                 ? "bg-white/[0.06] border border-white/[0.1] text-white shadow-[0_4px_12px_rgba(255,255,255,0.02)]"
