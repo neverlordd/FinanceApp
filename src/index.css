@@ -1564,7 +1564,7 @@ body,
   color: var(--app-muted) !important;
 }
 
-.liquid-sidebar button[aria-current="page"] {
+.liquid-sidebar button[class*="bg-white"] {
   color: var(--app-text) !important;
   border-color: rgba(52, 199, 89, 0.26) !important;
   background: linear-gradient(135deg, rgba(52, 199, 89, 0.23), rgba(52, 199, 89, 0.08)) !important;
